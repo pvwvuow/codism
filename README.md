@@ -9,8 +9,10 @@
 - همه‌ی مقادیر محرمانه فقط به‌صورت Secret در پروژه‌ی Supabase نگهداری می‌شوند — در این ریپو هیچ کلیدی نیست
 
 ## آدرس‌ها
-- پنل: `https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/`
+- پنل (رابط کاربری): `https://pvwvuow.github.io/codism/`
+  - نکته: پلن رایگان Supabase اجازه‌ی نمایش HTML از Edge Function را نمی‌دهد (anti-phishing؛ پاسخ text/html به text/plain تبدیل می‌شود)؛ بنابراین UI روی GitHub Pages میزبانی می‌شود و آدرس قدیمی `…/functions/v1/panel/` به‌صورت خودکار (302) به همین آدرس ریدایرکت می‌شود
 - Base URL برای کلاینت‌ها (VSCode/curl/openai SDK): `https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1`
+- API آدرس‌های `/api/*` و `/v1/*` همان Edge Function هستند؛ UI از CORS با `Access-Control-Allow-Origin: *` به آن‌ها وصل می‌شود
 
 ## Environment (Secrets در داشبورد Supabase)
 ```
