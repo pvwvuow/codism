@@ -1,0 +1,55 @@
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import crypto from 'crypto';
+import { nanoid } from 'nanoid';
+import { db } from './db.js';
+import { authRequired, adminOnly, signToken, verifyPassword, hashPassword } from './auth.js';
+import { proxyToUpstream } from './proxy.js';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const app = express();
+const PORT = process.env.PORT || 3000;
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cors());
+app.use(morgan('tiny'));
+app.use(express.json({ limit: '2mb' }));
+app.use('/v1', express.raw({ type: '*/*', limit: '10mb' }), (req,res,next)=>{ if(Buffer.isBuffer(req.body)) req.bodyBuf=req.body; next(); });
+app.use(rateLimit({ windowMs: 60*1000, max: 200 }));
+app.get('/health',(req,res)=>res.json({ok:true,time:new Date().toISOString(),upstream:process.env.UPSTREAM_BASE_URL}));
+app.get('/api/public/info',(req,res)=>res.json({name:'Codism AI Gateway',base_url:process.env.PUBLIC_BASE_URL||'http://localhost:'+PORT,docs:'/docs',endpoints:['/v1/chat/completions','/v1/completions','/v1/embeddings','/v1/models','/v1/images/generations']}));
+app.post('/api/auth/login',async(req,res)=>{
+ const {email,password}=req.body||{};
+ if(!email||!password) return res.status(400).json({error:'email & password required'});
+ const user=db.prepare('SELECT * FROM users WHERE email=?').get(email);
+ if(!user) return res.status(401).json({error:'Invalid credentials'});
+ const ok=await verifyPassword(password,user.password_hash);
+ if(!ok) return res.status(401).json({error:'Invalid credentials'});
+ const token=signToken({id:user.id,email:user.email,role:user.role,name:user.name});
+ res.json({token,user:{id:user.id,email:user.email,role:user.role,name:user.name}});
+});
+app.post('/api/auth/register',async(req,res)=>{
+ const {email,password,name}=req.body||{};
+ if(!email||!password||!name) return res.status(400).json({error:'name,email,password required'});
+ if(password.length<6) return res.status(400).json({error:'password min 6 chars'});
+ if(db.prepare('SELECT id FROM users WHERE email=?').get(email)) return res.status(409).json({error:'email exists'});
+ const hash=await hashPassword(password);
+ const r=db.prepare('INSERT INTO users(email,password_hash,name,role) VALUES(?,?,?,?)').run(email,hash,name,'user');
+ const token=signToken({id:r.lastInsertRowid,email,role:'user',name});
+ res.json({token,user:{id:r.lastInsertRowid,email,role:'user',name}});
+});
+app.get('/api/me',authRequired,(req,res)=>{ const u=db.prepare('SELECT id,email,name,role,created_at FROM users WHERE id=?').get(req.user.id); res.json(u); });
+import { registerPart2 } from './index2.js';
+registerPart2(app);
+const publicDir=path.join(__dirname,'../public');
+app.use(express.static(publicDir));
+app.get('*',(req,res)=>{
+ if(req.path.startsWith('/api')||req.path.startsWith('/v1')) return res.status(404).json({error:'not found'});
+ res.sendFile(path.join(publicDir,'index.html'));
+});
+app.listen(PORT,()=>{ console.log('✅ Codism AI Panel http://localhost:'+PORT+' upstream='+process.env.UPSTREAM_BASE_URL+' public='+process.env.PUBLIC_BASE_URL); });
+
