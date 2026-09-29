@@ -10,8 +10,9 @@
 <meta name="theme-color" content="#D97757">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/design.css?v=88335241">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/design.css?v=06099827">
+<script src="assets/i18n.js?v=06099827"></script>
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <script>window.CODISM_API_BASE="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel";</script>
 
@@ -30,9 +31,9 @@
       <a data-nav href="changelog.html">تغییرات</a>
       <a data-nav href="status.html">وضعیت</a>
     </nav>
-    <div style="display:flex;align-items:center;gap:.5rem">
+    <div class="navbar-actions" style="display:flex;align-items:center;gap:.5rem">
       <a class="btn btn-ghost" href="login.html" data-auth-link>ورود</a>
-      <a class="btn btn-primary" href="register.html" data-auth-cta>شروع رایگان</a>
+      <a class="btn btn-primary" href="register.html" data-auth-cta>شروع کن</a>
       <button class="nav-toggle" aria-label="منو"><span></span><span></span><span></span></button>
     </div>
   </div>
@@ -67,7 +68,7 @@
 .progress{height:.5rem;background:#F4F1EA;border-radius:999px;overflow:hidden}
 .progress > i{display:block;height:100%;background:#D97757;border-radius:inherit;transition:width .3s}
 .plan-feats{list-style:none;padding:0;margin:1rem 0;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#3D3A33}
-.plan-feats li{padding:.25rem 0}
+.plan-feats li{padding:.25rem 0;padding-inline-start:1.5rem}
 .chart{display:flex;align-items:flex-end;gap:4px;height:120px;padding:.5rem 0 0;border-bottom:1px solid #F4F1EA}
 .chart i{flex:1;background:#D97757;border-radius:4px 4px 0 0;min-height:2px;transition:height .3s;opacity:.9}
 .chart i:hover{opacity:1}
@@ -120,12 +121,12 @@
 </div>
 <div class="kpi card">
 <div class="kpi-label">درخواست امروز</div>
-<div class="kpi-value" data-kpi-today-req>0</div>
+<div class="kpi-value" data-kpi-today-req>۰</div>
 <div class="kpi-sub" data-kpi-today-tok>0 توکن</div>
 </div>
 <div class="kpi card">
 <div class="kpi-label">ناموفق امروز</div>
-<div class="kpi-value" data-kpi-failed>0</div>
+<div class="kpi-value" data-kpi-failed>۰</div>
 <div class="kpi-sub">401/403/429/5xx</div>
 </div>
 </div>
@@ -227,22 +228,22 @@
 <div class="kpi-row">
 <div class="kpi card">
 <div class="kpi-label">توکن امروز</div>
-<div class="kpi-value" data-usage-today-tok>0</div>
+<div class="kpi-value" data-usage-today-tok>۰</div>
 <div class="kpi-sub" data-usage-today-req>0 درخواست</div>
 </div>
 <div class="kpi card">
 <div class="kpi-label">توکن این ماه</div>
-<div class="kpi-value" data-usage-month-tok>0</div>
+<div class="kpi-value" data-usage-month-tok>۰</div>
 <div class="kpi-sub" data-usage-month-req>0 درخواست</div>
 </div>
 <div class="kpi card">
 <div class="kpi-label">میانگین روزانه (۱۴ روز)</div>
-<div class="kpi-value" data-usage-avg>0</div>
+<div class="kpi-value" data-usage-avg>۰</div>
 <div class="kpi-sub">توکن</div>
 </div>
 <div class="kpi card">
 <div class="kpi-label">درخواست‌های ناموفق (۱۴ روز)</div>
-<div class="kpi-value" data-usage-failed>0</div>
+<div class="kpi-value" data-usage-failed>۰</div>
 <div class="kpi-sub">از لاگ درخواست‌ها</div>
 </div>
 </div>
@@ -410,27 +411,27 @@
 <div class="kpi-row" style="grid-template-columns:repeat(auto-fit,minmax(9rem,1fr))">
 <div class="kpi card">
 <div class="kpi-label">کاربران</div>
-<div class="kpi-value" data-st-users>0</div>
+<div class="kpi-value" data-st-users>۰</div>
 </div>
 <div class="kpi card">
 <div class="kpi-label">کلیدها</div>
-<div class="kpi-value" data-st-keys>0</div>
+<div class="kpi-value" data-st-keys>۰</div>
 </div>
 <div class="kpi card">
 <div class="kpi-label">کلیدهای فعال</div>
-<div class="kpi-value" data-st-active>0</div>
+<div class="kpi-value" data-st-active>۰</div>
 </div>
 <div class="kpi card">
 <div class="kpi-label">درخواست امروز</div>
-<div class="kpi-value" data-st-req>0</div>
+<div class="kpi-value" data-st-req>۰</div>
 </div>
 <div class="kpi card">
 <div class="kpi-label">توکن امروز</div>
-<div class="kpi-value" data-st-tok>0</div>
+<div class="kpi-value" data-st-tok>۰</div>
 </div>
 <div class="kpi card">
 <div class="kpi-label">ناموفق امروز</div>
-<div class="kpi-value" data-st-failed>0</div>
+<div class="kpi-value" data-st-failed>۰</div>
 </div>
 </div>
 <div class="panel card">
@@ -508,7 +509,6 @@
 <div class="field">
 <label class="label" for="u-plan">پلن</label>
 <select id="u-plan" class="input" data-u-plan dir="ltr" style="text-align:left">
-<option value="free">رایگان (free)</option>
 <option value="starter">استارتر (starter)</option>
 <option value="basic">بیسیک (basic)</option>
 <option value="pro">حرفه‌ای (pro)</option>
@@ -524,60 +524,44 @@
 </div>
 </div>
 
-<div id="planModal" class="modal-back hidden" aria-hidden="true">
-<div class="modal card" role="dialog" aria-modal="true" aria-labelledby="pm-title">
-<h3 id="pm-title">تغییر پلن</h3>
-<p class="hint" data-plan-user dir="ltr" style="font-size:.875rem;color:#6B6659;margin-bottom:.75rem;direction:ltr;text-align:left">—</p>
+<div id="editUserModal" class="modal-back hidden" aria-hidden="true">
+<div class="modal card" role="dialog" aria-modal="true" aria-labelledby="eu-title">
+<h3 id="eu-title">ویرایش کاربر</h3>
+<p class="hint" data-edit-user dir="ltr" style="font-size:.875rem;color:#6B6659;margin-bottom:.75rem;direction:ltr;text-align:left">—</p>
 <div class="field">
-<label class="label" for="plan-select">پلن</label>
-<select id="plan-select" class="input" data-plan-select dir="ltr" style="text-align:left">
-<option value="free">رایگان (free)</option>
+<label class="label" for="eu-enabled">وضعیت</label>
+<label style="display:flex;align-items:center;gap:.5rem;font-size:.875rem;color:#3D3A33;cursor:pointer"><input type="checkbox" id="eu-enabled" data-edit-enabled checked> فعال</label>
+</div>
+<div class="field">
+<label class="label" for="eu-plan">پلن</label>
+<select id="eu-plan" class="input" data-edit-plan dir="ltr" style="text-align:left">
 <option value="starter">استارتر (starter)</option>
 <option value="basic">بیسیک (basic)</option>
 <option value="pro">حرفه‌ای (pro)</option>
 <option value="scale">مقیاس (scale)</option>
 <option value="unlimited">نامحدود (unlimited)</option>
 </select>
-<p class="hint" style="margin-top:.375rem">سهمیه ماهانه به استاندارد پلن بازنشانی می‌شود.</p>
-</div>
-<div class="modal-actions">
-<button type="button" class="btn btn-secondary" data-close-modal>انصراف</button>
-<button type="button" class="btn btn-primary" data-save-plan>ذخیره</button>
-</div>
-</div>
-</div>
-
-<div id="quotaModal" class="modal-back hidden" aria-hidden="true">
-<div class="modal card" role="dialog" aria-modal="true" aria-labelledby="qm-title">
-<h3 id="qm-title">ویرایش سهمیه</h3>
-<p class="hint" data-quota-user dir="ltr" style="font-size:.875rem;color:#6B6659;margin-bottom:.75rem;direction:ltr;text-align:left">—</p>
-<div class="field">
-<label class="label" for="quota-month">سهمیه ماهانه</label>
-<input type="number" id="quota-month" class="input" data-quota-month placeholder="خالی=نامحدود" dir="ltr" inputmode="numeric">
-<p class="hint" style="margin-top:.375rem">عدد توکن؛ خالی یعنی نامحدود</p>
+<p class="hint" style="margin-top:.375rem">انتخاب پلن، سهمیه ماهانه را به استاندارد همان پلن بازنشانی می‌کند.</p>
 </div>
 <div class="field">
-<label class="label" for="quota-day">سهمیه روزانه</label>
-<input type="number" id="quota-day" class="input" data-quota-day placeholder="خالی=بدون سقف" dir="ltr" inputmode="numeric">
+<label class="label" for="eu-quota-month">سهمیه ماهانه (توکن)</label>
+<input type="number" id="eu-quota-month" class="input" data-edit-quota-month placeholder="خالی = نامحدود" dir="ltr" inputmode="numeric">
 </div>
-<div class="modal-actions">
-<button type="button" class="btn btn-secondary" data-close-modal>انصراف</button>
-<button type="button" class="btn btn-primary" data-save-quota>ذخیره</button>
-</div>
-</div>
-</div>
-
-<div id="resetPwModal" class="modal-back hidden" aria-hidden="true">
-<div class="modal card" role="dialog" aria-modal="true" aria-labelledby="rp-title">
-<h3 id="rp-title">ریست رمز عبور</h3>
-<p class="hint" data-reset-user dir="ltr" style="font-size:.875rem;color:#6B6659;margin-bottom:.75rem;direction:ltr;text-align:left">—</p>
 <div class="field">
-<label class="label" for="reset-pass">رمز جدید</label>
-<input type="password" id="reset-pass" class="input" data-reset-pass minlength="8" dir="ltr" autocomplete="new-password">
+<label class="label" for="eu-quota-day">سهمیه روزانه (توکن)</label>
+<input type="number" id="eu-quota-day" class="input" data-edit-quota-day placeholder="خالی = بدون سقف" dir="ltr" inputmode="numeric">
 </div>
-<div class="modal-actions">
+<div class="field">
+<label class="label" for="eu-pass">رمز عبور جدید (اختیاری)</label>
+<input type="password" id="eu-pass" class="input" data-edit-pass minlength="8" dir="ltr" autocomplete="new-password" placeholder="خالی = بدون تغییر">
+</div>
+<div class="error-text" style="color:#DC2626;font-size:.875rem;min-height:1.25rem"></div>
+<div class="modal-actions" style="justify-content:space-between">
+<button type="button" class="btn btn-secondary" style="color:#DC2626;border-color:#FECACA" data-edit-delete>حذف کاربر</button>
+<div style="display:flex;gap:.75rem">
 <button type="button" class="btn btn-secondary" data-close-modal>انصراف</button>
-<button type="button" class="btn btn-primary" data-save-reset>ریست رمز</button>
+<button type="button" class="btn btn-primary" data-edit-save>ذخیره تغییرات</button>
+</div>
 </div>
 </div>
 </div>
@@ -660,7 +644,7 @@
   </div>
 </footer>
 
-<script src="assets/app.js?v=88335241"></script>
-<script src="assets/dashboard.js?v=88335241"></script>
+<script src="assets/app.js?v=06099827"></script>
+<script src="assets/dashboard.js?v=06099827"></script>
 </body>
 </html>

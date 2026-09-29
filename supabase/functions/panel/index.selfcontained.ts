@@ -16,14 +16,14 @@ async function verifyPassword(pw:string,stored:string){const p=stored.split("$")
 async function jwtSign(payload:any,secret:string){const h=b64urlEncode(enc.encode(JSON.stringify({alg:"HS256",typ:"JWT"}))),pp=b64urlEncode(enc.encode(JSON.stringify(payload))),data=`${h}.${pp}`,key=await crypto.subtle.importKey("raw",enc.encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]),sig=await crypto.subtle.sign("HMAC",key,enc.encode(data));return `${data}.${b64urlEncode(new Uint8Array(sig))}`}
 async function jwtVerify(token:string,secret:string){const parts=token.split(".");if(parts.length!==3)return null;const data=`${parts[0]}.${parts[1]}`;try{const key=await crypto.subtle.importKey("raw",enc.encode(secret),{name:"HMAC",hash:"SHA-256"},false,["verify"]),sig=b64urlDecode(parts[2]);if(!await crypto.subtle.verify("HMAC",key,sig,enc.encode(data)))return null;const payload=JSON.parse(dec.decode(b64urlDecode(parts[1])));if(payload.exp&&Date.now()/1000>payload.exp)return null;return payload}catch{return null}}
  function getEnv(k:string,d?:string){const v=Deno.env.get(k);return v===undefined?d??"":v}
-const PLANS=["free","starter","basic","pro","scale","unlimited"] as const;
+const PLANS=["starter","basic","pro","scale","unlimited"] as const;
 type PlanName=typeof PLANS[number];
-const PLAN_MONTHLY_TOKENS:Record<PlanName,number|null>={free:1_000_000,starter:30_000_000,basic:100_000_000,pro:200_000_000,scale:500_000_000,unlimited:null};
+const PLAN_MONTHLY_TOKENS:Record<PlanName,number|null>={starter:30_000_000,basic:100_000_000,pro:200_000_000,scale:500_000_000,unlimited:null};
 function planOf(v:any):PlanName|null{const s=String(v||"").toLowerCase();return (PLANS as readonly string[]).includes(s)?(s as PlanName):null}
 function planQuota(p:PlanName):number|null{return PLAN_MONTHLY_TOKENS[p]}
-const PLAN_RPM:Record<PlanName,number>={free:60,starter:120,basic:300,pro:600,scale:1200,unlimited:3000};
-const PLAN_LABEL_FA:Record<PlanName,string>={free:"رایگان",starter:"استارتر",basic:"بیسیک",pro:"پرو",scale:"اسکیل",unlimited:"بدون سقف"};
-const PLAN_PRICE_MONTHLY_USD:Record<PlanName,number>={free:0,starter:1.2,basic:3.5,pro:5.75,scale:11.5,unlimited:50};
+const PLAN_RPM:Record<PlanName,number>={starter:120,basic:300,pro:600,scale:1200,unlimited:3000};
+const PLAN_LABEL_FA:Record<PlanName,string>={starter:"استارتر",basic:"بیسیک",pro:"پرو",scale:"اسکیل",unlimited:"بدون سقف"};
+const PLAN_PRICE_MONTHLY_USD:Record<PlanName,number>={starter:1.2,basic:3.5,pro:5.75,scale:11.5,unlimited:50};
 function isSupaMisconfigured(){return !(getEnv("SUPABASE_URL")||getEnv("PANEL_SUPABASE_URL"))||!(getEnv("SUPABASE_SERVICE_ROLE")||getEnv("PANEL_SERVICE_ROLE"))}
 function supaHeaders(){const k=getEnv("SUPABASE_SERVICE_ROLE")||getEnv("PANEL_SERVICE_ROLE");return{"apikey":k,"Authorization":`Bearer ${k}`,"Content-Type":"application/json"}}
 function supaUrl(path:string){if(isSupaMisconfigured()) throw new Error("server misconfiguration");return `${(getEnv("SUPABASE_URL")||getEnv("PANEL_SUPABASE_URL")).replace(/\/+$/,"")}/rest/v1${path}`}
@@ -208,7 +208,7 @@ if(norm==="/api/status"&&req.method==="GET"){
       ok=r.ok;
     }catch{ok=false}finally{clearTimeout(to);latency_ms=Date.now()-start}
   }catch{ok=false;latency_ms=Date.now()-start}
-  const payload={ok:true,upstream:{ok,latency_ms,checked_at:new Date().toISOString()}};
+  const payload={ok:true,registration_open:getEnv("REGISTRATION_OPEN","true")!=="false",upstream:{ok,latency_ms,checked_at:new Date().toISOString()}};
   g2.__codismStatusCache={ts:now,payload};
   return jsonRes(200,payload);
 }
@@ -229,7 +229,7 @@ if(norm==="/api/status"&&req.method==="GET"){
   const ex=await sbGet(`/users?email=eq.${encodeURIComponent(email)}&select=id`);
   if(ex.length){addRegFail(ip);return jsonRes(409,{error:"email_exists",code:"email_exists"})}
   const h=await hashPassword(password);
-  const plan=planOf("free")||"free";
+  const plan="starter";
   const mq=planQuota(plan);
   let ins:any;try{ins=await sbPost("/users",{email,name,password_hash:h,role:"user",enabled:true,plan,daily_quota_tokens:0,monthly_quota_tokens:mq||0,phone:body.phone||null})}catch(e:any){console.error("register insert failed:",String(e.message||e));const msg=String(e.message||"");if(msg.includes("duplicate")||msg.includes("23505")||msg.includes("already exists")){addRegFail(ip);return jsonRes(409,{error:"email_exists",code:"email_exists"})}return jsonRes(400,{error:"create_failed",code:"create_failed"})}
   const user=ins[0];
@@ -261,7 +261,7 @@ if(norm==="/api/status"&&req.method==="GET"){
   const p=await requireJwt(req);
   if(!p) return null;
   // verify user still enabled
-  const rows=await sbGet(`/users?id=eq.${encodeURIComponent(p.sub)}&select=id,email,name,role,enabled,daily_quota_tokens,monthly_quota_tokens`);
+  const rows=await sbGet(`/users?id=eq.${encodeURIComponent(p.sub)}&select=id,email,name,role,enabled,plan,daily_quota_tokens,monthly_quota_tokens`);
   if(!rows[0]||!rows[0].enabled) return null;
   return {...p,db:rows[0]};
  }
@@ -363,7 +363,7 @@ if(norm==="/api/status"&&req.method==="GET"){
    const users=await sbGet(`/users?select=id,email,name,role,enabled,plan,daily_quota_tokens,monthly_quota_tokens,created_at&order=created_at.desc`);
    const keys=await sbGet(`/api_keys?select=user_id`);
    const cnt=new Map<string,number>();for(const k of keys) cnt.set(k.user_id,(cnt.get(k.user_id)||0)+1);
-   const out=users.map((u:any)=>({id:u.id,email:u.email,name:u.name,role:u.role,enabled:u.enabled,plan:u.plan||planOf("free"),daily_quota_tokens:u.daily_quota_tokens,monthly_quota_tokens:u.monthly_quota_tokens,created_at:u.created_at,key_count:cnt.get(u.id)||0}));
+   const out=users.map((u:any)=>({id:u.id,email:u.email,name:u.name,role:u.role,enabled:u.enabled,plan:u.plan||"starter",daily_quota_tokens:u.daily_quota_tokens,monthly_quota_tokens:u.monthly_quota_tokens,created_at:u.created_at,key_count:cnt.get(u.id)||0}));
    return jsonRes(200,out);
   }
   if(norm==="/api/admin/users"&&method==="POST"){
@@ -373,7 +373,8 @@ if(norm==="/api/status"&&req.method==="GET"){
    const ex=await sbGet(`/users?email=eq.${encodeURIComponent(email)}&select=id`);
    if(ex.length) return panelErr(409,"email exists");
    const h=await hashPassword(password);
-   const plan=planOf(b.plan||"free")||"free";
+   const plan=planOf(b.plan||"starter");
+   if(!plan) return panelErr(400,"invalid plan");
    const mq=planQuota(plan);
    const dq:any=0;
    try{const ins=await sbPost("/users",{email,name,password_hash:h,role,enabled:true,plan,daily_quota_tokens:dq,monthly_quota_tokens:mq||0});return jsonRes(200,ins[0]||{ok:true})}catch(e:any){console.error("admin create user failed:",String(e.message||e));const m2=String(e.message||"");if(m2.includes("duplicate")||m2.includes("23505"))return panelErr(409,"email exists");return panelErr(400,"create failed")}
@@ -391,7 +392,7 @@ if(norm==="/api/status"&&req.method==="GET"){
    if(b.monthly_quota_tokens!==undefined) patch.monthly_quota_tokens=parseInt(b.monthly_quota_tokens,10)||0;
    if(b.role) patch.role=b.role;
    if(b.password) patch.password_hash=await hashPassword(b.password);
-   if(b.plan!==undefined){const pl=planOf(b.plan)||"free";patch.plan=pl;patch.monthly_quota_tokens=planQuota(pl)||0;patch.daily_quota_tokens=0}
+   if(b.plan!==undefined){const pl=planOf(b.plan);if(!pl) return panelErr(400,"invalid plan");patch.plan=pl;if(b.monthly_quota_tokens===undefined)patch.monthly_quota_tokens=planQuota(pl)||0;if(b.daily_quota_tokens===undefined)patch.daily_quota_tokens=0}
    if(Object.keys(patch).length===0) return panelErr(400,"no fields");
    await sbPatch(`/users?id=eq.${encodeURIComponent(id)}`,patch);
    return jsonRes(200,{ok:true});

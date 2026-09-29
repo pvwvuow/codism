@@ -4,14 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>تعرفه‌ها — Codism</title>
-<meta name="description" content="پلن‌های توکنی شفاف: رایگان تا نامحدود. همه پلن‌ها همه مدل‌ها.">
+<meta name="description" content="پلن‌های توکنی شفاف: از استارتر تا نامحدود. همه پلن‌ها همه مدل‌ها.">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#D97757">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/design.css?v=88335241">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/design.css?v=06099827">
+<script src="assets/i18n.js?v=06099827"></script>
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <script>window.CODISM_API_BASE="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel";</script>
 
@@ -30,15 +31,15 @@
       <a data-nav href="changelog.html">تغییرات</a>
       <a data-nav href="status.html">وضعیت</a>
     </nav>
-    <div style="display:flex;align-items:center;gap:.5rem">
+    <div class="navbar-actions" style="display:flex;align-items:center;gap:.5rem">
       <a class="btn btn-ghost" href="login.html" data-auth-link>ورود</a>
-      <a class="btn btn-primary" href="register.html" data-auth-cta>شروع رایگان</a>
+      <a class="btn btn-primary" href="register.html" data-auth-cta>شروع کن</a>
       <button class="nav-toggle" aria-label="منو"><span></span><span></span><span></span></button>
     </div>
   </div>
 </header>
 
-<main dir="rtl">
+<main>
   <!-- Page Head -->
   <section class="page-head" style="padding:3rem 0 2rem;text-align:center;background:radial-gradient(600px 300px at 50% -10%, #FBF0EB 0%, transparent 70%), #FAF8F4;">
     <div class="container">
@@ -46,7 +47,7 @@
       <h1 style="font-family:var(--font-sans);font-weight:800;font-size:2.25rem;color:#1A1915;line-height:1.3;margin:0 0 .75rem;">توکن بخرید، نه صندلی</h1>
       <p class="muted" style="color:#6B6659;font-size:1rem;max-width:42rem;margin:0 auto;line-height:1.8;">همه پلن‌ها به همه ۳۰+ مدل با استریم، فراخوانی ابزار و تصویر دسترسی دارند. تنها تفاوت، حجم توکن ماهانه است.</p>
       <div style="margin-top:1rem;">
-        <span class="badge badge-clay" style="background:#FBF0EB;color:#B0512F;border:1px solid #EBBBA6;padding:.375rem .75rem;border-radius:999px;font-size:.8125rem;">۱ میلیون توکن رایگان — بدون کارت بانکی</span>
+        <span class="badge badge-clay" style="background:#FBF0EB;color:#B0512F;border:1px solid #EBBBA6;padding:.375rem .75rem;border-radius:999px;font-size:.8125rem;">فعال‌سازی آنی · بدون کارت بانکی</span>
       </div>
     </div>
   </section>
@@ -62,33 +63,7 @@
 
   <!-- Plans Grid -->
   <div class="container" style="padding-bottom:1.5rem;">
-    <div class="plans-grid grid-3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;">
-      <!-- رایگان -->
-      <div class="plan-card card" style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem;">
-        <div>
-          <h3 style="font-weight:800;font-size:1.125rem;color:#1A1915;margin:0 0 .25rem;">رایگان</h3>
-          <p class="muted" style="color:#6B6659;font-size:.875rem;line-height:1.7;margin:0;">هر مدل را بدون کارت امتحان کنید.</p>
-        </div>
-        <div style="padding:.75rem 0;border-top:1px solid #F4F1EA;border-bottom:1px solid #F4F1EA;">
-          <div style="display:flex;align-items:baseline;gap:.5rem;">
-            <span style="font-family:var(--font-sans);font-weight:800;font-size:1.5rem;color:#1A1915;">رایگان</span>
-          </div>
-          <span class="muted" style="font-size:.8125rem;color:#8A8475;">همیشگی — بدون کارت</span>
-          <div style="margin-top:.75rem;display:flex;align-items:baseline;gap:.375rem;">
-            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.375rem;color:#1A1915;">1M</span>
-            <span class="muted" style="font-size:.8125rem;color:#6B6659;">توکن / ماه</span>
-          </div>
-        </div>
-        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#3D3A33;">
-          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>۱ میلیون توکن / ماه</li>
-          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>۶۰ درخواست / دقیقه</li>
-          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>همه مدل‌های چت</li>
-          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>استریم و ابزار و تصویر</li>
-          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>پشتیبانی انجمن</li>
-        </ul>
-        <a href="register.html" data-plan="free" class="btn btn-secondary" style="margin-top:auto;width:100%;">شروع رایگان</a>
-      </div>
-
+    <div class="plans-grid grid-3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(12.5rem,1fr));gap:1.25rem;">
       <!-- استارتر -->
       <div class="plan-card card" style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem;">
         <div>
@@ -97,15 +72,15 @@
         </div>
         <div style="padding:.75rem 0;border-top:1px solid #F4F1EA;border-bottom:1px solid #F4F1EA;">
           <div class="price-monthly">
-            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$1.2<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+            <span style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">۲۴۰,۰۰۰ تومان <span style="font-size:.8125rem;font-weight:400;color:#6B6659;">/ماه</span></span>
           </div>
           <div class="price-yearly" style="display:none;">
-            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$1<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
-            <span dir="ltr" class="price-sub-yearly muted" style="font-size:.75rem;color:#8A8475;margin-inline-start:.5rem;">$12 سالانه</span>
+            <span style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">۲۰۰,۰۰۰ تومان <span style="font-size:.8125rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+            <span class="price-sub-yearly muted" style="font-size:.75rem;color:#8A8475;margin-inline-start:.5rem;">۲,۴۰۰,۰۰۰ تومان سالانه</span>
           </div>
           <div style="margin-top:.5rem;display:flex;align-items:baseline;gap:.375rem;">
             <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.125rem;color:#1A1915;">30M</span>
-            <span dir="ltr" class="muted" style="font-size:.8125rem;color:#6B6659;">$0.04 هر ۱M توکن</span>
+            <span class="muted" style="font-size:.8125rem;color:#6B6659;">۸,۰۰۰ تومان / هر ۱M</span>
           </div>
         </div>
         <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#3D3A33;">
@@ -126,15 +101,15 @@
         </div>
         <div style="padding:.75rem 0;border-top:1px solid #F4F1EA;border-bottom:1px solid #F4F1EA;">
           <div class="price-monthly">
-            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$3.5<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+            <span style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">۷۰۰,۰۰۰ تومان <span style="font-size:.8125rem;font-weight:400;color:#6B6659;">/ماه</span></span>
           </div>
           <div class="price-yearly" style="display:none;">
-            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$2.92<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
-            <span dir="ltr" class="price-sub-yearly muted" style="font-size:.75rem;color:#8A8475;margin-inline-start:.5rem;">$35 سالانه</span>
+            <span style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">۵۸۴,۰۰۰ تومان <span style="font-size:.8125rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+            <span class="price-sub-yearly muted" style="font-size:.75rem;color:#8A8475;margin-inline-start:.5rem;">۷,۰۰۰,۰۰۰ تومان سالانه</span>
           </div>
           <div style="margin-top:.5rem;display:flex;align-items:baseline;gap:.375rem;">
             <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.125rem;color:#1A1915;">100M</span>
-            <span dir="ltr" class="muted" style="font-size:.8125rem;color:#6B6659;">$0.035 هر ۱M</span>
+            <span class="muted" style="font-size:.8125rem;color:#6B6659;">۷,۰۰۰ تومان / هر ۱M</span>
           </div>
         </div>
         <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#3D3A33;">
@@ -156,15 +131,15 @@
         </div>
         <div style="padding:.75rem 0;border-top:1px solid #F4F1EA;border-bottom:1px solid #F4F1EA;">
           <div class="price-monthly">
-            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$5.75<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+            <span style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">۱,۱۵۰,۰۰۰ تومان <span style="font-size:.8125rem;font-weight:400;color:#6B6659;">/ماه</span></span>
           </div>
           <div class="price-yearly" style="display:none;">
-            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$4.79<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
-            <span dir="ltr" class="price-sub-yearly muted" style="font-size:.75rem;color:#8A8475;margin-inline-start:.5rem;">$57.5 سالانه</span>
+            <span style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">۹۵۸,۰۰۰ تومان <span style="font-size:.8125rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+            <span class="price-sub-yearly muted" style="font-size:.75rem;color:#8A8475;margin-inline-start:.5rem;">۱۱,۵۰۰,۰۰۰ تومان سالانه</span>
           </div>
           <div style="margin-top:.5rem;display:flex;align-items:baseline;gap:.375rem;">
             <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.125rem;color:#1A1915;">200M</span>
-            <span dir="ltr" class="muted" style="font-size:.8125rem;color:#6B6659;">$0.0288 هر ۱M</span>
+            <span class="muted" style="font-size:.8125rem;color:#6B6659;">۵,۷۶۰ تومان / هر ۱M</span>
           </div>
         </div>
         <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#3D3A33;">
@@ -185,15 +160,15 @@
         </div>
         <div style="padding:.75rem 0;border-top:1px solid #F4F1EA;border-bottom:1px solid #F4F1EA;">
           <div class="price-monthly">
-            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$11.5<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+            <span style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">۲,۳۰۰,۰۰۰ تومان <span style="font-size:.8125rem;font-weight:400;color:#6B6659;">/ماه</span></span>
           </div>
           <div class="price-yearly" style="display:none;">
-            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$9.58<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
-            <span dir="ltr" class="price-sub-yearly muted" style="font-size:.75rem;color:#8A8475;margin-inline-start:.5rem;">$115 سالانه</span>
+            <span style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">۱,۹۱۶,۰۰۰ تومان <span style="font-size:.8125rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+            <span class="price-sub-yearly muted" style="font-size:.75rem;color:#8A8475;margin-inline-start:.5rem;">۲۳,۰۰۰,۰۰۰ تومان سالانه</span>
           </div>
           <div style="margin-top:.5rem;display:flex;align-items:baseline;gap:.375rem;">
             <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.125rem;color:#1A1915;">500M</span>
-            <span dir="ltr" class="muted" style="font-size:.8125rem;color:#6B6659;">$0.023 هر ۱M</span>
+            <span class="muted" style="font-size:.8125rem;color:#6B6659;">۴,۶۰۰ تومان / هر ۱M</span>
           </div>
         </div>
         <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#3D3A33;">
@@ -215,15 +190,14 @@
         </div>
         <div style="padding:.75rem 0;border-top:1px solid #F4F1EA;border-bottom:1px solid #F4F1EA;">
           <div class="price-monthly">
-            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$50<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+            <span style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">۱۰,۰۰۰,۰۰۰ تومان <span style="font-size:.8125rem;font-weight:400;color:#6B6659;">/ماه</span></span>
           </div>
           <div class="price-yearly" style="display:none;">
-            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$41.67<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
-            <span dir="ltr" class="price-sub-yearly muted" style="font-size:.75rem;color:#8A8475;margin-inline-start:.5rem;">$500 سالانه</span>
+            <span style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">۸,۳۳۴,۰۰۰ تومان <span style="font-size:.8125rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+            <span class="price-sub-yearly muted" style="font-size:.75rem;color:#8A8475;margin-inline-start:.5rem;">۱۰۰,۰۰۰,۰۰۰ تومان سالانه</span>
           </div>
           <div style="margin-top:.5rem;display:flex;align-items:baseline;gap:.375rem;">
-            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.125rem;color:#1A1915;">Unlimited</span>
-            <span class="muted" style="font-size:.8125rem;color:#6B6659;">توکن</span>
+            <span style="font-family:var(--font-serif);font-weight:700;font-size:1.125rem;color:#1A1915;">توکن نامحدود</span>
           </div>
         </div>
         <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#3D3A33;">
@@ -265,48 +239,40 @@
           </thead>
           <tbody>
             <tr>
-              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">رایگان</td>
-              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">رایگان</td>
-              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">1M</td>
-              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">—</td>
-              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">60</td>
-              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">100,000</td>
-            </tr>
-            <tr>
               <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">استارتر</td>
-              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">$1.2</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">۲۴۰,۰۰۰ تومان</td>
               <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">30M</td>
-              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">$0.04</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">۸,۰۰۰ تومان</td>
               <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">120</td>
               <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">200,000</td>
             </tr>
             <tr>
               <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">بیسیک</td>
-              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">$3.5</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">۷۰۰,۰۰۰ تومان</td>
               <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">100M</td>
-              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">$0.035</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">۷,۰۰۰ تومان</td>
               <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">300</td>
               <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">500,000</td>
             </tr>
             <tr>
               <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">حرفه‌ای <span class="badge badge-clay" style="background:#FBF0EB;color:#B0512F;font-size:.6875rem;margin-inline-start:.375rem;">بهترین ارزش</span></td>
-              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">$5.75</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">۱,۱۵۰,۰۰۰ تومان</td>
               <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">200M</td>
-              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">$0.0288</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">۵,۷۶۰ تومان</td>
               <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">600</td>
               <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">1,000,000</td>
             </tr>
             <tr>
               <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">مقیاس</td>
-              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">$11.5</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">۲,۳۰۰,۰۰۰ تومان</td>
               <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">500M</td>
-              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">$0.023</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">۴,۶۰۰ تومان</td>
               <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">1,200</td>
               <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">2,000,000</td>
             </tr>
             <tr>
               <td style="padding:.75rem 1rem;color:#3D3A33;">نامحدود</td>
-              <td style="padding:.75rem 1rem;color:#3D3A33;" dir="ltr">$50</td>
+              <td style="padding:.75rem 1rem;color:#3D3A33;">۱۰,۰۰۰,۰۰۰ تومان</td>
               <td style="padding:.75rem 1rem;color:#3D3A33;" dir="ltr">Unlimited</td>
               <td style="padding:.75rem 1rem;color:#3D3A33;">—</td>
               <td style="padding:.75rem 1rem;color:#3D3A33;" dir="ltr">3,000</td>
@@ -346,7 +312,7 @@
         </details>
         <details class="card" style="padding:0;">
           <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem;">پرداخت چگونه است؟<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="flex-shrink:0;"><path d="M4 6L8 10L12 6" stroke="#8A8475" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8;">پلن رایگان بدون کارت فعال می‌شود؛ برای پلن‌های پولی با پشتیبانی در تماس باشید. فعال‌سازی سریع است و هر زمان می‌توانید لغو کنید.</div>
+          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8;">برای فعال‌سازی هر پلنی با پشتیبانی در تماس باشید. فعال‌سازی سریع است، هر زمان می‌توانید لغو کنید و سهمیه تا پایان دوره باقی می‌ماند.</div>
         </details>
       </div>
     </div>
@@ -355,7 +321,7 @@
   <!-- CTA -->
   <div class="container" style="text-align:center;padding:2.5rem 1rem;">
     <p style="font-weight:600;color:#1A1915;margin:0 0 1rem;font-size:1rem;">هنوز مطمئن نیستید کدام پلن؟</p>
-    <a href="register.html" class="btn btn-primary btn-lg">شروع رایگان — هر زمان ارتقا دهید</a>
+    <a href="register.html" class="btn btn-primary btn-lg">همین حالا شروع کنید — هر زمان ارتقا دهید</a>
   </div>
 
   <script>
@@ -424,7 +390,7 @@
   </div>
 </footer>
 
-<script src="assets/app.js?v=88335241"></script>
+<script src="assets/app.js?v=06099827"></script>
 
 </body>
 </html>

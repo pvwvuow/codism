@@ -10,8 +10,9 @@
 <meta name="theme-color" content="#D97757">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/design.css?v=88335241">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/design.css?v=06099827">
+<script src="assets/i18n.js?v=06099827"></script>
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <script>window.CODISM_API_BASE="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel";</script>
 
@@ -30,9 +31,9 @@
       <a data-nav href="changelog.html">تغییرات</a>
       <a data-nav href="status.html">وضعیت</a>
     </nav>
-    <div style="display:flex;align-items:center;gap:.5rem">
+    <div class="navbar-actions" style="display:flex;align-items:center;gap:.5rem">
       <a class="btn btn-ghost" href="login.html" data-auth-link>ورود</a>
-      <a class="btn btn-primary" href="register.html" data-auth-cta>شروع رایگان</a>
+      <a class="btn btn-primary" href="register.html" data-auth-cta>شروع کن</a>
       <button class="nav-toggle" aria-label="منو"><span></span><span></span><span></span></button>
     </div>
   </div>
@@ -49,11 +50,11 @@
   <h2 style="font-size:1.25rem;font-weight:700;margin:0 0 .75rem">۱. پذیرش شرایط</h2>
   <p>با ساخت حساب یا استفاده از سرویس Codism، شما این شرایط را می‌پذیرید. اگر با بخشی از آن‌ها موافق نیستید، از سرویس استفاده نکنید. این شرایط بین شما و اپراتور سرویس Codism («ما») اعمال می‌شود و استفاده شما از سرویس را مدیریت می‌کند.</p>
   <h2 style="font-size:1.25rem;font-weight:700;margin:1.5rem 0 .75rem">۲. حساب کاربری و کلیدها</h2>
-  <p>مسئولیت حفظ امنیت حساب و کلیدهای API با شماست. کلیدها مانند رمز عبور هستند؛ در صورت افشا، باید کلید را از داشبورد حذف و کلید جدید بسازید. هر شخص یا سازمان مجاز است فقط یک حساب عادی داشته باشد؛ ساخت حساب‌های متعدد برای سوءاستفاده از پلن رایگان ممنوع است.</p>
+  <p>مسئولیت حفظ امنیت حساب و کلیدهای API با شماست. کلیدها مانند رمز عبور هستند؛ در صورت افشا، باید کلید را از داشبورد حذف و کلید جدید بسازید. هر شخص یا سازمان مجاز است فقط یک حساب عادی داشته باشد؛ ساخت حساب‌های متعدد برای سوءاستفاده ممنوع است.</p>
   <h2 style="font-size:1.25rem;font-weight:700;margin:1.5rem 0 .75rem">۳. استفاده مجاز</h2>
   <p>سرویس برای کاربردهای قانونی و متعارف ارائه شده است. موارد زیر اکیداً ممنوع است: نقض حقوق دیگران، تولید یا انتشار محتوای غیرقانونی، تلاش برای دور زدن محدودیت نرخ یا سهمیه، مهندسی معکوس سرویس، و استفاده از سرویس برای حمله یا اختلال در سرویس‌های دیگر. ما حق تعلیق حساب‌های متخلف را بدون اطلاع قبلی داریم.</p>
   <h2 style="font-size:1.25rem;font-weight:700;margin:1.5rem 0 .75rem">۴. پلن‌ها، سهمیه و پرداخت</h2>
-  <p>پلن رایگان شامل ۱ میلیون توکن در ماه است و نیاز به کارت بانکی ندارد. پلن‌های پولی بر اساس حجم توکن ماهانه تعریف می‌شوند؛ جزئیات در صفحه تعرفه‌ها آمده است. سهمیه هر ماه به‌وقت تهران ریست می‌شود. فعال‌سازی پلن‌های پولی از طریق پشتیبانی انجام می‌شود و شرایط پرداخت در زمان خرید اعلام می‌گردد.</p>
+  <p>پلن‌ها بر اساس حجم توکن ماهانه تعریف می‌شوند؛ جزئیات در صفحه تعرفه‌ها آمده است. سهمیه هر ماه به‌وقت تهران ریست می‌شود. فعال‌سازی پلن‌های پولی از طریق پشتیبانی انجام می‌شود و شرایط پرداخت در زمان خرید اعلام می‌گردد.</p>
   <h2 style="font-size:1.25rem;font-weight:700;margin:1.5rem 0 .75rem">۵. تغییرات سرویس</h2>
   <p>مدل‌های موجود، محدودیت‌های نرخ و سایر جزئیات فنی ممکن است تغییر کنند. تغییرات اساسی از طریق صفحه تغییرات اطلاع‌رسانی می‌شود. ما تلاش می‌کنیم پایداری سرویس را حفظ کنیم، اما دسترسی بدون وقفه تضمین نمی‌شود؛ برای جزئیات صفحه وضعیت سرویس را ببینید.</p>
   <h2 style="font-size:1.25rem;font-weight:700;margin:1.5rem 0 .75rem">۶. خاتمه</h2>
@@ -102,7 +103,7 @@
   </div>
 </footer>
 
-<script src="assets/app.js?v=88335241"></script>
+<script src="assets/app.js?v=06099827"></script>
 
 </body>
 </html>

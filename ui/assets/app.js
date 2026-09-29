@@ -4,6 +4,7 @@
   const API_BASE = (typeof window !== "undefined" && window.CODISM_API_BASE) || "";
 
   // helpers
+  function TR(fa, en) { return (typeof window !== "undefined" && window.I18N && window.I18N.lang === "en") ? en : fa; }
   function faNum(n) {
     try {
       return Number(n).toLocaleString("fa-IR");
@@ -121,16 +122,22 @@
         token = localStorage.getItem("codism_token");
       } catch (_) {}
       if (token) {
-        document.querySelectorAll("a[data-auth-cta]").forEach((el) => {
+        const ctas = document.querySelectorAll("a[data-auth-cta]");
+        ctas.forEach((el) => {
           try {
-            el.textContent = "داشبورد";
+            el.textContent = TR("داشبورد", "Dashboard");
             el.setAttribute("href", "dashboard.html");
           } catch (_) {}
         });
         document.querySelectorAll("a[data-auth-link]").forEach((el) => {
           try {
-            el.textContent = "داشبورد";
-            el.setAttribute("href", "dashboard.html");
+            if (ctas.length) {
+              // a primary dashboard CTA already exists — hide the duplicate
+              el.style.display = "none";
+            } else {
+              el.textContent = TR("داشبورد", "Dashboard");
+              el.setAttribute("href", "dashboard.html");
+            }
           } catch (_) {}
         });
       }

@@ -16,7 +16,6 @@
   const STATE = { me: null, usage: null, keys: [], models: [], adminStats: null };
 
   const PLAN_FA = {
-    free: "رایگان",
     starter: "استارتر",
     basic: "بیسیک",
     pro: "حرفه‌ای",
@@ -47,11 +46,15 @@
     const v = Number(n);
     if (Number.isNaN(v)) return esc(String(n));
     try {
+      if (typeof window !== "undefined" && window.I18N && window.I18N.lang === "en") return v.toLocaleString("en-US");
       return v.toLocaleString("fa-IR");
     } catch {
       return String(v);
     }
   }
+
+  function LOC() { return (typeof window !== "undefined" && window.I18N && window.I18N.lang === "en") ? "en-US" : "fa-IR"; }
+  function TR(fa, en) { return (typeof window !== "undefined" && window.I18N && window.I18N.lang === "en") ? en : fa; }
 
   function fmtTok(n) {
     const v = Number(n) || 0;
@@ -103,6 +106,7 @@
       err.message = message;
       err.status = res.status;
       err.body = body;
+      if (code && typeof window !== "undefined" && window.I18N && window.I18N.lang === "en" && window.I18N.codeMap && window.I18N.codeMap[code]) err.message = window.I18N.codeMap[code];
       throw err;
     }
     const ct = res.headers.get("content-type") || "";
@@ -260,13 +264,16 @@
       el.title = "کپی";
       el.addEventListener("click", (e) => {
         e.preventDefault();
-        copyText(baseUrl).then(() => showToast("کپی شد", true));
+        copyText(baseUrl).then(() => showToast(TR("کپی شد", "Copied"), true));
       });
     });
     // logout transform
-    const authCtas = qa("a[data-auth-cta], a[data-auth-link]");
-    authCtas.forEach((a) => {
-      a.textContent = "خروج";
+    qa("a[data-auth-cta]").forEach((a) => {
+      a.style.display = "none";
+    });
+    qa("a[data-auth-link]").forEach((a) => {
+      a.textContent = TR("خروج", "Logout");
+      a.style.display = "";
       a.setAttribute("href", "#");
       a.addEventListener("click", (e) => {
         e.preventDefault();
@@ -356,8 +363,9 @@
   // Loader: overview
   async function loadOverview() {
     try {
+      const mePromise = STATE.me ? Promise.resolve(STATE.me) : api("/api/me");
       const [meRes, keysRes, usageRes] = await Promise.all([
-        api("/api/me"),
+        mePromise,
         api("/api/keys").catch(() => []),
         api("/api/usage?days=14").catch(() => null),
       ]);
@@ -371,8 +379,8 @@
       STATE.keys = keys;
       const today = me.today || { requests: 0, prompt_tokens: 0, completion_tokens: 0 };
       const month = me.month || { requests: 0, prompt_tokens: 0, completion_tokens: 0 };
-      const planKey = (me.user && me.user.plan) || "free";
-      const planFa = PLAN_FA[planKey] || PLAN_FA.free;
+      const planKey = (me.user && me.user.plan) || "starter";
+      const planFa = PLAN_FA[planKey] || PLAN_FA.starter;
       setText("[data-plan-name]", planFa);
       setText("[data-plan-name2]", planFa);
       const monthTok = (Number(month.prompt_tokens) || 0) + (Number(month.completion_tokens) || 0);
@@ -479,7 +487,7 @@
             let dateStr = "—";
             try {
               const d = new Date(k.created_at);
-              dateStr = esc(d.toLocaleDateString("fa-IR")) + ' <small dir="ltr" style="color:#8A8475">' + esc(d.toLocaleTimeString("fa-IR")) + "</small>";
+              dateStr = esc(d.toLocaleDateString(LOC())) + ' <small dir="ltr" style="color:#8A8475">' + esc(d.toLocaleTimeString(LOC())) + "</small>";
             } catch {}
             tr.innerHTML =
               '<td>' + label + "</td>" +
@@ -610,7 +618,7 @@
             let timeStr = "—";
             try {
               const d = new Date(r.ts);
-              timeStr = esc(d.toLocaleDateString("fa-IR")) + " " + esc(d.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }));
+              timeStr = esc(d.toLocaleDateString(LOC())) + " " + esc(d.toLocaleTimeString(LOC(), { hour: "2-digit", minute: "2-digit" }));
             } catch {}
             const route = r.route ? '<code class="kbd" dir="ltr" style="font-size:.75rem">' + esc(r.route) + "</code>" : "—";
             const model = r.model ? '<span dir="ltr" style="font-family:var(--font-mono);font-size:.75rem">' + esc(r.model) + "</span>" : "—";
@@ -691,13 +699,13 @@
       const u = me.user || {};
       setText("[data-set-email]", u.email || "—");
       setText("[data-set-name]", u.name || "—");
-      const planFa = PLAN_FA[u.plan || "free"] || PLAN_FA.free;
+      const planFa = PLAN_FA[u.plan] || PLAN_FA.starter;
       setText("[data-set-plan]", planFa);
       const quota = u.monthly_quota_tokens;
-      setText("[data-set-quota]", quota == null || quota === 0 ? "نامحدود" : fmtTok(quota) + " توکن");
+      setText("[data-set-quota]", quota == null || quota === 0 ? TR("نامحدود", "Unlimited") : fmtTok(quota) + " " + TR("توکن", "tokens"));
       let since = "—";
       try {
-        if (u.created_at) since = esc(new Date(u.created_at).toLocaleDateString("fa-IR"));
+        if (u.created_at) since = esc(new Date(u.created_at).toLocaleDateString(LOC()));
       } catch {}
       setText("[data-set-since]", since);
       // also fill inputs if exist
@@ -785,6 +793,68 @@
 
   // Loader: admin-users
   let adminSelectedUser = null;
+  function openEditUser(u) {
+    adminSelectedUser = u;
+    setText("[data-edit-user]", (u.email || "") + " / " + (u.name || "—"));
+    const planSel = q("[data-edit-plan]");
+    if (planSel) planSel.value = PLAN_FA[u.plan] ? u.plan : "starter";
+    const en = q("[data-edit-enabled]");
+    if (en) en.checked = !!u.enabled;
+    const m = q("[data-edit-quota-month]");
+    if (m) m.value = u.monthly_quota_tokens && u.monthly_quota_tokens > 0 ? String(u.monthly_quota_tokens) : "";
+    const d = q("[data-edit-quota-day]");
+    if (d) d.value = u.daily_quota_tokens && u.daily_quota_tokens > 0 ? String(u.daily_quota_tokens) : "";
+    const pw = q("[data-edit-pass]");
+    if (pw) pw.value = "";
+    openModal("editUserModal");
+  }
+  function setupEditUser() {
+    const save = q("[data-edit-save]");
+    if (save) {
+      save.addEventListener("click", async (e) => {
+        e.preventDefault();
+        if (!adminSelectedUser) return;
+        const id = adminSelectedUser.id;
+        const planSel = q("[data-edit-plan]");
+        const en = q("[data-edit-enabled]");
+        const m = q("[data-edit-quota-month]");
+        const d = q("[data-edit-quota-day]");
+        const pw = q("[data-edit-pass]");
+        const payload = {};
+        if (planSel) payload.plan = planSel.value || "starter";
+        if (en) payload.enabled = !!en.checked;
+        if (m) payload.monthly_quota_tokens = m.value.trim() === "" ? 0 : Number(m.value);
+        if (d) payload.daily_quota_tokens = d.value.trim() === "" ? 0 : Number(d.value);
+        if (pw && pw.value) {
+          if (pw.value.length < 8) { showToast(TR("حداقل ۸ کاراکتر", "At least 8 characters"), false); return; }
+          payload.password = pw.value;
+        }
+        try {
+          await api("/api/admin/users/" + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify(payload) });
+          showToast(TR("تغییرات ذخیره شد", "Changes saved"), true);
+          closeAllModals();
+          loadAdminUsers();
+        } catch (err) {
+          showToast(err.message || TR("خطای غیرمنتظره", "Unexpected error"), false);
+        }
+      });
+    }
+    const del = q("[data-edit-delete]");
+    if (del) {
+      del.addEventListener("click", async () => {
+        if (!adminSelectedUser) return;
+        if (!confirm(TR("کاربر و همه کلیدهایش حذف شود؟", "Delete this user and all their keys?"))) return;
+        try {
+          await api("/api/admin/users/" + encodeURIComponent(adminSelectedUser.id), { method: "DELETE" });
+          showToast(TR("کاربر حذف شد", "User deleted"), true);
+          closeAllModals();
+          loadAdminUsers();
+        } catch (err) {
+          showToast(err.message || TR("خطای غیرمنتظره", "Unexpected error"), false);
+        }
+      });
+    }
+  }
   async function loadAdminUsers() {
     const isAdmin = STATE.me && STATE.me.user && STATE.me.user.role === "admin";
     if (!isAdmin) return;
@@ -799,25 +869,16 @@
       }
       users.forEach((u) => {
         const tr = document.createElement("tr");
-        const planFa = PLAN_FA[u.plan || "free"] || esc(u.plan || "free");
+        const planFa = PLAN_FA[u.plan] || esc(u.plan || "starter");
         const enabledBadge = u.enabled ? '<span class="badge badge-ok">فعال</span>' : '<span class="badge badge-bad">غیرفعال</span>';
-        const quotaTxt = u.monthly_quota_tokens == null || u.monthly_quota_tokens === 0 ? "نامحدود" : fmtTok(u.monthly_quota_tokens);
+        const quotaTxt = u.monthly_quota_tokens == null || u.monthly_quota_tokens === 0 ? TR("نامحدود", "Unlimited") : fmtTok(u.monthly_quota_tokens) + " " + TR("توکن", "tok");
         let dateStr = "—";
         try {
-          dateStr = esc(new Date(u.created_at).toLocaleDateString("fa-IR"));
+          dateStr = esc(new Date(u.created_at).toLocaleDateString(LOC()));
         } catch {}
         const userCell =
           '<div style="font-weight:600">' + esc(u.name || "—") + '</div><div dir="ltr" style="font-size:.75rem;color:#6B6659">' + esc(u.email || "") + "</div>";
-        const menu =
-          '<div class="menu" style="position:relative;display:inline-block">' +
-          '<button class="btn btn-ghost btn-sm" data-menu-toggle>⋯</button>' +
-          '<div class="menu-list hidden" style="position:absolute;left:0;top:100%;background:#fff;border:1px solid #E8E2D5;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.08);min-width:160px;z-index:10;padding:.25rem 0">' +
-          '<button class="btn btn-ghost btn-sm" style="width:100%;justify-content:start" data-act="toggle" data-id="' + esc(String(u.id)) + '" data-enabled="' + (u.enabled ? "1" : "0") + '">' + (u.enabled ? "غیرفعال کردن" : "فعال کردن") + "</button>" +
-          '<button class="btn btn-ghost btn-sm" style="width:100%;justify-content:start" data-act="plan" data-id="' + esc(String(u.id)) + '">تغییر پلن</button>' +
-          '<button class="btn btn-ghost btn-sm" style="width:100%;justify-content:start" data-act="quota" data-id="' + esc(String(u.id)) + '">ویرایش سهمیه</button>' +
-          '<button class="btn btn-ghost btn-sm" style="width:100%;justify-content:start" data-act="reset" data-id="' + esc(String(u.id)) + '">ریست رمز</button>' +
-          '<button class="btn btn-ghost btn-sm" style="width:100%;justify-content:start;color:#DC2626" data-act="delete" data-id="' + esc(String(u.id)) + '">حذف</button>' +
-          "</div></div>";
+        const editBtn = '<button class="btn btn-ghost btn-sm" data-edit-open="' + esc(String(u.id)) + '">' + TR("ویرایش", "Edit") + "</button>";
         tr.innerHTML =
           "<td>" + userCell + "</td>" +
           '<td><span class="badge badge-clay">' + esc(planFa) + "</span></td>" +
@@ -825,128 +886,16 @@
           "<td>" + faNum(u.key_count || 0) + "</td>" +
           "<td>" + esc(quotaTxt) + "</td>" +
           "<td>" + esc(dateStr) + "</td>" +
-          "<td>" + menu + "</td>";
+          "<td>" + editBtn + "</td>";
         tbody.appendChild(tr);
       });
 
-      // menu toggle logic
-      qa("[data-menu-toggle]", tbody).forEach((btn) => {
-        btn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          const list = btn.nextElementSibling;
-          const isHidden = list.classList.contains("hidden");
-          // close all
-          qa(".menu-list", tbody).forEach((l) => {
-            l.classList.add("hidden");
-            l.style.display = "none";
-          });
-          if (isHidden) {
-            list.classList.remove("hidden");
-            list.style.display = "block";
-          }
-        });
-      });
-      if (!window.__codismMenuCloseBound) {
-        window.__codismMenuCloseBound = true;
-        document.addEventListener("click", () => {
-          qa(".menu-list").forEach((l) => {
-            l.classList.add("hidden");
-            l.style.display = "none";
-          });
-        });
-      }
-
-      // actions
-      qa('[data-act="toggle"]', tbody).forEach((b) => {
-        b.addEventListener("click", async () => {
-          const id = b.getAttribute("data-id");
-          const enabled = b.getAttribute("data-enabled") === "1";
-          try {
-            await api("/api/admin/users/" + encodeURIComponent(id), {
-              method: "PATCH",
-              body: JSON.stringify({ enabled: !enabled }),
-            });
-            showToast("وضعیت تغییر کرد", true);
-            loadAdminUsers();
-          } catch (e) {
-            showToast(e.message || "خطای غیرمنتظره", false);
-          }
-        });
-      });
-      qa('[data-act="plan"]', tbody).forEach((b) => {
-        b.addEventListener("click", () => {
-          const id = b.getAttribute("data-id");
-          adminSelectedUser = id;
-          const modal = q("#planModal") || q("[data-modal='planModal']") || q("[data-plan-modal]");
-          if (modal) {
-            openModal(modal.id || "planModal");
-          } else {
-            const sel = prompt("پلن جدید (free, starter, basic, pro, scale, unlimited):", "pro");
-            if (sel) {
-              api("/api/admin/users/" + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify({ plan: sel }) })
-                .then(() => {
-                  showToast("پلن تغییر کرد", true);
-                  loadAdminUsers();
-                })
-                .catch((e) => showToast(e.message || "خطای غیرمنتظره", false));
-            }
-          }
-        });
-      });
-      qa('[data-act="quota"]', tbody).forEach((b) => {
-        b.addEventListener("click", () => {
-          const id = b.getAttribute("data-id");
-          adminSelectedUser = id;
-          const modal = q("#quotaModal") || q("[data-modal='quotaModal']") || q("[data-quota-modal]");
-          if (modal) {
-            // prefill
-            const u = users.find((x) => String(x.id) === String(id));
-            const mInput = modal.querySelector('[data-quota-monthly]') || modal.querySelector('input[name="monthly_quota_tokens"]');
-            const dInput = modal.querySelector('[data-quota-daily]') || modal.querySelector('input[name="daily_quota_tokens"]');
-            if (mInput) mInput.value = u && u.monthly_quota_tokens ? String(u.monthly_quota_tokens) : "";
-            if (dInput) dInput.value = u && u.daily_quota_tokens != null ? String(u.daily_quota_tokens) : "";
-            openModal(modal.id || "quotaModal");
-          } else {
-            const val = prompt("سهمیه ماهانه (عدد یا خالی برای نامحدود):", "");
-            if (val !== null) {
-              const payload = { monthly_quota_tokens: val === "" ? 0 : Number(val) };
-              api("/api/admin/users/" + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify(payload) })
-                .then(() => {
-                  showToast("سهمیه ویرایش شد", true);
-                  loadAdminUsers();
-                })
-                .catch((e) => showToast(e.message || "خطای غیرمنتظره", false));
-            }
-          }
-        });
-      });
-      qa('[data-act="reset"]', tbody).forEach((b) => {
-        b.addEventListener("click", () => {
-          const id = b.getAttribute("data-id");
-          adminSelectedUser = id;
-          const modal = q("#resetPwModal") || q("[data-modal='resetPwModal']") || q("[data-reset-modal]");
-          if (modal) openModal(modal.id || "resetPwModal");
-          else {
-            const pw = prompt("رمز جدید (حداقل ۸ کاراکتر):", "");
-            if (pw) {
-              api("/api/admin/users/" + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify({ password: pw }) })
-                .then(() => showToast("رمز تغییر کرد", true))
-                .catch((e) => showToast(e.message || "خطای غیرمنتظره", false));
-            }
-          }
-        });
-      });
-      qa('[data-act="delete"]', tbody).forEach((b) => {
-        b.addEventListener("click", async () => {
-          const id = b.getAttribute("data-id");
-          if (!confirm("کاربر و همه کلیدهایش حذف شود؟")) return;
-          try {
-            await api("/api/admin/users/" + encodeURIComponent(id), { method: "DELETE" });
-            showToast("کاربر حذف شد", true);
-            loadAdminUsers();
-          } catch (e) {
-            showToast(e.message || "خطای غیرمنتظره", false);
-          }
+      // open unified edit-user modal
+      qa("[data-edit-open]", tbody).forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-edit-open");
+          const u = users.find((x) => String(x.id) === String(id));
+          if (u) openEditUser(u);
         });
       });
     } catch (e) {
@@ -964,12 +913,13 @@
       const stats = await api("/api/admin/stats");
       STATE.adminStats = stats;
       const t = stats.totals || {};
-      setText("[data-admin-users]", faNum(t.users || 0));
-      setText("[data-admin-keys]", faNum(t.keys || 0));
-      setText("[data-admin-active-keys]", faNum(t.active_keys || 0));
-      setText("[data-admin-requests-today]", faNum(t.requests_today || 0));
-      setText("[data-admin-tokens-today]", fmtTok(t.tokens_today || 0));
-      setText("[data-admin-failed-today]", faNum(t.failed_today || 0));
+      setText("[data-st-users]", faNum(t.users || 0));
+      setText("[data-st-keys]", faNum(t.keys || 0));
+      setText("[data-st-active]", faNum(t.active_keys || 0));
+      setText("[data-st-req]", faNum(t.requests_today || 0));
+      setText("[data-st-tok]", fmtTok(t.tokens_today || 0));
+      setText("[data-st-failed]", faNum(t.failed_today || 0));
+
       // generic kpis
       qa("[data-kpi-admin-users]").forEach((el) => (el.textContent = faNum(t.users || 0)));
       qa("[data-kpi-admin-keys]").forEach((el) => (el.textContent = faNum(t.keys || 0)));
@@ -994,91 +944,25 @@
       const email = (q("[data-new-user-email]") || form.querySelector('input[name="email"]') || {}).value || "";
       const name = (q("[data-new-user-name]") || form.querySelector('input[name="name"]') || {}).value || "";
       const password = (q("[data-new-user-password]") || form.querySelector('input[name="password"]') || {}).value || "";
-      const plan = (q("[data-new-user-plan]") || form.querySelector('select[name="plan"]') || {}).value || "free";
+      const plan = (q("[data-new-user-plan]") || form.querySelector('select[name="plan"]') || {}).value || "starter";
       if (!email || !password) {
-        showToast("ایمیل و رمز الزامی است", false);
+        showToast(TR("ایمیل و رمز الزامی است", "Email and password are required"), false);
         return;
       }
       try {
         await api("/api/admin/users", { method: "POST", body: JSON.stringify({ email, name, password, plan }) });
-        showToast("کاربر ساخته شد", true);
+        showToast(TR("کاربر ساخته شد", "User created"), true);
         closeAllModals();
         form.reset && form.reset();
         loadAdminUsers();
       } catch (err) {
-        if (err.code === "email_exists" || err.status === 409) showToast("ایمیل تکراری است", false);
+        if (err.code === "email_exists" || err.status === 409) showToast(TR("ایمیل تکراری است", "Email already exists"), false);
         else showToast(err.message || "خطای غیرمنتظره", false);
       }
     };
     if (form.tagName.toLowerCase() === "form") form.addEventListener("submit", handler);
     else if (btn) btn.addEventListener("click", handler);
     else form.addEventListener("click", handler);
-  }
-
-  function setupAdminModals() {
-    // plan save
-    const planSave = q("[data-save-plan]") || q("#savePlanBtn");
-    if (planSave) {
-      planSave.addEventListener("click", async (e) => {
-        e.preventDefault();
-        const sel = q("[data-plan-select]") || q("#planSelect") || document.querySelector("#planModal select");
-        const plan = sel ? sel.value : "free";
-        if (!adminSelectedUser) return;
-        try {
-          await api("/api/admin/users/" + encodeURIComponent(adminSelectedUser), { method: "PATCH", body: JSON.stringify({ plan }) });
-          showToast("پلن تغییر کرد", true);
-          closeAllModals();
-          loadAdminUsers();
-        } catch (err) {
-          showToast(err.message || "خطای غیرمنتظره", false);
-        }
-      });
-    }
-    const quotaSave = q("[data-save-quota]") || q("#saveQuotaBtn");
-    if (quotaSave) {
-      quotaSave.addEventListener("click", async (e) => {
-        e.preventDefault();
-        const modal = quotaSave.closest(".modal-back") || document;
-        const mInput = modal.querySelector('[data-quota-monthly]') || modal.querySelector('input[name="monthly_quota_tokens"]') || q("[data-quota-monthly]");
-        const dInput = modal.querySelector('[data-quota-daily]') || modal.querySelector('input[name="daily_quota_tokens"]') || q("[data-quota-daily]");
-        const mVal = mInput ? mInput.value.trim() : "";
-        const dVal = dInput ? dInput.value.trim() : "";
-        const payload = {};
-        payload.monthly_quota_tokens = mVal === "" ? 0 : Number(mVal);
-        if (dInput) payload.daily_quota_tokens = dVal === "" ? 0 : Number(dVal); // 0 = uncapped (DB column NOT NULL)
-        if (!adminSelectedUser) return;
-        try {
-          await api("/api/admin/users/" + encodeURIComponent(adminSelectedUser), { method: "PATCH", body: JSON.stringify(payload) });
-          showToast("سهمیه ویرایش شد", true);
-          closeAllModals();
-          loadAdminUsers();
-        } catch (err) {
-          showToast(err.message || "خطای غیرمنتظره", false);
-        }
-      });
-    }
-    const resetSave = q("[data-save-reset-pw]") || q("#saveResetPwBtn");
-    if (resetSave) {
-      resetSave.addEventListener("click", async (e) => {
-        e.preventDefault();
-        const modal = resetSave.closest(".modal-back") || document;
-        const inp = modal.querySelector('[data-reset-password]') || modal.querySelector('input[name="password"]') || q("[data-reset-password]");
-        const pw = inp ? inp.value : "";
-        if (!pw || pw.length < 8) {
-          showToast("حداقل ۸ کاراکتر", false);
-          return;
-        }
-        if (!adminSelectedUser) return;
-        try {
-          await api("/api/admin/users/" + encodeURIComponent(adminSelectedUser), { method: "PATCH", body: JSON.stringify({ password: pw }) });
-          showToast("رمز تغییر کرد", true);
-          closeAllModals();
-          if (inp) inp.value = "";
-        } catch (err) {
-          showToast(err.message || "خطای غیرمنتظره", false);
-        }
-      });
-    }
   }
 
   // Keys create modal
@@ -1103,7 +987,7 @@
       const submitBtn = trigger;
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.textContent = "در حال ساخت…";
+        submitBtn.textContent = TR("در حال ساخت…", "Creating…");
       }
       try {
         const res = await api("/api/keys", { method: "POST", body: JSON.stringify(payload) });
@@ -1123,7 +1007,7 @@
           // copy button inside reveal
           const copyBtn = reveal.querySelector("[data-copy-new-key]") || reveal.querySelector("[data-copy]");
           if (copyBtn) {
-            copyBtn.onclick = () => copyText(res.key || "").then(() => showToast("کپی شد", true));
+            copyBtn.onclick = () => copyText(res.key || "").then(() => showToast(TR("کپی شد", "Copied"), true));
           }
           // on close reload
           const closeBtns = reveal.querySelectorAll("[data-close-modal]");
@@ -1145,7 +1029,7 @@
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.textContent = "ساخت کلید";
+          submitBtn.textContent = TR("ساخت کلید", "Create key");
         }
       }
     };
@@ -1206,7 +1090,7 @@
     setupPasswordForm();
     setupKeysCreate();
     setupAdminCreateUser();
-    setupAdminModals();
+    setupEditUser();
 
     try {
       const me = await api("/api/me");

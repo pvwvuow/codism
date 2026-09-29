@@ -3,15 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Codism — ۳۰ میلیون توکن برای $1.20 · ۳۰+ مدل هوش مصنوعی</title>
-<meta name="description" content="API سازگار با OpenAI روی ۳۰+ مدل؛ استریم، ابزار و تصویر. ۱ میلیون توکن رایگان، بدون کارت بانکی.">
+<title>Codism — ۳۰ میلیون توکن در ماه · ۳۰+ مدل هوش مصنوعی</title>
+<meta name="description" content="API سازگار با OpenAI روی ۳۰+ مدل؛ استریم، ابزار و تصویر. فعال‌سازی آنی، بدون کارت بانکی.">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#D97757">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/design.css?v=88335241">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/design.css?v=06099827">
+<script src="assets/i18n.js?v=06099827"></script>
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <script>window.CODISM_API_BASE="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel";</script>
 
@@ -30,9 +31,9 @@
       <a data-nav href="changelog.html">تغییرات</a>
       <a data-nav href="status.html">وضعیت</a>
     </nav>
-    <div style="display:flex;align-items:center;gap:.5rem">
+    <div class="navbar-actions" style="display:flex;align-items:center;gap:.5rem">
       <a class="btn btn-ghost" href="login.html" data-auth-link>ورود</a>
-      <a class="btn btn-primary" href="register.html" data-auth-cta>شروع رایگان</a>
+      <a class="btn btn-primary" href="register.html" data-auth-cta>شروع کن</a>
       <button class="nav-toggle" aria-label="منو"><span></span><span></span><span></span></button>
     </div>
   </div>
@@ -43,27 +44,22 @@
   <section class="hero">
     <div class="container hero-grid">
       <div>
-        <div class="hero-badge rise d1"><span style="display:inline-block;width:.5rem;height:.5rem;border-radius:999px;background:#059669"></span> ۱ میلیون توکن رایگان هر ماه · بدون کارت بانکی</div>
-        <h1 class="hero-title rise d1">۳۰ میلیون توکن در مقابل <span class="hl" dir="ltr">$1.20</span>. نامحدود با <span class="hl" dir="ltr">$50</span>.</h1>
+        <div class="hero-badge rise d1"><span style="display:inline-block;width:.5rem;height:.5rem;border-radius:999px;background:#059669"></span> فعال‌سازی آنی · بدون کارت بانکی</div>
+        <h1 class="hero-title rise d1">۳۰ میلیون توکن در مقابل ۲۴۰,۰۰۰ تومان. نامحدود با ۱۰ میلیون تومان.</h1>
         <p class="hero-sub rise d2">آن‌ها را روی Claude Opus 5.5 یا هر یک از ۳۰+ مدل خرج کنید — همه پلن‌ها به همه مدل‌ها دسترسی دارند. یک API سازگار با OpenAI؛ استریم، فراخوانی ابزار و ورودی تصویر همگی فعال.</p>
         <div class="hero-ctas rise d2">
-          <a class="btn btn-primary btn-lg" href="register.html">شروع رایگان — بدون کارت ←</a>
+          <a class="btn btn-primary btn-lg" href="register.html">شروع کن — بدون کارت ←</a>
           <a class="btn btn-secondary btn-lg" href="pricing.html">مشاهده همه پلن‌ها</a>
         </div>
         <div class="hero-stats rise d3">
           <div class="card" style="padding:1rem;text-align:center">
-            <div style="font-size:.75rem;font-weight:600;color:#6B6659">رایگان</div>
-            <div style="font-family:var(--font-serif);font-size:1.5rem;font-weight:700;color:#1A1915" dir="ltr">1M</div>
-            <div style="font-size:.75rem;color:#8A8475">توکن / ماه</div>
-          </div>
-          <div class="card" style="padding:1rem;text-align:center">
-            <div style="font-family:var(--font-serif);font-size:.875rem;font-weight:600;color:#6B6659" dir="ltr">$1.20</div>
+            <div style="font-size:.75rem;font-weight:600;color:#6B6659">استارتر</div>
             <div style="font-family:var(--font-serif);font-size:1.5rem;font-weight:700;color:#1A1915" dir="ltr">30M</div>
             <div style="font-size:.75rem;color:#8A8475">توکن / ماه</div>
           </div>
           <div class="card stat-hot" style="padding:1rem;text-align:center">
-            <div style="font-family:var(--font-serif);font-size:.875rem;font-weight:600;color:#6B6659" dir="ltr">$50</div>
-            <div style="font-family:var(--font-serif);font-size:1.5rem;font-weight:700;color:#1A1915" dir="ltr">Unlimited</div>
+            <div style="font-size:.75rem;font-weight:600;color:#6B6659">۱۰,۰۰۰,۰۰۰ تومان</div>
+            <div style="font-family:var(--font-serif);font-size:1.5rem;font-weight:700;color:#1A1915">نامحدود</div>
             <div style="font-size:.75rem;color:#8A8475">بدون سقف ماهانه</div>
           </div>
         </div>
@@ -292,7 +288,7 @@ stream = client.chat.completions.<span class="tok-fn">create</span>(
   <!-- PRICING TEASER -->
   <section class="section">
     <div class="container">
-      <h2 class="section-title">۳۰ میلیون توکن، <span class="hl" dir="ltr">$1.20</span>. یا نامحدود با <span dir="ltr">$50</span>.</h2>
+      <h2 class="section-title">۳۰ میلیون توکن، <span class="hl">۲۴۰ هزار تومان</span>. یا نامحدود با <span class="hl">۱۰ میلیون تومان</span>.</h2>
       <p class="section-sub" style="text-align:center;color:#6B6659;margin:.5rem 0 2rem">مصرف خود را روی Claude Opus 5.5 یا هر مدل دیگر بگذارید؛ همه پلن‌ها همه مدل‌ها.</p>
       <div class="table-wrap compare-table">
         <table class="table">
@@ -307,44 +303,37 @@ stream = client.chat.completions.<span class="tok-fn">create</span>(
           </thead>
           <tbody>
             <tr>
-              <td>رایگان</td>
-              <td><span class="ltr" dir="ltr">1M</span></td>
-              <td>رایگان</td>
-              <td>—</td>
-              <td><span class="ltr" dir="ltr">60</span></td>
-            </tr>
-            <tr>
               <td>استارتر</td>
               <td><span class="ltr" dir="ltr">30M</span></td>
-              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$1.20</span></td>
-              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$0.04</span></td>
+              <td>۲۴۰,۰۰۰ تومان</td>
+              <td>۸,۰۰۰ تومان</td>
               <td><span class="ltr" dir="ltr">120</span></td>
             </tr>
             <tr>
               <td>بیسیک</td>
               <td><span class="ltr" dir="ltr">100M</span></td>
-              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$3.50</span></td>
-              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$0.035</span></td>
+              <td>۷۰۰,۰۰۰ تومان</td>
+              <td>۷,۰۰۰ تومان</td>
               <td><span class="ltr" dir="ltr">300</span></td>
             </tr>
             <tr>
               <td>حرفه‌ای <span class="badge badge-clay" style="margin-inline-start:.5rem">بهترین ارزش</span></td>
               <td><span class="ltr" dir="ltr">200M</span></td>
-              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$5.75</span></td>
-              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$0.0288</span></td>
+              <td>۱,۱۵۰,۰۰۰ تومان</td>
+              <td>۵,۷۶۰ تومان</td>
               <td><span class="ltr" dir="ltr">600</span></td>
             </tr>
             <tr>
               <td>مقیاس</td>
               <td><span class="ltr" dir="ltr">500M</span></td>
-              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$11.50</span></td>
-              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$0.023</span></td>
+              <td>۲,۳۰۰,۰۰۰ تومان</td>
+              <td>۴,۶۰۰ تومان</td>
               <td><span class="ltr" dir="ltr">1,200</span></td>
             </tr>
             <tr>
               <td>نامحدود <span class="badge badge-clay" style="margin-inline-start:.5rem">بدون سقف</span></td>
               <td><span class="ltr" dir="ltr">Unlimited</span></td>
-              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$50</span></td>
+              <td>۱۰,۰۰۰,۰۰۰ تومان</td>
               <td>—</td>
               <td><span class="ltr" dir="ltr">3,000</span></td>
             </tr>
@@ -352,7 +341,7 @@ stream = client.chat.completions.<span class="tok-fn">create</span>(
         </table>
       </div>
       <div class="hero-ctas" style="justify-content:center;margin-top:1.5rem">
-        <a class="btn btn-primary" href="register.html">شروع رایگان با ۱ میلیون توکن</a>
+        <a class="btn btn-primary" href="register.html">همین حالا شروع کنید</a>
         <a class="btn btn-secondary" href="pricing.html">مقایسه دقیق پلن‌ها</a>
       </div>
       <p class="price-note" style="text-align:center;color:#6B6659;font-size:.875rem;margin-top:1rem">توکن = پرامپت + پاسخ. محدودیت نرخ به‌ازای هر دقیقه اعمال و در هدرهای <code class="kbd" dir="ltr">X-RateLimit-*</code> گزارش می‌شود.</p>
@@ -370,7 +359,7 @@ stream = client.chat.completions.<span class="tok-fn">create</span>(
         </details>
         <details class="card" style="padding:0;margin-bottom:.75rem">
           <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer">پلن‌های ارزان‌تر مدل‌ها را محدود می‌کنند؟</summary>
-          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8">خیر. همه پلن‌ها به همه مدل‌ها دسترسی دارند؛ تفاوت فقط در حجم توکن و نرخ درخواست است. می‌توانید Claude Opus 5.5 یا هر مدل دیگری را حتی روی پلن رایگان امتحان کنید.</div>
+          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8">خیر. همه پلن‌ها به همه مدل‌ها دسترسی دارند؛ تفاوت فقط در حجم توکن و نرخ درخواست است. می‌توانید Claude Opus 5.5 یا هر مدل دیگری را در هر پلنی امتحان کنید.</div>
         </details>
         <details class="card" style="padding:0;margin-bottom:.75rem">
           <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer">با SDK رسمی OpenAI سازگار است؟</summary>
@@ -394,7 +383,7 @@ stream = client.chat.completions.<span class="tok-fn">create</span>(
         </details>
         <details class="card" style="padding:0;margin-bottom:.75rem">
           <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer">پرداخت چطور است؟</summary>
-          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8">پلن رایگان بدون نیاز به کارت فعال می‌شود. برای پلن‌های پولی با پشتیبانی در تماس باشید؛ فعال‌سازی سریع و لغو در هر زمان امکان‌پذیر است و سهمیه تا پایان دوره باقی می‌ماند.</div>
+          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8">برای فعال‌سازی هر پلنی با پشتیبانی در تماس باشید؛ فعال‌سازی سریع است، هر زمان می‌توانید لغو کنید و سهمیه تا پایان دوره باقی می‌ماند.</div>
         </details>
       </div>
     </div>
@@ -404,9 +393,9 @@ stream = client.chat.completions.<span class="tok-fn">create</span>(
   <section class="cta-dark">
     <div class="container" style="text-align:center;padding:3rem 1rem">
       <h2 style="color:white;margin:0 0 .75rem">در حدود یک دقیقه آماده‌اید</h2>
-      <p style="color:#E8E2D5;margin:0 0 1.5rem">حساب بسازید، کلید بگیرید و اولین درخواست را بزنید — ۱ میلیون توکن رایگان شامل می‌شود.</p>
+      <p style="color:#E8E2D5;margin:0 0 1.5rem">حساب بسازید، کلید بگیرید و اولین درخواست را بزنید — فعال‌سازی آنی، بدون کارت بانکی.</p>
       <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
-        <a class="btn btn-primary" href="register.html">ساخت حساب رایگان</a>
+        <a class="btn btn-primary" href="register.html">ساخت حساب</a>
         <a class="btn btn-outline btn-on-dark" href="docs/getting-started.html">راهنمای سریع</a>
       </div>
     </div>
@@ -454,7 +443,7 @@ stream = client.chat.completions.<span class="tok-fn">create</span>(
   </div>
 </footer>
 
-<script src="assets/app.js?v=88335241"></script>
+<script src="assets/app.js?v=06099827"></script>
 
 </body>
 </html>
