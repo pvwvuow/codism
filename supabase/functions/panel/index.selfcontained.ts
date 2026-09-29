@@ -25,6 +25,7 @@ async function sbPost(path:string,body:any,prefer="return=representation"){const
 async function sbPatch(path:string,body:any){const r=await sbFetch(path,{method:"PATCH",headers:{"Prefer":"return=representation"},body:JSON.stringify(body)});if(!r.ok)throw new Error(await r.text());try{return await r.json()}catch{return []}}
 async function sbDelete(path:string){const r=await sbFetch(path,{method:"DELETE"});return r.ok}
 async function sbRpc(name:string,args:any){const r=await sbFetch(`/rpc/${name}`,{method:"POST",body:JSON.stringify(args)});if(!r.ok)return [];try{const j=await r.json();return Array.isArray(j)?j:[]}catch{return []}}
+function logRequest(userId:string|null,keyId:string|null,route:string,method:string,model:string|null,status:number,errorCode:string|null,pt:number,ct:number,latency:number){sbPost("/request_log",{user_id:userId,key_id:keyId,route,method,model,status,error_code:errorCode,prompt_tokens:pt,completion_tokens:ct,latency_ms:latency}).catch((e:any)=>console.error("request_log write failed:",e))}
 let adminEnsured=false;
 async function ensureAdmin(){if(adminEnsured)return;adminEnsured=true;const email=getEnv("ADMIN_EMAIL"),pw=getEnv("ADMIN_PASSWORD");if(!email||!pw)return;try{const rows=await sbGet(`/users?email=eq.${encodeURIComponent(email)}&select=id`);if(rows.length>0)return;const h=await hashPassword(pw);await sbPost("/users",{email,name:"Admin",password_hash:h,role:"admin",enabled:true,daily_quota_tokens:0,monthly_quota_tokens:0})}catch{}}
 function corsHeaders(){return{"access-control-allow-origin":"*","access-control-expose-headers":"x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-reset, x-ratelimit-limit-tokens, x-ratelimit-remaining-tokens"}}
@@ -40,8 +41,9 @@ function resetFail(ip:string){loginFails.delete(ip)}
 function parseAliases():Record<string,string>{try{const v=getEnv("MODEL_ALIASES");if(!v)return {};return JSON.parse(v)}catch{return {}}}
 function upstreamBase(){return getEnv("UPSTREAM_BASE_URL","https://codecraftapi.com/v1").replace(/\/+$/,"")}
 function maxBodyBytes(){return (parseInt(getEnv("MAX_BODY_MB","8"),10)||8)*1024*1024}
-function todayBounds(){const n=new Date();const s=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate(),0,0,0));const e=new Date(s.getTime()+86400000);return[s.toISOString(),e.toISOString()]}
-function monthBounds(){const n=new Date();const s=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),1,0,0,0));const e=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth()+1,1,0,0,0));return[s.toISOString(),e.toISOString()]}
+const TZ_OFF_MIN=210;
+function todayBounds(){const n=new Date(Date.now()+TZ_OFF_MIN*60000);const s=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate(),0,0,0)-TZ_OFF_MIN*60000);const e=new Date(s.getTime()+86400000);return[s.toISOString(),e.toISOString()]}
+function monthBounds(){const n=new Date(Date.now()+TZ_OFF_MIN*60000);const s=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),1,0,0,0)-TZ_OFF_MIN*60000);const e=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth()+1,1,0,0,0)-TZ_OFF_MIN*60000);return[s.toISOString(),e.toISOString()]}
 async function getAuthPayload(req:Request){const a=req.headers.get("authorization")||req.headers.get("Authorization")||"";if(!a.toLowerCase().startsWith("bearer "))return null;const t=a.slice(7).trim();if(!t)return null;if(t.startsWith("codism_"))return null;const sec=getEnv("JWT_SECRET");if(!sec)return null;return await jwtVerify(t,sec)}
 async function requireJwt(req:Request){const p=await getAuthPayload(req);if(!p)return null;return p}
 function normalizePath(p:string){let s=p;const prefixes=["/functions/v1/panel","/panel"];for(const pre of prefixes){if(s===pre||s.startsWith(pre+"/")){let rest=s.slice(pre.length)||"/";if(!rest.startsWith("/"))rest="/"+rest;s=rest;break}}if(!s.startsWith("/"))s="/"+s;return s}
@@ -52,14 +54,14 @@ const HTML=`<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"
 <main>
 <section id="view-login"><div style="min-height:60vh;display:grid;place-items:center"><div class="card" style="width:100%;max-width:420px"><h2 style="margin:0 0 6px">ورود به پنل</h2><p class="muted">Codism AI Panel — ورود با ایمیل و رمز</p><div style="display:grid;gap:10px;margin-top:12px"><input id="le" placeholder="ایمیل" class="ltr"><input id="lp" type="password" placeholder="رمز عبور"><button class="primary" onclick="doLogin()">ورود</button><div id="loginMsg" class="muted" style="color:#fca5a5"></div></div></div></div></section>
 <section id="view-keys" class="hidden"><div class="row" style="justify-content:space-between"><h3>کلیدهای من</h3><button class="primary" onclick="createKey()">+ ساخت کلید</button></div><div class="row" style="margin:8px 0"><input id="kLabel" placeholder="برچسب کلید (مثلا my-app)" style="max-width:260px"><button class="ghost" onclick="createKey()">ایجاد</button></div><div class="card"><table><thead><tr><th>برچسب</th><th>کلید</th><th>وضعیت</th><th>مدل‌ها</th><th>تاریخ</th><th>حذف</th></tr></thead><tbody id="keysBody"></tbody></table></div></section>
-<section id="view-usage" class="hidden"><div class="grid g4" style="margin-bottom:10px"><div class="card"><div class="muted">امروز — توکن</div><div id="uTodayTok" class="kpi">-</div><div id="uTodayReq" class="muted">-</div></div><div class="card"><div class="muted">این ماه — توکن</div><div id="uMonthTok" class="kpi">-</div><div id="uMonthReq" class="muted">-</div></div><div class="card"><div class="muted">روزهای اخیر</div><div id="uDays" class="kpi">14</div></div><div class="card"><button class="ghost" onclick="loadUsage()">بروزرسانی</button></div></div><div class="card"><table><thead><tr><th>روز</th><th>درخواست</th><th>prompt</th><th>completion</th></tr></thead><tbody id="usageBody"></tbody></table></div></section>
+<section id="view-usage" class="hidden"><div class="grid g4" style="margin-bottom:10px"><div class="card"><div class="muted">امروز — توکن</div><div id="uTodayTok" class="kpi">-</div><div id="uTodayReq" class="muted">-</div></div><div class="card"><div class="muted">این ماه — توکن</div><div id="uMonthTok" class="kpi">-</div><div id="uMonthReq" class="muted">-</div></div><div class="card"><div class="muted">روزهای اخیر</div><div id="uDays" class="kpi">14</div></div><div class="card"><button class="ghost" onclick="loadUsage()">بروزرسانی</button></div></div><div class="card"><table><thead><tr><th>روز</th><th>درخواست</th><th>prompt</th><th>completion</th></tr></thead><tbody id="usageBody"></tbody></table></div><div class="card" style="margin-top:10px"><h4>درخواست‌های اخیر</h4><p class="muted">اگر مصرف صفر است، اینجا را ببینید — درخواست‌های ناموفق هم ثبت می‌شوند</p><table><thead><tr><th>زمان</th><th>مسیر</th><th>مدل</th><th>وضعیت</th><th>جزئیات</th></tr></thead><tbody id="recentBody"></tbody></table></div></section>
 <section id="view-guide" class="hidden"><div class="card"><h3>راهنما</h3><p class="muted">آدرس پایه شما:</p><code id="guideBase" class="ltr" style="display:block;background:#000;color:#34d399;padding:8px;border-radius:8px"></code><p class="muted">نمونه curl:</p><pre id="guideCurl" class="ltr"></pre><p class="muted">Python:</p><pre class="ltr">from openai import OpenAI
 client=OpenAI(base_url=BASE+"/v1",api_key="codism_XXX")
 client.chat.completions.create(model="gpt-4o-mini",messages=[{"role":"user","content":"سلام"}])</pre><p class="muted">JS:</p><pre class="ltr">import OpenAI from "openai"
 const client=new OpenAI({baseURL:BASE+"/v1",apiKey:"codism_XXX"})
 await client.chat.completions.create({model:"gpt-4o-mini",messages:[{role:"user",content:"hi"}]})</pre><div class="row"><select id="guideKeySel" class="ltr" style="max-width:360px"></select><button class="ghost" onclick="refreshGuide()">اعمال کلید</button></div></div></section>
 <section id="view-admin-users" class="hidden"><div class="row" style="justify-content:space-between"><h3>کاربران</h3></div><div class="card"><table><thead><tr><th>ایمیل</th><th>نام</th><th>نقش</th><th>فعال</th><th>سهمیه روزانه</th><th>سهمیه ماهانه</th><th>کلیدها</th><th>عملیات</th></tr></thead><tbody id="adminUsersBody"></tbody></table></div><div class="card" style="margin-top:10px"><h4>ایجاد کاربر</h4><div class="grid g4"><input id="auEmail" placeholder="ایمیل" class="ltr"><input id="auName" placeholder="نام"><input id="auPass" placeholder="رمز" type="password"><select id="auRole"><option value="user">user</option><option value="admin">admin</option></select></div><div class="grid g2" style="margin-top:8px"><input id="auDaily" type="number" placeholder="سهمیه روزانه (0=نامحدود)"><input id="auMonthly" type="number" placeholder="سهمیه ماهانه (0=نامحدود)"></div><div style="margin-top:8px"><button class="primary" onclick="adminCreateUser()">ایجاد</button><span id="auMsg" class="muted"></span></div></div></section>
-<section id="view-admin-stats" class="hidden"><div class="grid g4"><div class="card"><div class="muted">کاربران</div><div id="stUsers" class="kpi">-</div></div><div class="card"><div class="muted">کلیدها</div><div id="stKeys" class="kpi">-</div></div><div class="card"><div class="muted">کلید فعال</div><div id="stActive" class="kpi">-</div></div><div class="card"><div class="muted">درخواست امروز</div><div id="stReq" class="kpi">-</div></div></div><div class="card" style="margin-top:10px"><div class="muted">توکن امروز</div><div id="stTok" class="kpi">-</div></div><div class="card" style="margin-top:10px"><table><thead><tr><th>روز</th><th>درخواست</th><th>توکن</th></tr></thead><tbody id="adminStatsBody"></tbody></table></div></section>
+<section id="view-admin-stats" class="hidden"><div class="grid g4"><div class="card"><div class="muted">کاربران</div><div id="stUsers" class="kpi">-</div></div><div class="card"><div class="muted">کلیدها</div><div id="stKeys" class="kpi">-</div></div><div class="card"><div class="muted">کلید فعال</div><div id="stActive" class="kpi">-</div></div><div class="card"><div class="muted">درخواست امروز</div><div id="stReq" class="kpi">-</div></div><div class="card"><div class="muted">ناموفق امروز</div><div id="stFailed" class="kpi">-</div></div></div><div class="card" style="margin-top:10px"><div class="muted">توکن امروز</div><div id="stTok" class="kpi">-</div></div><div class="card" style="margin-top:10px"><table><thead><tr><th>روز</th><th>درخواست</th><th>توکن</th></tr></thead><tbody id="adminStatsBody"></tbody></table></div></section>
 </main>
 <script>
 let token=localStorage.getItem("codism_token")||"",cur=null,keys=[];
@@ -75,7 +77,7 @@ async function loadKeys(){try{keys=await api("/api/keys");const tb=document.getE
 async function createKey(){const label=document.getElementById("kLabel").value.trim();try{await api("/api/keys",{method:"POST",body:{label}});document.getElementById("kLabel").value="";loadKeys()}catch(e){alert(e.message)}}
 async function delKey(id){if(!confirm("حذف کلید؟"))return;await api("/api/keys/"+id,{method:"DELETE"});loadKeys()}
 function copyKey(k){navigator.clipboard.writeText(k);alert("کپی شد")}
-async function loadUsage(){try{const j=await api("/api/usage?days=14");document.getElementById("uTodayTok").textContent=(j.today.prompt_tokens+j.today.completion_tokens);document.getElementById("uTodayReq").textContent=j.today.requests+" درخواست";document.getElementById("uMonthTok").textContent=(j.month.prompt_tokens+j.month.completion_tokens);document.getElementById("uMonthReq").textContent=j.month.requests+" درخواست";document.getElementById("usageBody").innerHTML=j.by_day.map(r=>\`<tr><td>\${r.day.slice(0,10)}</td><td>\${r.requests}</td><td>\${r.prompt_tokens}</td><td>\${r.completion_tokens}</td></tr>\`).join("")}catch(e){}}
+async function loadUsage(){try{const j=await api("/api/usage?days=14");document.getElementById("uTodayTok").textContent=(j.today.prompt_tokens+j.today.completion_tokens);document.getElementById("uTodayReq").textContent=j.today.requests+" درخواست";document.getElementById("uMonthTok").textContent=(j.month.prompt_tokens+j.month.completion_tokens);document.getElementById("uMonthReq").textContent=j.month.requests+" درخواست";document.getElementById("usageBody").innerHTML=j.by_day.map(r=>\`<tr><td>\${r.day.slice(0,10)}</td><td>\${r.requests}</td><td>\${r.prompt_tokens}</td><td>\${r.completion_tokens}</td></tr>\`).join("");const rb=document.getElementById("recentBody");if(rb){const hints={invalid_api_key:"کلید نامعتبر",missing_api_key:"کلید ارسال نشده",key_disabled:"کلید غیرفعال",user_disabled:"حساب غیرفعال",model_not_allowed:"این مدل برای کلید شما مجاز نیست",daily_quota_exceeded:"سهمیه روزانه تمام شد",monthly_quota_exceeded:"سهمیه ماهانه تمام شد",upstream_challenge:"سرویس موقتا در دسترس نیست",upstream_error:"سرویس موقتا در دسترس نیست",upstream_timeout:"پاسخ سرویس طولانی شد",body_too_large:"حجم درخواست بیش از حد",not_found:"مسیر اشتباه"};rb.innerHTML=(j.recent||[]).map(q=>\`<tr><td>\${new Date(q.ts).toLocaleString("fa-IR")}</td><td class="ltr">\${q.route}</td><td class="ltr">\${q.model||"-"}</td><td><span class="badge \${q.status<400?"ok":"bad"}">\${q.status}</span></td><td>\${q.status<400?((q.prompt_tokens+q.completion_tokens)+" توکن"):(hints[q.error_code]||q.error_code||"-")}</td></tr>\`).join("")||'<tr><td colspan=5 class="muted">موردی ثبت نشده</td></tr>'}}catch(e){}}
 function refreshGuide(){const base=(API_BASE||(location.origin+"/functions/v1/panel"))+"/v1";
 const sel=document.getElementById("guideKeySel");const key=sel&&sel.value?sel.value:"codism_XXX";document.getElementById("guideCurl").textContent='curl '+base+'/chat/completions -H "Authorization: Bearer '+key+'" -H "Content-Type: application/json" -d \'{"model":"gpt-4o-mini","messages":[{"role":"user","content":"سلام"}]}\''}
 async function loadAdminUsers(){try{const rows=await api("/api/admin/users");document.getElementById("adminUsersBody").innerHTML=rows.map(u=>\`<tr><td class="ltr">\${u.email}</td><td>\${u.name||""}</td><td>\${u.role}</td><td><button class="ghost" onclick="toggleUser('\${u.id}',\${!u.enabled})">\${u.enabled?"فعال":"غیرفعال"}</button></td><td><input class="ltr" style="width:110px" value="\${u.daily_quota_tokens||0}" onchange="editQuota('\${u.id}','daily',this.value)"></td><td><input class="ltr" style="width:110px" value="\${u.monthly_quota_tokens||0}" onchange="editQuota('\${u.id}','monthly',this.value)"></td><td>\${u.key_count||0}</td><td><button class="ghost" onclick="resetPw('\${u.id}')">رمز</button> <button class="ghost" onclick="delUser('\${u.id}')">حذف</button></td></tr>\`).join("")}catch(e){document.getElementById("adminUsersBody").innerHTML='<tr><td colspan=8>'+e.message+'</td></tr>'}}
@@ -84,7 +86,7 @@ async function toggleUser(id,enabled){try{await api("/api/admin/users/"+id,{meth
 async function editQuota(id,kind,val){const body={};if(kind==="daily")body.daily_quota_tokens=parseInt(val,10);else body.monthly_quota_tokens=parseInt(val,10);try{await api("/api/admin/users/"+id,{method:"PATCH",body})}catch(e){alert(e.message)}}
 async function resetPw(id){const p=prompt("رمز جدید:");if(!p)return;try{await api("/api/admin/users/"+id,{method:"PATCH",body:{password:p}});alert("انجام شد")}catch(e){alert(e.message)}}
 async function delUser(id){if(!confirm("حذف کاربر؟"))return;try{await api("/api/admin/users/"+id,{method:"DELETE"});loadAdminUsers()}catch(e){alert(e.message)}}
-async function loadAdminStats(){try{const j=await api("/api/admin/stats");document.getElementById("stUsers").textContent=j.totals.users;document.getElementById("stKeys").textContent=j.totals.keys;document.getElementById("stActive").textContent=j.totals.active_keys;document.getElementById("stReq").textContent=j.totals.requests_today;document.getElementById("stTok").textContent=j.totals.tokens_today;document.getElementById("adminStatsBody").innerHTML=j.by_day.map(r=>\`<tr><td>\${r.day.slice(0,10)}</td><td>\${r.requests}</td><td>\${r.tokens}</td></tr>\`).join("")}catch(e){}}
+async function loadAdminStats(){try{const j=await api("/api/admin/stats");document.getElementById("stUsers").textContent=j.totals.users;document.getElementById("stKeys").textContent=j.totals.keys;document.getElementById("stActive").textContent=j.totals.active_keys;document.getElementById("stReq").textContent=j.totals.requests_today;document.getElementById("stTok").textContent=j.totals.tokens_today;const sf=document.getElementById("stFailed");if(sf)sf.textContent=j.totals.failed_today??0;document.getElementById("adminStatsBody").innerHTML=j.by_day.map(r=>\`<tr><td>\${r.day.slice(0,10)}</td><td>\${r.requests}</td><td>\${r.tokens}</td></tr>\`).join("")}catch(e){}}
 window.addEventListener("hashchange",route);boot();
 </script></body></html>`;
 
@@ -152,7 +154,7 @@ Deno.serve(async (req:Request)=>{
  if(norm==="/api/keys"&&method==="POST"){
   const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
   let b:any={};try{b=await req.json()}catch{}
-  const label=(b.label||"").trim();
+  let label=(b.label||"").trim();
   let models="*";
   if(typeof b.models==="string"){
    models=b.models.trim().slice(0,200);
@@ -171,6 +173,7 @@ Deno.serve(async (req:Request)=>{
   if(active.length>=10) return panelErr(429,"max 10 active keys");
   const rand=hexEncode(crypto.getRandomValues(new Uint8Array(16)));
   const key="codism_"+rand;
+  if(!label) label="کلید "+rand.slice(0,4);
   const ins=await sbPost("/api_keys",{user_id:a.sub,key,label,enabled:true,models});
   return jsonRes(200,ins[0]||{key});
  }
@@ -188,8 +191,9 @@ Deno.serve(async (req:Request)=>{
   const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
   const days=Math.min(90,Math.max(1,parseInt(url.searchParams.get("days")||"14",10)||14));
   const [tFrom,tTo]=todayBounds(),[mFrom,mTo]=monthBounds();
-  const [by,td,mo]=await Promise.all([sbRpc("usage_by_day",{p_user:a.sub,p_days:days}),sbRpc("usage_sum",{p_user:a.sub,p_from:tFrom,p_to:tTo}),sbRpc("usage_sum",{p_user:a.sub,p_from:mFrom,p_to:mTo})]);
-  return jsonRes(200,{by_day:by,today:td[0]||{prompt_tokens:0,completion_tokens:0,requests:0},month:mo[0]||{prompt_tokens:0,completion_tokens:0,requests:0}});
+  const [by,td,mo]=await Promise.all([sbRpc("usage_by_day",{p_user:a.sub,p_days:days,p_offset_min:TZ_OFF_MIN}),sbRpc("usage_sum",{p_user:a.sub,p_from:tFrom,p_to:tTo}),sbRpc("usage_sum",{p_user:a.sub,p_from:mFrom,p_to:mTo})]);
+  const recent=await sbGet(`/request_log?user_id=eq.${encodeURIComponent(a.sub)}&select=ts,route,model,status,error_code,prompt_tokens,completion_tokens,latency_ms&order=ts.desc&limit=25`);
+  return jsonRes(200,{by_day:by,today:td[0]||{prompt_tokens:0,completion_tokens:0,requests:0},month:mo[0]||{prompt_tokens:0,completion_tokens:0,requests:0},recent});
  }
  // admin routes
  if(pathname.startsWith("/api/admin/")){
@@ -235,22 +239,23 @@ Deno.serve(async (req:Request)=>{
    return jsonRes(200,{ok:true});
   }
   if(norm==="/api/admin/stats"&&method==="GET"){
-   const [totals,by]=await Promise.all([sbRpc("admin_totals",{}),sbRpc("admin_usage_by_day",{p_days:14})]);
-   return jsonRes(200,{totals:totals[0]||{users:0,keys:0,active_keys:0,requests_today:0,tokens_today:0},by_day:by});
+   const [totals,by]=await Promise.all([sbRpc("admin_totals",{p_offset_min:TZ_OFF_MIN}),sbRpc("admin_usage_by_day",{p_days:14,p_offset_min:TZ_OFF_MIN})]);
+   return jsonRes(200,{totals:totals[0]||{users:0,keys:0,active_keys:0,requests_today:0,tokens_today:0,failed_today:0},by_day:by});
   }
   return panelErr(404,"not found");
  }
  // OpenAI compatible
  const isModels = (norm==="/v1/models"||norm==="/models");
  if(isModels&&method==="GET"){
+  const t0=Date.now();
   const auth=req.headers.get("authorization")||req.headers.get("Authorization")||"";
   let keyText="";if(auth.toLowerCase().startsWith("bearer ")) keyText=auth.slice(7).trim();else keyText=(req.headers.get("x-api-key")||"").trim();
-  if(!keyText) return openaiErr(401,"Missing API key.","invalid_request_error","missing_api_key");
+  if(!keyText){logRequest(null,null,"/v1/models",method,null,401,"missing_api_key",0,0,Date.now()-t0);return openaiErr(401,"Missing API key.","invalid_request_error","missing_api_key")}
   const kRows=await sbGet(`/api_keys?key=eq.${encodeURIComponent(keyText)}&select=id,user_id,enabled,models`);
-  const kRow=kRows[0];if(!kRow) return openaiErr(401,"Invalid API key.","invalid_request_error","invalid_api_key");
-  if(!kRow.enabled) return openaiErr(403,"This API key has been disabled.","insufficient_quota","key_disabled");
+  const kRow=kRows[0];if(!kRow){logRequest(null,null,"/v1/models",method,null,401,"invalid_api_key",0,0,Date.now()-t0);return openaiErr(401,"Invalid API key.","invalid_request_error","invalid_api_key")}
+  if(!kRow.enabled){logRequest(kRow.user_id,kRow.id,"/v1/models",method,null,403,"key_disabled",0,0,Date.now()-t0);return openaiErr(403,"This API key has been disabled.","insufficient_quota","key_disabled")}
   const uRows=await sbGet(`/users?id=eq.${encodeURIComponent(kRow.user_id)}&select=id,enabled`);
-  const uRow=uRows[0];if(!uRow||!uRow.enabled) return openaiErr(403,"User disabled.","insufficient_quota","key_disabled");
+  const uRow=uRows[0];if(!uRow||!uRow.enabled){logRequest(uRow?uRow.id:null,kRow.id,"/v1/models",method,null,403,"user_disabled",0,0,Date.now()-t0);return openaiErr(403,"User disabled.","insufficient_quota","user_disabled")}
   const aliases=parseAliases();
   const synthetic=Object.keys(aliases).map(id=>({id,object:"model",created:1700000000,owned_by:"codism-panel"}));
   const modelsStr=(kRow.models||"*").trim();
@@ -272,17 +277,18 @@ Deno.serve(async (req:Request)=>{
  }
  const isChat = (norm==="/v1/chat/completions"||norm==="/chat/completions");
  if(isChat&&method==="POST"){
+  const t0=Date.now();
   const maxB=maxBodyBytes();
-  const cl=req.headers.get("content-length");if(cl&&parseInt(cl,10)>maxB) return openaiErr(413,"Request body too large.","invalid_request_error","body_too_large");
+  const cl=req.headers.get("content-length");if(cl&&parseInt(cl,10)>maxB){logRequest(null,null,"/v1/chat/completions",method,null,413,"body_too_large",0,0,Date.now()-t0);return openaiErr(413,"Request body too large.","invalid_request_error","body_too_large")}
   let raw:Uint8Array|null=null;try{const ab=await req.arrayBuffer();raw=ab.byteLength?new Uint8Array(ab):null}catch{raw=null}
-  if(raw&&raw.byteLength>maxB) return openaiErr(413,"Request body too large.","invalid_request_error","body_too_large");
+  if(raw&&raw.byteLength>maxB){logRequest(null,null,"/v1/chat/completions",method,null,413,"body_too_large",0,0,Date.now()-t0);return openaiErr(413,"Request body too large.","invalid_request_error","body_too_large")}
   const auth=req.headers.get("authorization")||req.headers.get("Authorization")||"";let keyText="";if(auth.toLowerCase().startsWith("bearer ")) keyText=auth.slice(7).trim();else keyText=(req.headers.get("x-api-key")||"").trim();
-  if(!keyText) return openaiErr(401,"Missing API key.","invalid_request_error","missing_api_key");
+  if(!keyText){logRequest(null,null,"/v1/chat/completions",method,null,401,"missing_api_key",0,0,Date.now()-t0);return openaiErr(401,"Missing API key.","invalid_request_error","missing_api_key")}
   const kRows=await sbGet(`/api_keys?key=eq.${encodeURIComponent(keyText)}&select=id,user_id,enabled,models`);
-  const kRow=kRows[0];if(!kRow) return openaiErr(401,"Invalid API key.","invalid_request_error","invalid_api_key");
-  if(!kRow.enabled) return openaiErr(403,"This API key has been disabled.","insufficient_quota","key_disabled");
+  const kRow=kRows[0];if(!kRow){logRequest(null,null,"/v1/chat/completions",method,null,401,"invalid_api_key",0,0,Date.now()-t0);return openaiErr(401,"Invalid API key.","invalid_request_error","invalid_api_key")}
+  if(!kRow.enabled){logRequest(kRow.user_id,kRow.id,"/v1/chat/completions",method,null,403,"key_disabled",0,0,Date.now()-t0);return openaiErr(403,"This API key has been disabled.","insufficient_quota","key_disabled")}
   const uRows=await sbGet(`/users?id=eq.${encodeURIComponent(kRow.user_id)}&select=id,enabled,daily_quota_tokens,monthly_quota_tokens`);
-  const uRow=uRows[0];if(!uRow||!uRow.enabled) return openaiErr(403,"User disabled.","insufficient_quota","key_disabled");
+  const uRow=uRows[0];if(!uRow||!uRow.enabled){logRequest(uRow?uRow.id:null,kRow.id,"/v1/chat/completions",method,null,403,"user_disabled",0,0,Date.now()-t0);return openaiErr(403,"User disabled.","insufficient_quota","user_disabled")}
   let bodyJson:any=null;if(raw)try{bodyJson=JSON.parse(dec.decode(raw))}catch{}
   const aliases=parseAliases();
   let expandedModel=bodyJson?.model||"";
@@ -291,15 +297,16 @@ Deno.serve(async (req:Request)=>{
   const modelsStr=(kRow.models||"*").trim();
   if(modelsStr!=="*"&&modelsStr!==""){
    const set=new Set(modelsStr.split(",").map((s:string)=>s.trim()).filter(Boolean));
-   if(expandedModel&&!set.has(expandedModel)&&!set.has("*")) return openaiErr(404,`The model '${expandedModel}' does not exist or you do not have access to it.`,"invalid_request_error","model_not_allowed");
+   const rawModel=(bodyJson&&typeof bodyJson.model==="string")?bodyJson.model:"";
+   if(expandedModel&&!set.has(expandedModel)&&!set.has("*")&&!set.has(rawModel)){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel,404,"model_not_allowed",0,0,Date.now()-t0);return openaiErr(404,`The model '${expandedModel}' does not exist or you do not have access to it.`,"invalid_request_error","model_not_allowed")}
   }
   if(bodyJson&&typeof bodyJson.model==="string"&&expandedModel!==bodyJson.model){bodyJson.model=expandedModel;raw=enc.encode(JSON.stringify(bodyJson))}
   // quota
   if((uRow.daily_quota_tokens||0)>0){
-   const [f,t]=todayBounds();const r=await sbRpc("usage_sum",{p_user:uRow.id,p_from:f,p_to:t});const s=r[0]||{prompt_tokens:0,completion_tokens:0};const tot=(Number(s.prompt_tokens)||0)+(Number(s.completion_tokens)||0);if(tot>=uRow.daily_quota_tokens) return openaiErr(429,"daily token quota exceeded","insufficient_quota","daily_quota_exceeded");
+   const [f,t]=todayBounds();const r=await sbRpc("usage_sum",{p_user:uRow.id,p_from:f,p_to:t});const s=r[0]||{prompt_tokens:0,completion_tokens:0};const tot=(Number(s.prompt_tokens)||0)+(Number(s.completion_tokens)||0);if(tot>=uRow.daily_quota_tokens){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,429,"daily_quota_exceeded",0,0,Date.now()-t0);return openaiErr(429,"daily token quota exceeded","insufficient_quota","daily_quota_exceeded")}
   }
   if((uRow.monthly_quota_tokens||0)>0){
-   const [f,t]=monthBounds();const r=await sbRpc("usage_sum",{p_user:uRow.id,p_from:f,p_to:t});const s=r[0]||{prompt_tokens:0,completion_tokens:0};const tot=(Number(s.prompt_tokens)||0)+(Number(s.completion_tokens)||0);if(tot>=uRow.monthly_quota_tokens) return openaiErr(429,"monthly token quota exceeded","insufficient_quota","monthly_quota_exceeded");
+   const [f,t]=monthBounds();const r=await sbRpc("usage_sum",{p_user:uRow.id,p_from:f,p_to:t});const s=r[0]||{prompt_tokens:0,completion_tokens:0};const tot=(Number(s.prompt_tokens)||0)+(Number(s.completion_tokens)||0);if(tot>=uRow.monthly_quota_tokens){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,429,"monthly_quota_exceeded",0,0,Date.now()-t0);return openaiErr(429,"monthly token quota exceeded","insufficient_quota","monthly_quota_exceeded")}
   }
   // stream handling: merge stream_options
   let isStream=false;if(bodyJson&&bodyJson.stream===true) isStream=true;
@@ -318,11 +325,12 @@ Deno.serve(async (req:Request)=>{
   }catch(e:any){
    clearTimeout(to);
    const isAbort=e&&e.name==="AbortError";
+   logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,isAbort?504:502,isAbort?"upstream_timeout":"upstream_error",0,0,Date.now()-t0);
    return openaiErr(isAbort?504:502,isAbort?"Upstream request timed out.":"AI upstream temporarily unavailable.",isAbort?"timeout":"upstream_error",isAbort?"upstream_timeout":"upstream_error");
   }
   clearTimeout(to);
   const upCt=upResp.headers.get("content-type")||"";
-  if(upResp.status===403&&upCt.includes("text/html")) return openaiErr(502,"AI upstream temporarily unavailable (challenge).","upstream_challenge","upstream_challenge");
+  if(upResp.status===403&&upCt.includes("text/html")){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,502,"upstream_challenge",0,0,Date.now()-t0);return openaiErr(502,"AI upstream temporarily unavailable (challenge).","upstream_challenge","upstream_challenge")}
   const respHeaders=new Headers();respHeaders.set("access-control-allow-origin","*");respHeaders.set("access-control-expose-headers","x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-reset, x-ratelimit-limit-tokens, x-ratelimit-remaining-tokens");
   for(const [k,v] of upResp.headers.entries()) if(k.toLowerCase().startsWith("x-ratelimit-")) respHeaders.set(k,v);
   if(upCt) respHeaders.set("content-type",upCt);else respHeaders.set("content-type","application/json");
@@ -359,7 +367,8 @@ Deno.serve(async (req:Request)=>{
       ctrl.close();
       const latency=Date.now()-start;
       if(!foundUsage){promptTokens=Math.ceil(promptChars/4);completionTokens=Math.ceil(completionChars/4)}
-      sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:expandedModel||"",prompt_tokens:promptTokens,completion_tokens:completionTokens,latency_ms:latency,status:upResp.status}).catch(()=>{});
+      sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:expandedModel||"",prompt_tokens:promptTokens,completion_tokens:completionTokens,latency_ms:latency,status:upResp.status}).catch((e:any)=>console.error("usage_log write failed:",e));
+      logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,upResp.status,null,promptTokens,completionTokens,latency);
      }
     },
     cancel(){try{controller.abort()}catch{}}
@@ -369,7 +378,8 @@ Deno.serve(async (req:Request)=>{
    const buf=new Uint8Array(await upResp.arrayBuffer());
    let pt=0,ctok=0;try{const j=JSON.parse(dec.decode(buf));if(j.usage){pt=Number(j.usage.prompt_tokens)||0;ctok=Number(j.usage.completion_tokens)||0}}catch{}
    const latency=Date.now()-start;
-   sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:expandedModel||"",prompt_tokens:pt,completion_tokens:ctok,latency_ms:latency,status:upResp.status}).catch(()=>{});
+   sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:expandedModel||"",prompt_tokens:pt,completion_tokens:ctok,latency_ms:latency,status:upResp.status}).catch((e:any)=>console.error("usage_log write failed:",e));
+   logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,upResp.status,null,pt,ctok,latency);
    return new Response(buf,{status:upResp.status,headers:respHeaders});
   }
  }
