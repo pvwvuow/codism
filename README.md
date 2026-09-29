@@ -1,42 +1,32 @@
 # Codism AI Panel — tvframe.vip
 
-پنل مدیریت AI اختصاصی با Base URL خودت — پروکسی OpenAI-Compatible به CodeCraft
+پنل مدیریت و فروش API هوش مصورف — نسخه‌ی اجراشده روی Supabase Edge Functions (Deno)
 
-## ویژگی‌ها
-- Base URL اختصاصی: `https://tvframe.vip/v1` (قابل تغییر به `https://ai.tvframe.vip/v1`)
-- ساخت بی‌نهایت کلید `codism_...` و اشتراک بین کاربران
-- سهمیه‌بندی روزانه/ماهانه + محدودیت مدل
-- لاگ و آمار کامل (توکن، مدل، latency)
-- Playground تست مستقیم
-- مستندات cURL / JS / Python آماده کپی
-- پنل ادمین: مدیریت کاربران
+## وضعیت فعلی (نسخه Deno / Supabase)
+- کل پنل یک فایل مستقل است: `supabase/functions/panel/index.selfcontained.ts`
+- شامل: UI فارسی RTL + احراز هویت JWT + مدیریت کاربر توسط ادمین + کلیدهای `codism_*` + سهمیه روزانه/ماهانه + لاگ مصرف + پراکسی OpenAI-Compatible به آپستریم
+- دیتابیس: Postgres (جداول `users` / `api_keys` / `usage_log` + توابع RPC آماری)
+- همه‌ی مقادیر محرمانه فقط به‌صورت Secret در پروژه‌ی Supabase نگهداری می‌شوند — در این ریپو هیچ کلیدی نیست
 
-## اجرا
-```bash
-npm install
-npm run init-db   # ساخت ادمین از .env
-npm start         # http://localhost:3000
+## آدرس‌ها
+- پنل: `https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/`
+- Base URL برای کلاینت‌ها (VSCode/curl/openai SDK): `https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1`
+
+## Environment (Secrets در داشبورد Supabase)
+```
+PANEL_SUPABASE_URL      # آدرس پروژه
+PANEL_SERVICE_ROLE      # کلید سرویس‌رول
+UPSTREAM_API_KEY        # کلید آپستریم (فقط در secrets — هرگز در ریپو/کد)
+UPSTREAM_BASE_URL
+MODEL_ALIASES           # مثل {"gpt-4o":"claude-opus-5.5"}
+JWT_SECRET  ADMIN_EMAIL  ADMIN_PASSWORD  MAX_BODY_MB
 ```
 
-## ENV
-```
-PORT=3000
-JWT_SECRET=...
-UPSTREAM_BASE_URL=https://codecraftapi.com/v1
-UPSTREAM_API_KEY=cc_...
-PUBLIC_BASE_URL=https://tvframe.vip
-ADMIN_EMAIL=admin@tvframe.vip
-ADMIN_PASSWORD=<set-a-strong-password-at-deploy-time>
-```
+## نکته‌ها
+- آپستریم پشت Cloudflare است؛ تابع حتماً User-Agent مرورگر می‌فرستد و چالش 403 HTML را به 502 استاندارد تبدیل می‌کند
+- ثبت‌نام عمومی وجود ندارد؛ فقط ادمین کاربر می‌سازد
+- محدودیت: هر کاربر حداکثر ۱۰ کلید فعال
 
-## دیپلوی روی tvframe.vip
-- اگر دامنه اصلی مشغول است، یک ساب‌دامین بساز: `ai.tvframe.vip` → مقدار `PUBLIC_BASE_URL=https://ai.tvframe.vip`
-- روی هاست Node (یا VPS) فایل‌ها را قرار بده، `npm install && npm run init-db && pm2 start server/index.js`
-- پروکسی معکوس Nginx به پورت 3000
-
-## استفاده توسط کاربر نهایی
-```js
-import OpenAI from "openai";
-const client = new OpenAI({ baseURL: "https://tvframe.vip/v1", apiKey: "codism_XXX" });
-await client.chat.completions.create({ model:"gpt-4o-mini", messages:[{role:"user",content:"سلام"}] });
-```
+---
+## نسخه قدیمی Express (برای VPS — مرجع)
+کد `server/` + `public/` نسخه‌ی Node/SQLite است که نیازمند هاست Node بود؛ به‌دلیل چالش Cloudflare روی Node، نسخه‌ی Deno/Supabase جایگزین شد.
