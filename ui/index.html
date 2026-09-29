@@ -1,41 +1,460 @@
-<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Codism AI Panel</title><style>*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Tahoma;background:#0a0a0f;color:#e5e7eb}header{position:sticky;top:0;background:#111119;border-bottom:1px solid #222;display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:56px}nav{display:flex;gap:6px;padding:8px 12px;background:#111119;border-bottom:1px solid #222;overflow:auto}nav button{border:1px solid #2a2a3a;background:#1a1a27;color:#cbd5e1;border-radius:999px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap}nav button.active{background:#7c3aed;color:#fff;border-color:#7c3aed}main{max-width:1100px;margin:0 auto;padding:16px}card{background:#15151f;border:1px solid #232334;border-radius:16px;padding:14px}grid{display:grid;gap:10px}g2{grid-template-columns:repeat(2,1fr)}g4{grid-template-columns:repeat(4,1fr)}@media(max-width:700px){g4{grid-template-columns:repeat(2,1fr)}}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;border-bottom:1px solid #232334;text-align:right}th{color:#94a3b8;font-weight:600}input,select,textarea{width:100%;background:#0f0f18;border:1px solid #2a2a3a;color:#e5e7eb;border-radius:10px;padding:8px 10px;font-size:13px}button.primary{background:#7c3aed;color:#fff;border:0;border-radius:10px;padding:8px 14px;cursor:pointer}button.ghost{background:#1a1a27;border:1px solid #2a2a3a;color:#e5e7eb;border-radius:10px;padding:6px 10px;cursor:pointer}.badge{padding:2px 8px;border-radius:999px;font-size:11px;border:1px solid #2a2a3a}.ok{background:#052e1a;color:#86efac;border-color:#14532d}.bad{background:#2a1212;color:#fca5a5}.muted{color:#94a3b8;font-size:12px}.ltr{direction:ltr;text-align:left;font-family:ui-monospace,monospace}pre{background:#0f0f18;border:1px solid #232334;border-radius:12px;padding:12px;overflow:auto;white-space:pre-wrap;word-break:break-all}.hidden{display:none!important}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.kpi{font-weight:800;font-size:18px}</style></head><body><script>window.CODISM_API_BASE="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel";</script>
-<header><b style="letter-spacing:1px">CODISM</b><span id="baseUrl" class="ltr" style="background:#000;color:#34d399;padding:4px 8px;border-radius:8px;font-size:11px">/v1</span><div class="row"><span id="meInfo" class="muted"></span><button class="ghost" onclick="logout()">خروج</button></div></header>
-<nav><button data-n="keys" onclick="go('keys')">کلیدها</button><button data-n="usage" onclick="go('usage')">مصرف من</button><button data-n="guide" onclick="go('guide')">راهنما</button><button data-n="admin-users" id="navAdminUsers" class="hidden" onclick="go('admin-users')">کاربران</button><button data-n="admin-stats" id="navAdminStats" class="hidden" onclick="go('admin-stats')">آمار کل</button></nav>
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Codism — ۳۰ میلیون توکن برای $1.20 · ۳۰+ مدل هوش مصنوعی</title>
+<meta name="description" content="API سازگار با OpenAI روی ۳۰+ مدل؛ استریم، ابزار و تصویر. ۱ میلیون توکن رایگان، بدون کارت بانکی.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#D97757">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/design.css?v=86250282">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<script>window.CODISM_API_BASE="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel";</script>
+
+</head>
+<body>
+<header class="navbar">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;height:4rem">
+    <a href="index.html" style="display:flex;align-items:center;gap:.5rem;text-decoration:none">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#D97757"/><text x="14" y="16" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="13" font-weight="500">{}</text></svg>
+      <span style="font-family:var(--font-serif);font-weight:700;font-size:1.25rem;color:#1A1915">Codism</span>
+    </a>
+    <nav class="nav-links">
+      <a data-nav href="models.html">مدل‌ها</a>
+      <a data-nav href="pricing.html">تعرفه‌ها</a>
+      <a data-nav href="docs/">مستندات</a>
+      <a data-nav href="changelog.html">تغییرات</a>
+      <a data-nav href="status.html">وضعیت</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <a class="btn btn-ghost" href="login.html" data-auth-link>ورود</a>
+      <a class="btn btn-primary" href="register.html" data-auth-cta>شروع رایگان</a>
+      <button class="nav-toggle" aria-label="منو"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
 <main>
-<section id="view-login"><div style="min-height:60vh;display:grid;place-items:center"><div class="card" style="width:100%;max-width:420px"><h2 style="margin:0 0 6px">ورود به پنل</h2><p class="muted">Codism AI Panel — ورود با ایمیل و رمز</p><div style="display:grid;gap:10px;margin-top:12px"><input id="le" placeholder="ایمیل" class="ltr"><input id="lp" type="password" placeholder="رمز عبور"><button class="primary" onclick="doLogin()">ورود</button><div id="loginMsg" class="muted" style="color:#fca5a5"></div></div></div></div></section>
-<section id="view-keys" class="hidden"><div class="row" style="justify-content:space-between"><h3>کلیدهای من</h3><button class="primary" onclick="createKey()">+ ساخت کلید</button></div><div class="row" style="margin:8px 0"><input id="kLabel" placeholder="برچسب کلید (مثلا my-app)" style="max-width:260px"><button class="ghost" onclick="createKey()">ایجاد</button></div><div class="card"><table><thead><tr><th>برچسب</th><th>کلید</th><th>وضعیت</th><th>مدل‌ها</th><th>تاریخ</th><th>حذف</th></tr></thead><tbody id="keysBody"></tbody></table></div></section>
-<section id="view-usage" class="hidden"><div class="grid g4" style="margin-bottom:10px"><div class="card"><div class="muted">امروز — توکن</div><div id="uTodayTok" class="kpi">-</div><div id="uTodayReq" class="muted">-</div></div><div class="card"><div class="muted">این ماه — توکن</div><div id="uMonthTok" class="kpi">-</div><div id="uMonthReq" class="muted">-</div></div><div class="card"><div class="muted">روزهای اخیر</div><div id="uDays" class="kpi">14</div></div><div class="card"><button class="ghost" onclick="loadUsage()">بروزرسانی</button></div></div><div class="card"><table><thead><tr><th>روز</th><th>درخواست</th><th>prompt</th><th>completion</th></tr></thead><tbody id="usageBody"></tbody></table></div><div class="card" style="margin-top:10px"><h4>درخواست‌های اخیر</h4><p class="muted">اگر مصرف صفر است، اینجا را ببینید — درخواست‌های ناموفق هم ثبت می‌شوند</p><table><thead><tr><th>زمان</th><th>مسیر</th><th>مدل</th><th>وضعیت</th><th>جزئیات</th></tr></thead><tbody id="recentBody"></tbody></table></div></section>
-<section id="view-guide" class="hidden"><div class="card"><h3>راهنما</h3><p class="muted">آدرس پایه شما:</p><code id="guideBase" class="ltr" style="display:block;background:#000;color:#34d399;padding:8px;border-radius:8px"></code><p class="muted">نمونه curl:</p><pre id="guideCurl" class="ltr"></pre><p class="muted">Python:</p><pre class="ltr">from openai import OpenAI
-client=OpenAI(base_url=BASE+"/v1",api_key="codism_XXX")
-client.chat.completions.create(model="gpt-4o-mini",messages=[{"role":"user","content":"سلام"}])</pre><p class="muted">JS:</p><pre class="ltr">import OpenAI from "openai"
-const client=new OpenAI({baseURL:BASE+"/v1",apiKey:"codism_XXX"})
-await client.chat.completions.create({model:"gpt-4o-mini",messages:[{role:"user",content:"hi"}]})</pre><div class="row"><select id="guideKeySel" class="ltr" style="max-width:360px"></select><button class="ghost" onclick="refreshGuide()">اعمال کلید</button></div></div></section>
-<section id="view-admin-users" class="hidden"><div class="row" style="justify-content:space-between"><h3>کاربران</h3></div><div class="card"><table><thead><tr><th>ایمیل</th><th>نام</th><th>نقش</th><th>فعال</th><th>سهمیه روزانه</th><th>سهمیه ماهانه</th><th>کلیدها</th><th>عملیات</th></tr></thead><tbody id="adminUsersBody"></tbody></table></div><div class="card" style="margin-top:10px"><h4>ایجاد کاربر</h4><div class="grid g4"><input id="auEmail" placeholder="ایمیل" class="ltr"><input id="auName" placeholder="نام"><input id="auPass" placeholder="رمز" type="password"><select id="auRole"><option value="user">user</option><option value="admin">admin</option></select></div><div class="grid g2" style="margin-top:8px"><input id="auDaily" type="number" placeholder="سهمیه روزانه (0=نامحدود)"><input id="auMonthly" type="number" placeholder="سهمیه ماهانه (0=نامحدود)"></div><div style="margin-top:8px"><button class="primary" onclick="adminCreateUser()">ایجاد</button><span id="auMsg" class="muted"></span></div></div></section>
-<section id="view-admin-stats" class="hidden"><div class="grid g4"><div class="card"><div class="muted">کاربران</div><div id="stUsers" class="kpi">-</div></div><div class="card"><div class="muted">کلیدها</div><div id="stKeys" class="kpi">-</div></div><div class="card"><div class="muted">کلید فعال</div><div id="stActive" class="kpi">-</div></div><div class="card"><div class="muted">درخواست امروز</div><div id="stReq" class="kpi">-</div></div><div class="card"><div class="muted">ناموفق امروز</div><div id="stFailed" class="kpi">-</div></div></div><div class="card" style="margin-top:10px"><div class="muted">توکن امروز</div><div id="stTok" class="kpi">-</div></div><div class="card" style="margin-top:10px"><table><thead><tr><th>روز</th><th>درخواست</th><th>توکن</th></tr></thead><tbody id="adminStatsBody"></tbody></table></div></section>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <div class="hero-badge rise d1"><span style="display:inline-block;width:.5rem;height:.5rem;border-radius:999px;background:#059669"></span> ۱ میلیون توکن رایگان هر ماه · بدون کارت بانکی</div>
+        <h1 class="hero-title rise d1">۳۰ میلیون توکن در مقابل <span class="hl" dir="ltr">$1.20</span>. نامحدود با <span class="hl" dir="ltr">$50</span>.</h1>
+        <p class="hero-sub rise d2">آن‌ها را روی Claude Opus 5.5 یا هر یک از ۳۰+ مدل خرج کنید — همه پلن‌ها به همه مدل‌ها دسترسی دارند. یک API سازگار با OpenAI؛ استریم، فراخوانی ابزار و ورودی تصویر همگی فعال.</p>
+        <div class="hero-ctas rise d2">
+          <a class="btn btn-primary btn-lg" href="register.html">شروع رایگان — بدون کارت ←</a>
+          <a class="btn btn-secondary btn-lg" href="pricing.html">مشاهده همه پلن‌ها</a>
+        </div>
+        <div class="hero-stats rise d3">
+          <div class="card" style="padding:1rem;text-align:center">
+            <div style="font-size:.75rem;font-weight:600;color:#6B6659">رایگان</div>
+            <div style="font-family:var(--font-serif);font-size:1.5rem;font-weight:700;color:#1A1915" dir="ltr">1M</div>
+            <div style="font-size:.75rem;color:#8A8475">توکن / ماه</div>
+          </div>
+          <div class="card" style="padding:1rem;text-align:center">
+            <div style="font-family:var(--font-serif);font-size:.875rem;font-weight:600;color:#6B6659" dir="ltr">$1.20</div>
+            <div style="font-family:var(--font-serif);font-size:1.5rem;font-weight:700;color:#1A1915" dir="ltr">30M</div>
+            <div style="font-size:.75rem;color:#8A8475">توکن / ماه</div>
+          </div>
+          <div class="card stat-hot" style="padding:1rem;text-align:center">
+            <div style="font-family:var(--font-serif);font-size:.875rem;font-weight:600;color:#6B6659" dir="ltr">$50</div>
+            <div style="font-family:var(--font-serif);font-size:1.5rem;font-weight:700;color:#1A1915" dir="ltr">Unlimited</div>
+            <div style="font-size:.75rem;color:#8A8475">بدون سقف ماهانه</div>
+          </div>
+        </div>
+      </div>
+      <div class="rise d3">
+        <div class="terminal">
+          <div style="display:flex;align-items:center;gap:.5rem;padding:.75rem 1rem;border-bottom:1px solid #2A2823">
+            <span style="width:.75rem;height:.75rem;border-radius:999px;background:#FF5F57;display:inline-block"></span>
+            <span style="width:.75rem;height:.75rem;border-radius:999px;background:#FEBC2E;display:inline-block"></span>
+            <span style="width:.75rem;height:.75rem;border-radius:999px;background:#28C840;display:inline-block"></span>
+            <span style="margin-inline-start:.75rem;font-family:var(--font-mono);font-size:.75rem;color:#A8A294" dir="ltr">quickstart.py</span>
+          </div>
+          <pre style="margin:0;padding:1rem 1.25rem;overflow-x:auto"><code dir="ltr" style="font-family:var(--font-mono);font-size:.8rem;line-height:1.7;color:#E8E2D5"><span class="tok-com"># pip install openai</span>
+<span class="tok-kw">from</span> openai <span class="tok-kw">import</span> OpenAI
+
+client = <span class="tok-fn">OpenAI</span>(
+    <span class="tok-kw">api_key</span>=<span class="tok-str">"codism_your_key"</span>,
+    <span class="tok-kw">base_url</span>=<span class="tok-str">"https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1"</span>,  <span class="tok-com"># فقط این را عوض کنید</span>
+)
+
+stream = client.chat.completions.<span class="tok-fn">create</span>(
+    <span class="tok-kw">model</span>=<span class="tok-str">"gpt-4o"</span>,
+    <span class="tok-kw">messages</span>=[{<span class="tok-str">"role"</span>: <span class="tok-str">"user"</span>, <span class="tok-str">"content"</span>: <span class="tok-str">"Hello!"</span>}],
+    <span class="tok-kw">stream</span>=<span class="tok-kw">True</span>,
+)
+
+<span class="tok-kw">for</span> chunk <span class="tok-kw">in</span> stream:
+    <span class="tok-fn">print</span>(chunk.choices[<span class="tok-num">0</span>].delta.content <span class="tok-kw">or</span> <span class="tok-str">""</span>, <span class="tok-kw">end</span>=<span class="tok-str">""</span>)</code></pre>
+        </div>
+        <div class="cap-row" style="display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap">
+          <span class="chip">استریم</span>
+          <span class="chip">ابزارها</span>
+          <span class="chip">تصویر</span>
+          <span class="chip">استدلال</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOOLS STRIP -->
+  <section class="tools-strip">
+    <div class="container">
+      <p style="text-align:center;font-size:.875rem;font-weight:700;color:#6B6659;letter-spacing:.02em;margin:0 0 1.25rem">جایگزین مستقیم برای ابزارهایی که همین حالا استفاده می‌کنید</p>
+      <div class="tools-row">
+        <div class="tool-card card" style="padding:1rem;display:flex;align-items:center;gap:.75rem;justify-content:center">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect width="20" height="20" rx="4" fill="#F4F1EA" stroke="#E8E2D5"/><path d="M6 7l3 3-3 3M10 13h4" stroke="#D97757" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span dir="ltr" style="font-weight:600;font-size:.875rem">Kilo Code</span>
+        </div>
+        <div class="tool-card card" style="padding:1rem;display:flex;align-items:center;gap:.75rem;justify-content:center">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect width="20" height="20" rx="4" fill="#F4F1EA" stroke="#E8E2D5"/><circle cx="10" cy="10" r="4" stroke="#D97757" stroke-width="1.4"/><path d="M10 6v2M10 12v2M6 10h2M12 10h2" stroke="#D97757" stroke-width="1.2" stroke-linecap="round"/></svg>
+          <span dir="ltr" style="font-weight:600;font-size:.875rem">Cline</span>
+        </div>
+        <div class="tool-card card" style="padding:1rem;display:flex;align-items:center;gap:.75rem;justify-content:center">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect width="20" height="20" rx="4" fill="#F4F1EA" stroke="#E8E2D5"/><path d="M7 10h6M10 7v6" stroke="#D97757" stroke-width="1.4" stroke-linecap="round"/><rect x="5" y="5" width="10" height="10" rx="2" stroke="#D97757" stroke-width="1.2"/></svg>
+          <span dir="ltr" style="font-weight:600;font-size:.875rem">Cursor</span>
+        </div>
+        <div class="tool-card card" style="padding:1rem;display:flex;align-items:center;gap:.75rem;justify-content:center">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect width="20" height="20" rx="4" fill="#F4F1EA" stroke="#E8E2D5"/><path d="M6 10l2 2 6-6" stroke="#D97757" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span dir="ltr" style="font-weight:600;font-size:.875rem">opencode</span>
+        </div>
+        <div class="tool-card card" style="padding:1rem;display:flex;align-items:center;gap:.75rem;justify-content:center">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect width="20" height="20" rx="4" fill="#F4F1EA" stroke="#E8E2D5"/><path d="M10 6l2 3h3l-2.5 2 1 3L10 12l-3.5 2 1-3L5 9h3z" stroke="#D97757" stroke-width="1.2" stroke-linejoin="round"/></svg>
+          <span dir="ltr" style="font-weight:600;font-size:.875rem">Claude Code</span>
+        </div>
+        <div class="tool-card card" style="padding:1rem;display:flex;align-items:center;gap:.75rem;justify-content:center">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect width="20" height="20" rx="4" fill="#F4F1EA" stroke="#E8E2D5"/><circle cx="10" cy="10" r="3" stroke="#D97757" stroke-width="1.4"/><path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="#D97757" stroke-width="1.2" stroke-linecap="round"/></svg>
+          <span dir="ltr" style="font-weight:600;font-size:.875rem">OpenClaw</span>
+        </div>
+      </div>
+      <p class="tools-note" style="text-align:center;font-size:.875rem;color:#6B6659;margin:1rem 0 0">هنوز ابزار خودتان را ندارید؟ هر کلاینتی که با OpenAI صحبت کند کار می‌کند — <a href="docs/coding-agents.html">راهنمای راه‌اندازی</a></p>
+    </div>
+  </section>
+
+  <!-- STEPS -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">در سه قدم زنده شوید</h2>
+      <p class="section-sub" style="text-align:center;color:#6B6659;margin:.5rem 0 2rem">هیچ کارت اعتباری لازم نیست. اگر ابزار شما با OpenAI صحبت می‌کند، همین حالا با ما هم صحبت می‌کند.</p>
+      <div class="steps-grid">
+        <div class="step-card card" style="padding:1.5rem">
+          <div style="font-family:var(--font-serif);font-weight:700;color:#D97757">01</div>
+          <h3 style="margin:.5rem 0">ساخت کلید</h3>
+          <p style="color:#545046;font-size:.875rem;line-height:1.8">در داشبورد ثبت‌نام کنید و از تب کلیدها یک کلید بسازید. کلیدها با پیشوند <code class="kbd">codism_</code> ساخته می‌شوند.</p>
+          <div style="margin-top:.75rem"><code class="kbd" dir="ltr">codism_…  ·  ≤ 10 keys</code></div>
+        </div>
+        <div class="step-card card" style="padding:1.5rem">
+          <div style="font-family:var(--font-serif);font-weight:700;color:#D97757">02</div>
+          <h3 style="margin:.5rem 0">کلاینت را نشانه بگیرید</h3>
+          <p style="color:#545046;font-size:.875rem;line-height:1.8">فقط دو چیز عوض می‌شود: Base URL و کلید. با Kilo Code، Cline، Cursor، opencode و Claude Code تست شده است.</p>
+          <div style="margin-top:.75rem"><code class="kbd" dir="ltr">base_url = …/functions/v1/panel/v1</code></div>
+        </div>
+        <div class="step-card card" style="padding:1.5rem">
+          <div style="font-family:var(--font-serif);font-weight:700;color:#D97757">03</div>
+          <h3 style="margin:.5rem 0">اجرا</h3>
+          <p style="color:#545046;font-size:.875rem;line-height:1.8">اولین درخواست را بزنید. توکن‌ها زنده استریم می‌شوند و مصرف شما در داشبورد لحظه‌ای ثبت می‌شود.</p>
+          <div style="margin-top:.75rem"><code class="kbd" dir="ltr">stream=True</code></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section-alt">
+    <div class="container">
+      <h2 class="section-title">برای اپلیکیشن‌های واقعی ساخته شده</h2>
+      <p class="section-sub" style="text-align:center;color:#6B6659;margin:.5rem 0 2rem">هر چیزی که برای رفتن به پروداکشن لازم است — نه فقط دمو.</p>
+      <div class="features-grid">
+        <div class="feature-card card" style="padding:1.5rem">
+          <div class="feature-icon" style="width:2.5rem;height:2.5rem;border-radius:.5rem;background:#FBF0EB;display:flex;align-items:center;justify-content:center;margin-bottom:.75rem"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12M10 4v12" stroke="#D97757" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="10" r="6" stroke="#D97757" stroke-width="1.2"/></svg></div>
+          <h3>استریم واقعی</h3>
+          <p style="color:#545046;font-size:.875rem;line-height:1.8">خروجی Server-Sent Events از اولین توکن تا آخرین. بدون بافر، بدون انتظار.</p>
+        </div>
+        <div class="feature-card card" style="padding:1.5rem">
+          <div class="feature-icon" style="width:2.5rem;height:2.5rem;border-radius:.5rem;background:#FBF0EB;display:flex;align-items:center;justify-content:center;margin-bottom:.75rem"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="4" y="6" width="12" height="8" rx="2" stroke="#D97757" stroke-width="1.4"/><path d="M8 10h4" stroke="#D97757" stroke-width="1.4" stroke-linecap="round"/></svg></div>
+          <h3>فراخوانی ابزار</h3>
+          <p style="color:#545046;font-size:.875rem;line-height:1.8">ابزارها و توابع را به مدل بدهید؛ Coding Agentها همین‌طور کار می‌کنند.</p>
+        </div>
+        <div class="feature-card card" style="padding:1.5rem">
+          <div class="feature-icon" style="width:2.5rem;height:2.5rem;border-radius:.5rem;background:#FBF0EB;display:flex;align-items:center;justify-content:center;margin-bottom:.75rem"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="4" y="4" width="12" height="12" rx="2" stroke="#D97757" stroke-width="1.4"/><circle cx="10" cy="10" r="2.5" stroke="#D97757" stroke-width="1.2"/><path d="M4 13l3-3 2 2 3-4 4 4" stroke="#D97757" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>ورودی تصویر</h3>
+          <p style="color:#545046;font-size:.875rem;line-height:1.8">تصاویر را در چت بفرستید: تحلیل، OCR و درک رابط کاربری.</p>
+        </div>
+        <div class="feature-card card" style="padding:1.5rem">
+          <div class="feature-icon" style="width:2.5rem;height:2.5rem;border-radius:.5rem;background:#FBF0EB;display:flex;align-items:center;justify-content:center;margin-bottom:.75rem"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 4a6 6 0 100 12 6 6 0 000-12z" stroke="#D97757" stroke-width="1.4"/><path d="M10 8v4l3 2" stroke="#D97757" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>مدل‌های استدلالی</h3>
+          <p style="color:#545046;font-size:.875rem;line-height:1.8">مدل‌های Reasoning قبل از پاسخ، مرحله‌به‌مرحله فکر می‌کنند. بودجه‌بندی توکن هم پشتیبانی می‌شود.</p>
+        </div>
+        <div class="feature-card card" style="padding:1.5rem">
+          <div class="feature-icon" style="width:2.5rem;height:2.5rem;border-radius:.5rem;background:#FBF0EB;display:flex;align-items:center;justify-content:center;margin-bottom:.75rem"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 14l4-4 3 3 5-7" stroke="#D97757" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16h12" stroke="#D97757" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+          <h3>تحلیل مصرف</h3>
+          <p style="color:#545046;font-size:.875rem;line-height:1.8">لاگ کامل هر درخواست، توکن و تأخیر — به تفکیک کلید و مدل. خروجی CSV و JSON.</p>
+        </div>
+        <div class="feature-card card" style="padding:1.5rem">
+          <div class="feature-icon" style="width:2.5rem;height:2.5rem;border-radius:.5rem;background:#FBF0EB;display:flex;align-items:center;justify-content:center;margin-bottom:.75rem"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M6 10h8M10 6v8" stroke="#D97757" stroke-width="1.4" stroke-linecap="round"/><circle cx="10" cy="10" r="7" stroke="#D97757" stroke-width="1.2"/></svg></div>
+          <h3>پلن‌های شفاف</h3>
+          <p style="color:#545046;font-size:.875rem;line-height:1.8">ماهانه یا سالانه؛ همه پلن‌ها همه مدل‌ها. وقتی توکن تمام شود، خطای واضح 402 می‌گیرید نه فاکتور غافلگیرکننده.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODELS -->
+  <section class="section">
+    <div class="container">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+        <h2 class="section-title" style="margin:0;text-align:right">مدل‌هایی که با آن‌ها شروع می‌کنید</h2>
+        <a class="btn btn-outline" href="models.html">مرور همه مدل‌ها ←</a>
+      </div>
+      <div class="grid-3" style="margin-top:1.5rem">
+        <article class="model-card"><div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+  <div style="display:flex;align-items:center;gap:.5rem;min-width:0">
+    <span class="pv-dot pv-anthropic"></span>
+    <code class="kbd" dir="ltr" style="font-size:.8125rem">claude-opus-5.5</code>
+  </div>
+  <span style="font-size:.75rem;color:#8A8475">Anthropic</span>
+</div>
+<p style="font-size:.875rem;color:#6B6659;line-height:1.8;margin:.75rem 0;min-height:2.6rem">مدل پرچم‌دار Anthropic؛ استدلال و کدنویسی در بالاترین سطح.</p>
+<div style="display:flex;flex-wrap:wrap;gap:.375rem"><span class="chip chip-reasoning">استدلال</span> <span class="chip chip-tools">ابزارها</span> <span class="chip chip-vision">تصویر</span></div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-top:.875rem;padding-top:.75rem;border-top:1px solid #F4F1EA;font-family:var(--font-mono);font-size:.75rem;color:#8A8475" dir="ltr">
+  <span>CTX 200K</span><span>IN · OUT included</span>
+</div></article>
+        <article class="model-card"><div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+  <div style="display:flex;align-items:center;gap:.5rem;min-width:0">
+    <span class="pv-dot pv-openai"></span>
+    <code class="kbd" dir="ltr" style="font-size:.8125rem">gpt-5.6-luna</code>
+  </div>
+  <span style="font-size:.75rem;color:#8A8475">OpenAI</span>
+</div>
+<p style="font-size:.875rem;color:#6B6659;line-height:1.8;margin:.75rem 0;min-height:2.6rem">مدل سریع و کارآمد OpenAI برای کارهای روزمره.</p>
+<div style="display:flex;flex-wrap:wrap;gap:.375rem"><span class="chip chip-reasoning">استدلال</span> <span class="chip chip-tools">ابزارها</span> <span class="chip chip-vision">تصویر</span></div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-top:.875rem;padding-top:.75rem;border-top:1px solid #F4F1EA;font-family:var(--font-mono);font-size:.75rem;color:#8A8475" dir="ltr">
+  <span>CTX 400K</span><span>IN · OUT included</span>
+</div></article>
+        <article class="model-card"><div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+  <div style="display:flex;align-items:center;gap:.5rem;min-width:0">
+    <span class="pv-dot pv-google"></span>
+    <code class="kbd" dir="ltr" style="font-size:.8125rem">gemini-3.7-flash</code>
+  </div>
+  <span style="font-size:.75rem;color:#8A8475">Google</span>
+</div>
+<p style="font-size:.875rem;color:#6B6659;line-height:1.8;margin:.75rem 0;min-height:2.6rem">Google Gemini؛ سرعت بالا با پنجره متنی بزرگ.</p>
+<div style="display:flex;flex-wrap:wrap;gap:.375rem"><span class="chip chip-reasoning">استدلال</span> <span class="chip chip-tools">ابزارها</span> <span class="chip chip-vision">تصویر</span></div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-top:.875rem;padding-top:.75rem;border-top:1px solid #F4F1EA;font-family:var(--font-mono);font-size:.75rem;color:#8A8475" dir="ltr">
+  <span>CTX 1M</span><span>IN · OUT included</span>
+</div></article>
+        <article class="model-card"><div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+  <div style="display:flex;align-items:center;gap:.5rem;min-width:0">
+    <span class="pv-dot pv-deepseek"></span>
+    <code class="kbd" dir="ltr" style="font-size:.8125rem">deepseek-v4-pro-max</code>
+  </div>
+  <span style="font-size:.75rem;color:#8A8475">DeepSeek</span>
+</div>
+<p style="font-size:.875rem;color:#6B6659;line-height:1.8;margin:.75rem 0;min-height:2.6rem">DeepSeek؛ استدلال و کدنویسی قوی با قیمت اقتصادی.</p>
+<div style="display:flex;flex-wrap:wrap;gap:.375rem"><span class="chip chip-reasoning">استدلال</span> <span class="chip chip-tools">ابزارها</span></div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-top:.875rem;padding-top:.75rem;border-top:1px solid #F4F1EA;font-family:var(--font-mono);font-size:.75rem;color:#8A8475" dir="ltr">
+  <span>CTX 163K</span><span>IN · OUT included</span>
+</div></article>
+        <article class="model-card"><div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+  <div style="display:flex;align-items:center;gap:.5rem;min-width:0">
+    <span class="pv-dot pv-moonshot"></span>
+    <code class="kbd" dir="ltr" style="font-size:.8125rem">kimi-k3</code>
+  </div>
+  <span style="font-size:.75rem;color:#8A8475">Moonshot</span>
+</div>
+<p style="font-size:.875rem;color:#6B6659;line-height:1.8;margin:.75rem 0;min-height:2.6rem">Moonshot Kimi؛ متن‌های طولانی و تحلیل عمیق.</p>
+<div style="display:flex;flex-wrap:wrap;gap:.375rem"><span class="chip chip-reasoning">استدلال</span> <span class="chip chip-tools">ابزارها</span></div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-top:.875rem;padding-top:.75rem;border-top:1px solid #F4F1EA;font-family:var(--font-mono);font-size:.75rem;color:#8A8475" dir="ltr">
+  <span>CTX 262K</span><span>IN · OUT included</span>
+</div></article>
+        <article class="model-card"><div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+  <div style="display:flex;align-items:center;gap:.5rem;min-width:0">
+    <span class="pv-dot pv-bytedance"></span>
+    <code class="kbd" dir="ltr" style="font-size:.8125rem">seed-2.1-turbo</code>
+  </div>
+  <span style="font-size:.75rem;color:#8A8475">ByteDance</span>
+</div>
+<p style="font-size:.875rem;color:#6B6659;line-height:1.8;margin:.75rem 0;min-height:2.6rem">ByteDance Seed؛ پاسخ‌های فوری با کیفیت پایدار.</p>
+<div style="display:flex;flex-wrap:wrap;gap:.375rem"><span class="chip chip-reasoning">استدلال</span> <span class="chip chip-tools">ابزارها</span></div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-top:.875rem;padding-top:.75rem;border-top:1px solid #F4F1EA;font-family:var(--font-mono);font-size:.75rem;color:#8A8475" dir="ltr">
+  <span>CTX 262K</span><span>IN · OUT included</span>
+</div></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING TEASER -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">۳۰ میلیون توکن، <span class="hl" dir="ltr">$1.20</span>. یا نامحدود با <span dir="ltr">$50</span>.</h2>
+      <p class="section-sub" style="text-align:center;color:#6B6659;margin:.5rem 0 2rem">مصرف خود را روی Claude Opus 5.5 یا هر مدل دیگر بگذارید؛ همه پلن‌ها همه مدل‌ها.</p>
+      <div class="table-wrap compare-table">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>پلن</th>
+              <th>توکن / ماه</th>
+              <th>قیمت / ماه</th>
+              <th>هر ۱ میلیون توکن</th>
+              <th>درخواست / دقیقه</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>رایگان</td>
+              <td><span class="ltr" dir="ltr">1M</span></td>
+              <td>رایگان</td>
+              <td>—</td>
+              <td><span class="ltr" dir="ltr">60</span></td>
+            </tr>
+            <tr>
+              <td>استارتر</td>
+              <td><span class="ltr" dir="ltr">30M</span></td>
+              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$1.20</span></td>
+              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$0.04</span></td>
+              <td><span class="ltr" dir="ltr">120</span></td>
+            </tr>
+            <tr>
+              <td>بیسیک</td>
+              <td><span class="ltr" dir="ltr">100M</span></td>
+              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$3.50</span></td>
+              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$0.035</span></td>
+              <td><span class="ltr" dir="ltr">300</span></td>
+            </tr>
+            <tr>
+              <td>حرفه‌ای <span class="badge badge-clay" style="margin-inline-start:.5rem">بهترین ارزش</span></td>
+              <td><span class="ltr" dir="ltr">200M</span></td>
+              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$5.75</span></td>
+              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$0.0288</span></td>
+              <td><span class="ltr" dir="ltr">600</span></td>
+            </tr>
+            <tr>
+              <td>مقیاس</td>
+              <td><span class="ltr" dir="ltr">500M</span></td>
+              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$11.50</span></td>
+              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$0.023</span></td>
+              <td><span class="ltr" dir="ltr">1,200</span></td>
+            </tr>
+            <tr>
+              <td>نامحدود <span class="badge badge-clay" style="margin-inline-start:.5rem">بدون سقف</span></td>
+              <td><span class="ltr" dir="ltr">Unlimited</span></td>
+              <td><span class="ltr" dir="ltr" style="font-family:var(--font-serif)">$50</span></td>
+              <td>—</td>
+              <td><span class="ltr" dir="ltr">3,000</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="hero-ctas" style="justify-content:center;margin-top:1.5rem">
+        <a class="btn btn-primary" href="register.html">شروع رایگان با ۱ میلیون توکن</a>
+        <a class="btn btn-secondary" href="pricing.html">مقایسه دقیق پلن‌ها</a>
+      </div>
+      <p class="price-note" style="text-align:center;color:#6B6659;font-size:.875rem;margin-top:1rem">توکن = پرامپت + پاسخ. محدودیت نرخ به‌ازای هر دقیقه اعمال و در هدرهای <code class="kbd" dir="ltr">X-RateLimit-*</code> گزارش می‌شود.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section-alt">
+    <div class="container">
+      <h2 class="section-title">سوال‌های پرتکرار</h2>
+      <div class="faq" style="max-width:46rem;margin:1.5rem auto 0">
+        <details class="card" style="padding:0;margin-bottom:.75rem">
+          <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer">هزینه چطور کار می‌کند؟</summary>
+          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8">هر پلن یک سهمیه توکن ماهانه دارد؛ توکن‌ها پرامپت و پاسخ را با هم می‌شمارند و هر ماه شارژ دوباره می‌شوند. تا وقتی سهمیه هست، هزینه‌ی اضافه‌ای پرداخت نمی‌کنید و مصرف‌تان در داشبورد به‌صورت لحظه‌ای نمایش داده می‌شود.</div>
+        </details>
+        <details class="card" style="padding:0;margin-bottom:.75rem">
+          <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer">پلن‌های ارزان‌تر مدل‌ها را محدود می‌کنند؟</summary>
+          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8">خیر. همه پلن‌ها به همه مدل‌ها دسترسی دارند؛ تفاوت فقط در حجم توکن و نرخ درخواست است. می‌توانید Claude Opus 5.5 یا هر مدل دیگری را حتی روی پلن رایگان امتحان کنید.</div>
+        </details>
+        <details class="card" style="padding:0;margin-bottom:.75rem">
+          <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer">با SDK رسمی OpenAI سازگار است؟</summary>
+          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8">بله. کافی است Base URL و api_key را عوض کنید؛ بقیه کد دست‌نخورده می‌ماند. تمام پارامترهای استاندارد مثل stream و tools بدون تغییر کار می‌کنند.</div>
+        </details>
+        <details class="card" style="padding:0;margin-bottom:.75rem">
+          <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer">با چه ابزارهای کدنویسی AI کار می‌کند؟</summary>
+          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8">Kilo Code، Cline، Cursor، opencode، Claude Code و هر کلاینت سازگار با OpenAI. اگر ابزار شما با OpenAI صحبت می‌کند، با Codism هم کار می‌کند — فقط Base URL را تغییر دهید.</div>
+        </details>
+        <details class="card" style="padding:0;margin-bottom:.75rem">
+          <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer">توکن چی‌ست؟</summary>
+          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8">کوچک‌ترین واحد متن؛ هم ورودی شما و هم پاسخ مدل با هم شمرده می‌شوند. هر درخواست مجموع پرامپت و completion را مصرف می‌کند و در داشبورد تفکیک‌شده نمایش داده می‌شود.</div>
+        </details>
+        <details class="card" style="padding:0;margin-bottom:.75rem">
+          <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer">استریم و فراخوانی ابزار را پشتیبانی می‌کنید؟</summary>
+          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8">بله؛ SSE از اولین توکن، و Tool Calling کامل. خروجی به‌صورت Server-Sent Events استریم می‌شود و تعریف ابزارها دقیقاً مثل API اصلی OpenAI عمل می‌کند.</div>
+        </details>
+        <details class="card" style="padding:0;margin-bottom:.75rem">
+          <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer">اگر توکن‌هایم تمام شود چه می‌شود؟</summary>
+          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8">درخواست‌ها به‌جای قطع بی‌صدا، خطای واضح HTTP 402 می‌گیرند؛ شارژ مجدد یا ارتقای پلن بلافاصله همه‌چیز را برمی‌گرداند. هیچ فاکتور غافلگیرکننده‌ای صادر نمی‌شود.</div>
+        </details>
+        <details class="card" style="padding:0;margin-bottom:.75rem">
+          <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer">پرداخت چطور است؟</summary>
+          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8">پلن رایگان بدون نیاز به کارت فعال می‌شود. برای پلن‌های پولی با پشتیبانی در تماس باشید؛ فعال‌سازی سریع و لغو در هر زمان امکان‌پذیر است و سهمیه تا پایان دوره باقی می‌ماند.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA DARK -->
+  <section class="cta-dark">
+    <div class="container" style="text-align:center;padding:3rem 1rem">
+      <h2 style="color:white;margin:0 0 .75rem">در حدود یک دقیقه آماده‌اید</h2>
+      <p style="color:#E8E2D5;margin:0 0 1.5rem">حساب بسازید، کلید بگیرید و اولین درخواست را بزنید — ۱ میلیون توکن رایگان شامل می‌شود.</p>
+      <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+        <a class="btn btn-primary" href="register.html">ساخت حساب رایگان</a>
+        <a class="btn btn-outline btn-on-dark" href="docs/getting-started.html">راهنمای سریع</a>
+      </div>
+    </div>
+  </section>
 </main>
-<script>
-let token=localStorage.getItem("codism_token")||"",cur=null,keys=[];
-const API_BASE=(typeof window!=="undefined"&&window.CODISM_API_BASE)||"";
-function api(p,o={}){o.headers=o.headers||{};if(token)o.headers["Authorization"]="Bearer "+token;if(o.body&&typeof o.body==="object"){o.headers["Content-Type"]="application/json";o.body=JSON.stringify(o.body)}return fetch(API_BASE+p,o).then(async r=>{const t=await r.text();let j;try{j=JSON.parse(t)}catch{j={raw:t}};if(!r.ok)throw new Error((j&&j.error)||t.slice(0,300));return j})}
-function show(id){document.querySelectorAll("main>section").forEach(s=>s.classList.add("hidden"));document.getElementById("view-"+id).classList.remove("hidden");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.n===id))}
-function go(h){location.hash="#/"+h}
-function route(){const h=location.hash.replace(/^#\/?/,"")||"keys";if(!token){show("login");return}if(h==="login"){show("keys");return}if(h.startsWith("admin")&&cur&&cur.role!=="admin"){show("keys");return}if(document.getElementById("view-"+h))show(h);else show("keys");if(h==="keys")loadKeys();if(h==="usage")loadUsage();if(h==="guide")refreshGuide();if(h==="admin-users")loadAdminUsers();if(h==="admin-stats")loadAdminStats()}
-async function doLogin(){const e=document.getElementById("le").value.trim(),p=document.getElementById("lp").value;document.getElementById("loginMsg").textContent="";try{const j=await api("/api/auth/login",{method:"POST",body:{email:e,password:p}});token=j.token;localStorage.setItem("codism_token",token);await boot()}catch(e){document.getElementById("loginMsg").textContent=e.message}}
-function logout(){localStorage.removeItem("codism_token");token="";cur=null;location.hash="#/login";show("login")}
-async function boot(){if(!token){show("login");return}try{const j=await api("/api/me");cur=j.user;document.getElementById("meInfo").textContent=cur.email+" ("+cur.role+")";if(cur.role==="admin"){document.getElementById("navAdminUsers").classList.remove("hidden");document.getElementById("navAdminStats").classList.remove("hidden")}const base=(API_BASE||(location.origin+"/functions/v1/panel"))+"/v1";document.getElementById("baseUrl").textContent=base;document.getElementById("guideBase").textContent=base;route()}catch{logout()}}
-async function loadKeys(){try{keys=await api("/api/keys");const tb=document.getElementById("keysBody");tb.innerHTML=keys.map(k=>{const masked=k.key?k.key.slice(0,12)+"..."+k.key.slice(-4):"-";return `<tr><td>${k.label||"-"}</td><td class="ltr"><span>${masked}</span> <button class="ghost" onclick="copyKey('${k.key}')">کپی</button></td><td><span class="badge ${k.enabled?"ok":"bad"}">${k.enabled?"فعال":"غیرفعال"}</span></td><td class="ltr">${k.models||"*"}</td><td>${new Date(k.created_at).toLocaleString("fa-IR")}</td><td><button class="ghost" onclick="delKey('${k.id}')">حذف</button></td></tr>`}).join("")||'<tr><td colspan=6 class="muted">کلیدی نیست</td></tr>';const sel=document.getElementById("guideKeySel");if(sel)sel.innerHTML=keys.map(k=>`<option value="${k.key}">${k.label||k.key.slice(0,12)}</option>`).join("");refreshGuide()}catch(e){}}
-async function createKey(){const label=document.getElementById("kLabel").value.trim();try{await api("/api/keys",{method:"POST",body:{label}});document.getElementById("kLabel").value="";loadKeys()}catch(e){alert(e.message)}}
-async function delKey(id){if(!confirm("حذف کلید؟"))return;await api("/api/keys/"+id,{method:"DELETE"});loadKeys()}
-function copyKey(k){navigator.clipboard.writeText(k);alert("کپی شد")}
-async function loadUsage(){try{const j=await api("/api/usage?days=14");document.getElementById("uTodayTok").textContent=(j.today.prompt_tokens+j.today.completion_tokens);document.getElementById("uTodayReq").textContent=j.today.requests+" درخواست";document.getElementById("uMonthTok").textContent=(j.month.prompt_tokens+j.month.completion_tokens);document.getElementById("uMonthReq").textContent=j.month.requests+" درخواست";document.getElementById("usageBody").innerHTML=j.by_day.map(r=>`<tr><td>${r.day.slice(0,10)}</td><td>${r.requests}</td><td>${r.prompt_tokens}</td><td>${r.completion_tokens}</td></tr>`).join("");const rb=document.getElementById("recentBody");if(rb){const hints={invalid_api_key:"کلید نامعتبر",missing_api_key:"کلید ارسال نشده",key_disabled:"کلید غیرفعال",user_disabled:"حساب غیرفعال",model_not_allowed:"این مدل برای کلید شما مجاز نیست",daily_quota_exceeded:"سهمیه روزانه تمام شد",monthly_quota_exceeded:"سهمیه ماهانه تمام شد",upstream_challenge:"سرویس موقتا در دسترس نیست",upstream_error:"سرویس موقتا در دسترس نیست",upstream_timeout:"پاسخ سرویس طولانی شد",body_too_large:"حجم درخواست بیش از حد",not_found:"مسیر اشتباه"};rb.innerHTML=(j.recent||[]).map(q=>`<tr><td>${new Date(q.ts).toLocaleString("fa-IR")}</td><td class="ltr">${q.route}</td><td class="ltr">${q.model||"-"}</td><td><span class="badge ${q.status<400?"ok":"bad"}">${q.status}</span></td><td>${q.status<400?((q.prompt_tokens+q.completion_tokens)+" توکن"):(hints[q.error_code]||q.error_code||"-")}</td></tr>`).join("")||'<tr><td colspan=5 class="muted">موردی ثبت نشده</td></tr>'}}catch(e){}}
-function refreshGuide(){const base=(API_BASE||(location.origin+"/functions/v1/panel"))+"/v1";
-const sel=document.getElementById("guideKeySel");const key=sel&&sel.value?sel.value:"codism_XXX";document.getElementById("guideCurl").textContent='curl '+base+'/chat/completions -H "Authorization: Bearer '+key+'" -H "Content-Type: application/json" -d \'{"model":"gpt-4o-mini","messages":[{"role":"user","content":"سلام"}]}\''}
-async function loadAdminUsers(){try{const rows=await api("/api/admin/users");document.getElementById("adminUsersBody").innerHTML=rows.map(u=>`<tr><td class="ltr">${u.email}</td><td>${u.name||""}</td><td>${u.role}</td><td><button class="ghost" onclick="toggleUser('${u.id}',${!u.enabled})">${u.enabled?"فعال":"غیرفعال"}</button></td><td><input class="ltr" style="width:110px" value="${u.daily_quota_tokens||0}" onchange="editQuota('${u.id}','daily',this.value)"></td><td><input class="ltr" style="width:110px" value="${u.monthly_quota_tokens||0}" onchange="editQuota('${u.id}','monthly',this.value)"></td><td>${u.key_count||0}</td><td><button class="ghost" onclick="resetPw('${u.id}')">رمز</button> <button class="ghost" onclick="delUser('${u.id}')">حذف</button></td></tr>`).join("")}catch(e){document.getElementById("adminUsersBody").innerHTML='<tr><td colspan=8>'+e.message+'</td></tr>'}}
-async function adminCreateUser(){const body={email:auEmail.value.trim(),name:auName.value.trim(),password:auPass.value,role:auRole.value,daily_quota_tokens:parseInt(auDaily.value||"0",10),monthly_quota_tokens:parseInt(auMonthly.value||"0",10)};document.getElementById("auMsg").textContent="";try{await api("/api/admin/users",{method:"POST",body});auEmail.value="";auName.value="";auPass.value="";loadAdminUsers()}catch(e){document.getElementById("auMsg").textContent=e.message}}
-async function toggleUser(id,enabled){try{await api("/api/admin/users/"+id,{method:"PATCH",body:{enabled}});loadAdminUsers()}catch(e){alert(e.message)}}
-async function editQuota(id,kind,val){const body={};if(kind==="daily")body.daily_quota_tokens=parseInt(val,10);else body.monthly_quota_tokens=parseInt(val,10);try{await api("/api/admin/users/"+id,{method:"PATCH",body})}catch(e){alert(e.message)}}
-async function resetPw(id){const p=prompt("رمز جدید:");if(!p)return;try{await api("/api/admin/users/"+id,{method:"PATCH",body:{password:p}});alert("انجام شد")}catch(e){alert(e.message)}}
-async function delUser(id){if(!confirm("حذف کاربر؟"))return;try{await api("/api/admin/users/"+id,{method:"DELETE"});loadAdminUsers()}catch(e){alert(e.message)}}
-async function loadAdminStats(){try{const j=await api("/api/admin/stats");document.getElementById("stUsers").textContent=j.totals.users;document.getElementById("stKeys").textContent=j.totals.keys;document.getElementById("stActive").textContent=j.totals.active_keys;document.getElementById("stReq").textContent=j.totals.requests_today;document.getElementById("stTok").textContent=j.totals.tokens_today;const sf=document.getElementById("stFailed");if(sf)sf.textContent=j.totals.failed_today??0;document.getElementById("adminStatsBody").innerHTML=j.by_day.map(r=>`<tr><td>${r.day.slice(0,10)}</td><td>${r.requests}</td><td>${r.tokens}</td></tr>`).join("")}catch(e){}}
-window.addEventListener("hashchange",route);boot();
-</script></body></html>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h4>محصول</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="models.html">مدل‌ها</a></li>
+          <li><a href="pricing.html">تعرفه‌ها</a></li>
+          <li><a href="changelog.html">تغییرات</a></li>
+          <li><a href="status.html">وضعیت سرویس</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>منابع</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="docs/">مستندات</a></li>
+          <li><a href="docs/getting-started.html">شروع سریع</a></li>
+          <li><a href="docs/coding-agents.html">راهنمای ابزارهای کدنویسی</a></li>
+          <li><a href="docs/chat-completions.html">مرجع API</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>قانونی</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="terms.html">شرایط استفاده</a></li>
+          <li><a href="privacy.html">حریم خصوصی</a></li>
+          <li><a href="refund.html">سیاست بازپرداخت</a></li>
+        </ul>
+      </div>
+      <div>
+        <a href="index.html" style="display:flex;align-items:center;gap:.5rem;text-decoration:none;margin-bottom:.75rem">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#D97757"/><text x="14" y="16" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="13" font-weight="500">{}</text></svg>
+          <span style="font-family:var(--font-serif);font-weight:700;font-size:1.25rem;color:#1A1915">Codism</span>
+        </a>
+        <p style="font-size:.875rem;color:#6B6659;line-height:1.7;margin:0">مدل‌های هوش مصنوعی از یک API ساده — سازگار با OpenAI، آماده برای ابزارهای کدنویسی.</p>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 Codism — تمامی حقوق محفوظ است.</div>
+  </div>
+</footer>
+
+<script src="assets/app.js?v=86250282"></script>
+
+</body>
+</html>

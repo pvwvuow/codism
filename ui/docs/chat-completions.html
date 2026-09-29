@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chat Completions — Codism</title>
+<meta name="description" content="مرجع کامل /v1/chat/completions.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#D97757">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/design.css?v=86250282">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<script>window.CODISM_API_BASE="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel";</script>
+
+</head>
+<body>
+<header class="navbar">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;height:4rem">
+    <a href="../index.html" style="display:flex;align-items:center;gap:.5rem;text-decoration:none">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#D97757"/><text x="14" y="16" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="13" font-weight="500">{}</text></svg>
+      <span style="font-family:var(--font-serif);font-weight:700;font-size:1.25rem;color:#1A1915">Codism</span>
+    </a>
+    <nav class="nav-links">
+      <a data-nav href="../models.html">مدل‌ها</a>
+      <a data-nav href="../pricing.html">تعرفه‌ها</a>
+      <a data-nav href="./">مستندات</a>
+      <a data-nav href="../changelog.html">تغییرات</a>
+      <a data-nav href="../status.html">وضعیت</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <a class="btn btn-ghost" href="../login.html" data-auth-link>ورود</a>
+      <a class="btn btn-primary" href="../register.html" data-auth-cta>شروع رایگان</a>
+      <button class="nav-toggle" aria-label="منو"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<main class="docs">
+  <div class="container">
+    <div class="docs-grid">
+      <aside class="docs-sidebar">
+        <nav class="docs-nav" aria-label="فهرست مستندات">
+          <div class="docs-nav-group">
+            <div class="docs-nav-title">شروع</div>
+            <a href="getting-started.html" class="docs-nav-link">شروع سریع</a>
+            <a href="authentication.html" class="docs-nav-link">احراز هویت</a>
+          </div>
+          <div class="docs-nav-group">
+            <div class="docs-nav-title">مرجع API</div>
+            <a href="chat-completions.html" class="docs-nav-link active" aria-current="page">Chat Completions</a>
+            <a href="streaming.html" class="docs-nav-link">استریم</a>
+            <a href="models.html" class="docs-nav-link">مدل‌ها</a>
+          </div>
+          <div class="docs-nav-group">
+            <div class="docs-nav-title">ابزارها و قابلیت‌ها</div>
+            <a href="coding-agents.html" class="docs-nav-link">ابزارهای کدنویسی</a>
+          </div>
+        </nav>
+      </aside>
+
+      <article class="docs-content">
+        <nav class="docs-breadcrumb" aria-label="breadcrumb">
+          <a href="../index.html">خانه</a>
+          <span class="docs-breadcrumb-sep">→</span>
+          <a href="index.html">مستندات</a>
+          <span class="docs-breadcrumb-sep">→</span>
+          <span aria-current="page">Chat Completions</span>
+        </nav>
+
+        <h1>Chat Completions</h1>
+        <p class="docs-lede">مرجع کامل اندپوینت اصلی برای ساخت پاسخ.</p>
+
+        <div class="docs-endpoint" dir="ltr">
+          <span class="badge badge-clay">POST</span>
+          <code class="kbd">/v1/chat/completions</code>
+        </div>
+        <p class="docs-endpoint-note" dir="ltr" style="font-size:.8rem;color:#6B6659;margin-top:.5rem;">https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1/chat/completions</p>
+
+        <section id="request-body" class="docs-section">
+          <h2>بدنه درخواست</h2>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>پارامتر</th>
+                  <th>نوع</th>
+                  <th>توضیح</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code class="kbd" dir="ltr">model</code></td>
+                  <td><code class="kbd" dir="ltr">string</code>، الزامی</td>
+                  <td>شناسه مدل؛ <code class="kbd" dir="ltr">gpt-4o</code> به مدل پیش‌فرض قوی نگاشت می‌شود</td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">messages</code></td>
+                  <td><code class="kbd" dir="ltr">array</code>، الزامی</td>
+                  <td>آرایه پیام‌ها با <code class="kbd" dir="ltr">role</code> و <code class="kbd" dir="ltr">content</code></td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">stream</code></td>
+                  <td><code class="kbd" dir="ltr">boolean</code></td>
+                  <td><code class="kbd" dir="ltr">true</code> = پاسخ به‌صورت SSE</td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">temperature</code></td>
+                  <td><code class="kbd" dir="ltr">number</code></td>
+                  <td>۰ تا ۲، پیش‌فرض ۱</td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">max_tokens</code></td>
+                  <td><code class="kbd" dir="ltr">integer</code></td>
+                  <td>سقف توکن پاسخ</td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">tools</code></td>
+                  <td><code class="kbd" dir="ltr">array</code></td>
+                  <td>تعریف ابزارها برای فراخوانی تابع</td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">tool_choice</code></td>
+                  <td><code class="kbd" dir="ltr">string|object</code></td>
+                  <td>کنترل انتخاب ابزار</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="example" class="docs-section">
+          <h2>نمونه درخواست</h2>
+          <div class="terminal" dir="ltr">
+            <div class="terminal-header">
+              <span class="terminal-dots"><i></i><i></i><i></i></span>
+              <span class="terminal-title">curl</span>
+            </div>
+            <pre><code>curl https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1/chat/completions \
+  -H "Authorization: Bearer codism_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"Hi"}],"temperature":0.7,"max_tokens":512}'</code></pre>
+          </div>
+        </section>
+
+        <section id="response" class="docs-section">
+          <h2>پاسخ</h2>
+          <div class="terminal" dir="ltr">
+            <div class="terminal-header">
+              <span class="terminal-dots"><i></i><i></i><i></i></span>
+              <span class="terminal-title">json</span>
+            </div>
+            <pre><code>{
+  "id": "chatcmpl-…",
+  "object": "chat.completion",
+  "model": "claude-opus-5.5",
+  "choices": [
+    {
+      "index": 0,
+      "message": { "role": "assistant", "content": "Hello! How can I help?" },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 12,
+    "completion_tokens": 9,
+    "total_tokens": 21
+  }
+}</code></pre>
+          </div>
+          <p>توجه: فیلد <code class="kbd" dir="ltr">model</code> در پاسخ، شناسه واقعی مدل بالادست را نشان می‌دهد (مثلاً نگاشت <code class="kbd" dir="ltr">gpt-4o → claude-opus-5.5</code>).</p>
+        </section>
+
+        <section id="model-mapping" class="docs-section">
+          <h2>نکته درباره نگاشت مدل</h2>
+          <p>شناسه‌های <code class="kbd" dir="ltr">gpt-4o</code> و <code class="kbd" dir="ltr">gpt-5</code> به یک مدل پیش‌فرض قدرتمند نگاشت می‌شوند؛ بقیه شناسه‌ها عیناً به مدل هم‌نام می‌روند. برای دیدن همه شناسه‌های معتبر، <code class="kbd" dir="ltr">GET /v1/models</code> را صدا بزنید.</p>
+        </section>
+
+        <nav class="docs-next">
+          <a href="streaming.html" class="docs-next-link">
+            <span class="docs-next-label">بعدی</span>
+            <strong class="docs-next-title">استریم</strong>
+          </a>
+        </nav>
+
+        <div class="docs-help card">
+          <h3>به کمک نیاز دارید؟</h3>
+          <p>مستندات را خواندید و هنوز سوالی دارید؟ تیم پشتیبانی Codism آماده پاسخگویی است.</p>
+          <a href="../index.html#contact" class="btn btn-outline btn-sm">تماس با پشتیبانی</a>
+        </div>
+      </article>
+
+      <nav class="docs-toc" aria-label="فهرست این صفحه">
+        <div class="docs-toc-title">در این صفحه</div>
+        <a href="#request-body" class="docs-toc-link">بدنه درخواست</a>
+        <a href="#example" class="docs-toc-link">نمونه درخواست</a>
+        <a href="#response" class="docs-toc-link">پاسخ</a>
+        <a href="#model-mapping" class="docs-toc-link">نکته درباره نگاشت مدل</a>
+      </nav>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h4>محصول</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="../models.html">مدل‌ها</a></li>
+          <li><a href="../pricing.html">تعرفه‌ها</a></li>
+          <li><a href="../changelog.html">تغییرات</a></li>
+          <li><a href="../status.html">وضعیت سرویس</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>منابع</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="./">مستندات</a></li>
+          <li><a href="./getting-started.html">شروع سریع</a></li>
+          <li><a href="./coding-agents.html">راهنمای ابزارهای کدنویسی</a></li>
+          <li><a href="./chat-completions.html">مرجع API</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>قانونی</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="../terms.html">شرایط استفاده</a></li>
+          <li><a href="../privacy.html">حریم خصوصی</a></li>
+          <li><a href="../refund.html">سیاست بازپرداخت</a></li>
+        </ul>
+      </div>
+      <div>
+        <a href="../index.html" style="display:flex;align-items:center;gap:.5rem;text-decoration:none;margin-bottom:.75rem">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#D97757"/><text x="14" y="16" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="13" font-weight="500">{}</text></svg>
+          <span style="font-family:var(--font-serif);font-weight:700;font-size:1.25rem;color:#1A1915">Codism</span>
+        </a>
+        <p style="font-size:.875rem;color:#6B6659;line-height:1.7;margin:0">مدل‌های هوش مصنوعی از یک API ساده — سازگار با OpenAI، آماده برای ابزارهای کدنویسی.</p>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 Codism — تمامی حقوق محفوظ است.</div>
+  </div>
+</footer>
+
+<script src="assets/app.js?v=86250282"></script>
+
+</body>
+</html>

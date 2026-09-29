@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>احراز هویت — Codism</title>
+<meta name="description" content="Bearer token، محدودیت نرخ و خطاها.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#D97757">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/design.css?v=86250282">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<script>window.CODISM_API_BASE="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel";</script>
+
+</head>
+<body>
+<header class="navbar">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;height:4rem">
+    <a href="../index.html" style="display:flex;align-items:center;gap:.5rem;text-decoration:none">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#D97757"/><text x="14" y="16" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="13" font-weight="500">{}</text></svg>
+      <span style="font-family:var(--font-serif);font-weight:700;font-size:1.25rem;color:#1A1915">Codism</span>
+    </a>
+    <nav class="nav-links">
+      <a data-nav href="../models.html">مدل‌ها</a>
+      <a data-nav href="../pricing.html">تعرفه‌ها</a>
+      <a data-nav href="./">مستندات</a>
+      <a data-nav href="../changelog.html">تغییرات</a>
+      <a data-nav href="../status.html">وضعیت</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <a class="btn btn-ghost" href="../login.html" data-auth-link>ورود</a>
+      <a class="btn btn-primary" href="../register.html" data-auth-cta>شروع رایگان</a>
+      <button class="nav-toggle" aria-label="منو"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<main class="docs">
+  <div class="container">
+    <div class="docs-grid">
+      <aside class="docs-sidebar">
+        <nav class="docs-nav" aria-label="فهرست مستندات">
+          <div class="docs-nav-group">
+            <div class="docs-nav-title">شروع</div>
+            <a href="getting-started.html" class="docs-nav-link">شروع سریع</a>
+            <a href="authentication.html" class="docs-nav-link active" aria-current="page">احراز هویت</a>
+          </div>
+          <div class="docs-nav-group">
+            <div class="docs-nav-title">مرجع API</div>
+            <a href="chat-completions.html" class="docs-nav-link">Chat Completions</a>
+            <a href="streaming.html" class="docs-nav-link">استریم</a>
+            <a href="models.html" class="docs-nav-link">مدل‌ها</a>
+          </div>
+          <div class="docs-nav-group">
+            <div class="docs-nav-title">ابزارها و قابلیت‌ها</div>
+            <a href="coding-agents.html" class="docs-nav-link">ابزارهای کدنویسی</a>
+          </div>
+        </nav>
+      </aside>
+
+      <article class="docs-content">
+        <nav class="docs-breadcrumb" aria-label="breadcrumb">
+          <a href="../index.html">خانه</a>
+          <span class="docs-breadcrumb-sep">→</span>
+          <a href="index.html">مستندات</a>
+          <span class="docs-breadcrumb-sep">→</span>
+          <span aria-current="page">احراز هویت</span>
+        </nav>
+
+        <h1>احراز هویت</h1>
+        <p class="docs-lede">کلید API خود را با هدر Authorization به‌صورت Bearer ارسال کنید.</p>
+
+        <section id="api-keys" class="docs-section">
+          <h2>کلیدهای API</h2>
+          <p>کلیدها با پیشوند <code class="kbd" dir="ltr">codism_</code> شروع می‌شوند و فقط هنگام ساخت یک‌بار نمایش داده می‌شوند. کلید را مثل رمز عبور محافظت کنید؛ اگر لو رفت، از داشبورد حذف و کلید جدید بسازید.</p>
+          <p>همه کلیدهای یک حساب، به همان سهمیه توکن حساب متصل‌اند. می‌توانید برای هر کلید محدودیت مدل تعیین کنید (مثلاً فقط <code class="kbd" dir="ltr">gpt-4o</code>).</p>
+        </section>
+
+        <section id="sending-key" class="docs-section">
+          <h2>ارسال کلید</h2>
+          <div class="terminal" dir="ltr">
+            <div class="terminal-header">
+              <span class="terminal-dots"><i></i><i></i><i></i></span>
+              <span class="terminal-title">curl</span>
+            </div>
+            <pre><code>curl https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1/chat/completions \
+  -H "Authorization: Bearer codism_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"Hi"}]}'</code></pre>
+          </div>
+          <p>هدر <code class="kbd" dir="ltr">x-api-key</code> هم پذیرفته می‌شود.</p>
+        </section>
+
+        <section id="rate-limit" class="docs-section">
+          <h2>محدودیت نرخ</h2>
+          <p>نرخ درخواست به‌ازای هر دقیقه بستگی به پلن دارد (پلن رایگان: ۶۰ درخواست در دقیقه). وضعیت فعلی در این هدرها برمی‌گردد:</p>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>هدر</th>
+                  <th>معنی</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code class="kbd" dir="ltr">X-RateLimit-Limit</code></td>
+                  <td>سقف درخواست در دقیقه</td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">X-RateLimit-Remaining</code></td>
+                  <td>باقی‌مانده این دقیقه</td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">X-RateLimit-Reset</code></td>
+                  <td>زمان ریست</td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">X-RateLimit-Limit-Tokens</code></td>
+                  <td>سقف توکن در دقیقه</td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">X-RateLimit-Remaining-Tokens</code></td>
+                  <td>توکن باقی‌مانده این دقیقه</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>عبور از سقف → <code class="kbd" dir="ltr">HTTP 429</code> با پیام روشن.</p>
+        </section>
+
+        <section id="errors" class="docs-section">
+          <h2>خطاها</h2>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>کد</th>
+                  <th>معنی</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code class="kbd" dir="ltr">401 missing_api_key</code></td>
+                  <td>کلید ارسال نشده</td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">401 invalid_api_key</code></td>
+                  <td>کلید نامعتبر</td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">403 key_disabled</code></td>
+                  <td>کلید غیرفعال</td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">403 user_disabled</code></td>
+                  <td>حساب غیرفعال</td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">404 model_not_allowed</code></td>
+                  <td>این مدل برای کلید شما مجاز نیست</td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">429 daily_quota_exceeded</code> / <code class="kbd" dir="ltr">monthly_quota_exceeded</code></td>
+                  <td>اتمام سهمیه</td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">402</code></td>
+                  <td>اتمام موجودی (پلن تمام‌شده)</td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">413 body_too_large</code></td>
+                  <td>حجم بدنه بیش از ۸ مگابایت</td>
+                </tr>
+                <tr>
+                  <td><code class="kbd" dir="ltr">502 upstream_error</code></td>
+                  <td>اختلال سرویس بالادست</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>همه خطاها JSON استاندارد OpenAI برمی‌گردند: <code class="kbd" dir="ltr">{"error":{"message","type","code"}}</code></p>
+        </section>
+
+        <nav class="docs-next">
+          <a href="chat-completions.html" class="docs-next-link">
+            <span class="docs-next-label">بعدی</span>
+            <strong class="docs-next-title">Chat Completions</strong>
+          </a>
+        </nav>
+
+        <div class="docs-help card">
+          <h3>به کمک نیاز دارید؟</h3>
+          <p>مستندات را خواندید و هنوز سوالی دارید؟ تیم پشتیبانی Codism آماده پاسخگویی است.</p>
+          <a href="../index.html#contact" class="btn btn-outline btn-sm">تماس با پشتیبانی</a>
+        </div>
+      </article>
+
+      <nav class="docs-toc" aria-label="فهرست این صفحه">
+        <div class="docs-toc-title">در این صفحه</div>
+        <a href="#api-keys" class="docs-toc-link">کلیدهای API</a>
+        <a href="#sending-key" class="docs-toc-link">ارسال کلید</a>
+        <a href="#rate-limit" class="docs-toc-link">محدودیت نرخ</a>
+        <a href="#errors" class="docs-toc-link">خطاها</a>
+      </nav>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h4>محصول</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="../models.html">مدل‌ها</a></li>
+          <li><a href="../pricing.html">تعرفه‌ها</a></li>
+          <li><a href="../changelog.html">تغییرات</a></li>
+          <li><a href="../status.html">وضعیت سرویس</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>منابع</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="./">مستندات</a></li>
+          <li><a href="./getting-started.html">شروع سریع</a></li>
+          <li><a href="./coding-agents.html">راهنمای ابزارهای کدنویسی</a></li>
+          <li><a href="./chat-completions.html">مرجع API</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>قانونی</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="../terms.html">شرایط استفاده</a></li>
+          <li><a href="../privacy.html">حریم خصوصی</a></li>
+          <li><a href="../refund.html">سیاست بازپرداخت</a></li>
+        </ul>
+      </div>
+      <div>
+        <a href="../index.html" style="display:flex;align-items:center;gap:.5rem;text-decoration:none;margin-bottom:.75rem">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#D97757"/><text x="14" y="16" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="13" font-weight="500">{}</text></svg>
+          <span style="font-family:var(--font-serif);font-weight:700;font-size:1.25rem;color:#1A1915">Codism</span>
+        </a>
+        <p style="font-size:.875rem;color:#6B6659;line-height:1.7;margin:0">مدل‌های هوش مصنوعی از یک API ساده — سازگار با OpenAI، آماده برای ابزارهای کدنویسی.</p>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 Codism — تمامی حقوق محفوظ است.</div>
+  </div>
+</footer>
+
+<script src="assets/app.js?v=86250282"></script>
+
+</body>
+</html>

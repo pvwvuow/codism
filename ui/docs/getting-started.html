@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>شروع سریع — Codism</title>
+<meta name="description" content="اولین درخواست در کمتر از پنج دقیقه.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#D97757">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/design.css?v=86250282">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<script>window.CODISM_API_BASE="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel";</script>
+
+</head>
+<body>
+<header class="navbar">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;height:4rem">
+    <a href="../index.html" style="display:flex;align-items:center;gap:.5rem;text-decoration:none">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#D97757"/><text x="14" y="16" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="13" font-weight="500">{}</text></svg>
+      <span style="font-family:var(--font-serif);font-weight:700;font-size:1.25rem;color:#1A1915">Codism</span>
+    </a>
+    <nav class="nav-links">
+      <a data-nav href="../models.html">مدل‌ها</a>
+      <a data-nav href="../pricing.html">تعرفه‌ها</a>
+      <a data-nav href="./">مستندات</a>
+      <a data-nav href="../changelog.html">تغییرات</a>
+      <a data-nav href="../status.html">وضعیت</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <a class="btn btn-ghost" href="../login.html" data-auth-link>ورود</a>
+      <a class="btn btn-primary" href="../register.html" data-auth-cta>شروع رایگان</a>
+      <button class="nav-toggle" aria-label="منو"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<main dir="rtl" lang="fa">
+  <div class="container" style="padding-top:1.5rem;padding-bottom:3rem">
+    <div class="docs-grid" style="display:grid;grid-template-columns:240px 1fr 200px;gap:2rem;align-items:start">
+      <aside class="docs-side" style="position:sticky;top:5rem">
+        <div class="docs-group" style="margin-bottom:1.5rem">
+          <div class="docs-group-title" style="font-size:.75rem;font-weight:700;color:#6B6659;margin-bottom:.5rem">شروع</div>
+          <a href="getting-started.html" class="docs-link active" aria-current="page" style="display:block;padding:.4rem .75rem;border-radius:6px;background:#FBF0EB;color:#B0512F;text-decoration:none;font-size:.875rem;font-weight:600">شروع سریع</a>
+          <a href="authentication.html" class="docs-link" style="display:block;padding:.4rem .75rem;border-radius:6px;color:#3D3A33;text-decoration:none;font-size:.875rem">احراز هویت</a>
+        </div>
+        <div class="docs-group" style="margin-bottom:1.5rem">
+          <div class="docs-group-title" style="font-size:.75rem;font-weight:700;color:#6B6659;margin-bottom:.5rem">مرجع API</div>
+          <a href="chat-completions.html" class="docs-link" style="display:block;padding:.4rem .75rem;border-radius:6px;color:#3D3A33;text-decoration:none;font-size:.875rem">Chat Completions</a>
+          <a href="streaming.html" class="docs-link" style="display:block;padding:.4rem .75rem;border-radius:6px;color:#3D3A33;text-decoration:none;font-size:.875rem">استریم</a>
+          <a href="models.html" class="docs-link" style="display:block;padding:.4rem .75rem;border-radius:6px;color:#3D3A33;text-decoration:none;font-size:.875rem">مدل‌ها</a>
+        </div>
+        <div class="docs-group" style="margin-bottom:1.5rem">
+          <div class="docs-group-title" style="font-size:.75rem;font-weight:700;color:#6B6659;margin-bottom:.5rem">ابزارها و قابلیت‌ها</div>
+          <a href="coding-agents.html" class="docs-link" style="display:block;padding:.4rem .75rem;border-radius:6px;color:#3D3A33;text-decoration:none;font-size:.875rem">ابزارهای کدنویسی</a>
+        </div>
+      </aside>
+
+      <div class="docs-body" style="min-width:0">
+        <nav class="docs-breadcrumb" style="font-size:.8125rem;color:#6B6659;margin-bottom:1rem;display:flex;gap:.4rem;align-items:center">
+          <a href="../index.html" style="color:#6B6659;text-decoration:none">خانه</a>
+          <span style="color:#CFCCC3">/</span>
+          <a href="index.html" style="color:#6B6659;text-decoration:none">مستندات</a>
+          <span style="color:#CFCCC3">/</span>
+          <span style="color:#1A1915;font-weight:600">شروع سریع</span>
+        </nav>
+
+        <h1 style="font-family:var(--font-sans);font-size:2rem;font-weight:800;color:#1A1915;margin:0 0 .5rem">شروع سریع</h1>
+        <p class="lede" style="color:#545046;font-size:1rem;line-height:1.8;margin:0 0 2rem">یک کلید API بسازید و اولین درخواستتان را در کمتر از پنج دقیقه بزنید.</p>
+
+        <section id="intro" style="margin-bottom:2rem">
+          <h2 style="font-size:1.375rem;font-weight:800;color:#1A1915;margin:0 0 .75rem">شروع سریع</h2>
+          <p style="color:#3D3A33;line-height:1.9;margin:0">Codism یک API سازگار با OpenAI ارائه می‌دهد. اگر ابزار شما با OpenAI صحبت می‌کند، فقط دو چیز را عوض می‌کنید: Base URL و کلید API.</p>
+        </section>
+
+        <section id="base-url" style="margin-bottom:2rem">
+          <h3 style="font-size:1rem;font-weight:700;color:#1A1915;margin:0 0 .75rem">Base URL شما</h3>
+          <div class="terminal" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 1.25rem;background:#1C1C1A;border:1px solid #161615;border-radius:12px">
+            <code class="reveal-key" dir="ltr" style="font-family:var(--font-mono);font-size:.875rem;color:#E8E2D5;word-break:break-all">https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1</code>
+            <button class="btn btn-sm btn-secondary" data-copy="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1" onclick="navigator.clipboard.writeText(this.dataset.copy).then(()=>{const t=this.textContent;this.textContent='کپی شد!';setTimeout(()=>this.textContent=t,1500)})" style="flex-shrink:0">کپی</button>
+          </div>
+        </section>
+
+        <section id="step1" style="margin-bottom:2rem">
+          <h3 style="font-size:1.125rem;font-weight:700;color:#1A1915;margin:0 0 .5rem">۱. ساخت کلید API</h3>
+          <p style="color:#3D3A33;line-height:1.9;margin:0">وارد داشبورد شوید ← تب <b>کلیدهای API</b> ← <b>ساخت کلید</b>. کلید فقط یک‌بار نمایش داده می‌شود — با <code class="kbd" dir="ltr">codism_</code> شروع می‌شود و ۴۸ کاراکتر دارد.</p>
+        </section>
+
+        <section id="step2" style="margin-bottom:2rem">
+          <h3 style="font-size:1.125rem;font-weight:700;color:#1A1915;margin:0 0 .75rem">۲. اولین درخواست</h3>
+          <div class="terminal" dir="ltr" style="background:#1C1C1A;border:1px solid #161615;border-radius:12px;overflow:hidden;box-shadow:0 10px 15px -3px rgba(26,25,21,.2)">
+            <div style="display:flex;align-items:center;gap:.4rem;padding:.6rem 1rem;border-bottom:1px solid #2A2823">
+              <span style="width:10px;height:10px;border-radius:50%;background:#FF5F57;display:inline-block"></span>
+              <span style="width:10px;height:10px;border-radius:50%;background:#FEBC2E;display:inline-block"></span>
+              <span style="width:10px;height:10px;border-radius:50%;background:#28C840;display:inline-block"></span>
+              <span style="margin-left:.5rem;font-family:var(--font-mono);font-size:.75rem;color:#A8A294">curl</span>
+            </div>
+            <pre style="margin:0;padding:1rem 1.25rem;overflow-x:auto;font-family:var(--font-mono);font-size:.8rem;line-height:1.7;color:#E8E2D5;text-align:left"><code><span style="color:#8A8475"># cURL</span>
+<span style="color:#D97757">curl</span> <span style="color:#7FB069">https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1/chat/completions</span> \
+  <span style="color:#8AB4F8">-H</span> <span style="color:#7FB069">"Authorization: Bearer codism_your_key_here"</span> \
+  <span style="color:#8AB4F8">-H</span> <span style="color:#7FB069">"Content-Type: application/json"</span> \
+  <span style="color:#8AB4F8">-d</span> <span style="color:#7FB069">'{
+    "model": "gpt-4o",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'</span></code></pre>
+          </div>
+        </section>
+
+        <section id="step3" style="margin-bottom:2rem">
+          <h3 style="font-size:1.125rem;font-weight:700;color:#1A1915;margin:0 0 .5rem">۳. استفاده از SDK رسمی OpenAI</h3>
+          <p style="color:#3D3A33;line-height:1.9;margin:0 0 1rem">SDK را به Base URL ما نشانه بگیرید؛ بقیه‌ی کد بدون تغییر کار می‌کند.</p>
+
+          <div class="terminal" dir="ltr" style="background:#1C1C1A;border:1px solid #161615;border-radius:12px;overflow:hidden;box-shadow:0 10px 15px -3px rgba(26,25,21,.2);margin-bottom:1rem">
+            <div style="display:flex;align-items:center;gap:.4rem;padding:.6rem 1rem;border-bottom:1px solid #2A2823">
+              <span style="width:10px;height:10px;border-radius:50%;background:#FF5F57;display:inline-block"></span>
+              <span style="width:10px;height:10px;border-radius:50%;background:#FEBC2E;display:inline-block"></span>
+              <span style="width:10px;height:10px;border-radius:50%;background:#28C840;display:inline-block"></span>
+              <span style="margin-left:.5rem;font-family:var(--font-mono);font-size:.75rem;color:#A8A294">quickstart.py</span>
+            </div>
+            <pre style="margin:0;padding:1rem 1.25rem;overflow-x:auto;font-family:var(--font-mono);font-size:.8rem;line-height:1.7;color:#E8E2D5;text-align:left"><code><span style="color:#D97757">from</span> openai <span style="color:#D97757">import</span> OpenAI
+
+client = OpenAI(
+  <span style="color:#8AB4F8">api_key</span>=<span style="color:#7FB069">"codism_your_key_here"</span>,
+  <span style="color:#8AB4F8">base_url</span>=<span style="color:#7FB069">"https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1"</span>,
+)
+
+response = client.chat.completions.create(
+  <span style="color:#8AB4F8">model</span>=<span style="color:#7FB069">"gpt-4o"</span>,
+  <span style="color:#8AB4F8">messages</span>=[{<span style="color:#7FB069">"role"</span>: <span style="color:#7FB069">"user"</span>, <span style="color:#7FB069">"content"</span>: <span style="color:#7FB069">"Hello!"</span>}],
+)
+<span style="color:#D97757">print</span>(response.choices[<span style="color:#FEBC2E">0</span>].message.content)</code></pre>
+          </div>
+
+          <div class="terminal" dir="ltr" style="background:#1C1C1A;border:1px solid #161615;border-radius:12px;overflow:hidden;box-shadow:0 10px 15px -3px rgba(26,25,21,.2)">
+            <div style="display:flex;align-items:center;gap:.4rem;padding:.6rem 1rem;border-bottom:1px solid #2A2823">
+              <span style="width:10px;height:10px;border-radius:50%;background:#FF5F57;display:inline-block"></span>
+              <span style="width:10px;height:10px;border-radius:50%;background:#FEBC2E;display:inline-block"></span>
+              <span style="width:10px;height:10px;border-radius:50%;background:#28C840;display:inline-block"></span>
+              <span style="margin-left:.5rem;font-family:var(--font-mono);font-size:.75rem;color:#A8A294">quickstart.js</span>
+            </div>
+            <pre style="margin:0;padding:1rem 1.25rem;overflow-x:auto;font-family:var(--font-mono);font-size:.8rem;line-height:1.7;color:#E8E2D5;text-align:left"><code><span style="color:#D97757">import</span> OpenAI <span style="color:#D97757">from</span> <span style="color:#7FB069">"openai"</span>;
+
+<span style="color:#D97757">const</span> client = <span style="color:#D97757">new</span> OpenAI({
+  <span style="color:#8AB4F8">apiKey</span>: <span style="color:#7FB069">"codism_your_key_here"</span>,
+  <span style="color:#8AB4F8">baseURL</span>: <span style="color:#7FB069">"https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1"</span>,
+});
+
+<span style="color:#D97757">const</span> response = <span style="color:#D97757">await</span> client.chat.completions.create({
+  <span style="color:#8AB4F8">model</span>: <span style="color:#7FB069">"gpt-4o"</span>,
+  <span style="color:#8AB4F8">messages</span>: [{ <span style="color:#8AB4F8">role</span>: <span style="color:#7FB069">"user"</span>, <span style="color:#8AB4F8">content</span>: <span style="color:#7FB069">"Hello!"</span> }],
+});
+console.<span style="color:#8AB4F8">log</span>(response.choices[<span style="color:#FEBC2E">0</span>].message.content);</code></pre>
+          </div>
+        </section>
+
+        <section id="step4" style="margin-bottom:2rem">
+          <h3 style="font-size:1.125rem;font-weight:700;color:#1A1915;margin:0 0 .5rem">۴. اتصال یک ابزار کدنویسی</h3>
+          <p style="color:#3D3A33;line-height:1.9;margin:0 0 1rem">بیشتر ابزارهای کدنویسی یک تنظیمات OpenAI سفارشی دارند. این مقادیر را بدهید:</p>
+          <div class="table-wrap" style="overflow-x:auto;border:1px solid #E8E2D5;border-radius:12px">
+            <table class="table" style="width:100%;font-size:.875rem;border-collapse:collapse">
+              <thead>
+                <tr style="background:#FAF8F4">
+                  <th style="padding:.75rem 1rem;text-align:right;font-weight:600;color:#6B6659;border-bottom:1px solid #E8E2D5">تنظیمات</th>
+                  <th style="padding:.75rem 1rem;text-align:right;font-weight:600;color:#6B6659;border-bottom:1px solid #E8E2D5">مقدار</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33">API Provider</td>
+                  <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33">OpenAI Compatible</td>
+                </tr>
+                <tr>
+                  <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33">Base URL</td>
+                  <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA"><code class="kbd" dir="ltr">https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1</code></td>
+                </tr>
+                <tr>
+                  <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33">API Key</td>
+                  <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA"><code class="kbd" dir="ltr">codism_…</code></td>
+                </tr>
+                <tr>
+                  <td style="padding:.75rem 1rem;color:#3D3A33">مدل</td>
+                  <td style="padding:.75rem 1rem;color:#3D3A33">هر model id از صفحه مدل‌ها</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p style="color:#6B6659;font-size:.875rem;line-height:1.8;margin:.75rem 0 0">با Kilo Code، Cline، Cursor، opencode و Continue تست شده است.</p>
+        </section>
+
+        <section id="endpoints" style="margin-bottom:2rem">
+          <h2 style="font-size:1.375rem;font-weight:800;color:#1A1915;margin:0 0 1rem">اندپوینت‌های موجود</h2>
+          <div class="endpoint" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.875rem 1rem;background:#fff;border:1px solid #E8E2D5;border-radius:8px;margin-bottom:.5rem">
+            <code dir="ltr" style="font-family:var(--font-mono);font-size:.875rem;color:#1A1915;font-weight:600">GET /v1/models</code>
+            <span style="font-size:.875rem;color:#6B6659">فهرست مدل‌ها</span>
+          </div>
+          <div class="endpoint" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.875rem 1rem;background:#fff;border:1px solid #E8E2D5;border-radius:8px;margin-bottom:.75rem">
+            <code dir="ltr" style="font-family:var(--font-mono);font-size:.875rem;color:#1A1915;font-weight:600">POST /v1/chat/completions</code>
+            <span style="font-size:.875rem;color:#6B6659">ساخت پاسخ چت</span>
+          </div>
+          <p style="color:#8A8475;font-size:.875rem;line-height:1.8;margin:0">Embeddings و سایر اندپوینت‌های OpenAI در حال حاضر ارائه نمی‌شوند.</p>
+        </section>
+
+        <div class="docs-next card" style="padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.5rem">
+          <div>
+            <div style="font-size:.75rem;font-weight:600;color:#6B6659;margin-bottom:.15rem">بعدی</div>
+            <div style="font-weight:700;color:#1A1915">احراز هویت</div>
+          </div>
+          <a href="authentication.html" class="btn btn-outline" style="text-decoration:none">احراز هویت ←</a>
+        </div>
+
+        <div class="docs-help card" style="padding:1.25rem;background:#FBF0EB;border-color:#F5DDD2">
+          <div style="font-weight:700;color:#1A1915;margin-bottom:.25rem">کمک لازم داری؟</div>
+          <p style="font-size:.875rem;color:#6B6659;line-height:1.8;margin:0 0 .75rem">از داشبورد تیکت بزن یا با پشتیبانی در تماس باش.</p>
+          <a href="../index.html" class="btn btn-outline" style="text-decoration:none;background:#fff">دریافت کمک</a>
+        </div>
+      </div>
+
+      <nav class="docs-toc" style="position:sticky;top:5rem;font-size:.875rem">
+        <div style="font-weight:700;color:#1A1915;margin-bottom:.75rem">در این صفحه</div>
+        <ol style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.35rem">
+          <li><a href="#intro" style="color:#6B6659;text-decoration:none;display:block;padding:.2rem 0">۱. شروع سریع</a></li>
+          <li><a href="#step1" style="color:#6B6659;text-decoration:none;display:block;padding:.2rem 0">۲. ۱. ساخت کلید API</a></li>
+          <li><a href="#step2" style="color:#6B6659;text-decoration:none;display:block;padding:.2rem 0">۳. ۲. اولین درخواست</a></li>
+          <li><a href="#step3" style="color:#6B6659;text-decoration:none;display:block;padding:.2rem 0">۴. ۳. استفاده از SDK</a></li>
+          <li><a href="#step4" style="color:#6B6659;text-decoration:none;display:block;padding:.2rem 0">۵. ۴. اتصال ابزار کدنویسی</a></li>
+          <li><a href="#endpoints" style="color:#6B6659;text-decoration:none;display:block;padding:.2rem 0">۶. اندپوینت‌های موجود</a></li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h4>محصول</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="../models.html">مدل‌ها</a></li>
+          <li><a href="../pricing.html">تعرفه‌ها</a></li>
+          <li><a href="../changelog.html">تغییرات</a></li>
+          <li><a href="../status.html">وضعیت سرویس</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>منابع</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="./">مستندات</a></li>
+          <li><a href="./getting-started.html">شروع سریع</a></li>
+          <li><a href="./coding-agents.html">راهنمای ابزارهای کدنویسی</a></li>
+          <li><a href="./chat-completions.html">مرجع API</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>قانونی</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="../terms.html">شرایط استفاده</a></li>
+          <li><a href="../privacy.html">حریم خصوصی</a></li>
+          <li><a href="../refund.html">سیاست بازپرداخت</a></li>
+        </ul>
+      </div>
+      <div>
+        <a href="../index.html" style="display:flex;align-items:center;gap:.5rem;text-decoration:none;margin-bottom:.75rem">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#D97757"/><text x="14" y="16" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="13" font-weight="500">{}</text></svg>
+          <span style="font-family:var(--font-serif);font-weight:700;font-size:1.25rem;color:#1A1915">Codism</span>
+        </a>
+        <p style="font-size:.875rem;color:#6B6659;line-height:1.7;margin:0">مدل‌های هوش مصنوعی از یک API ساده — سازگار با OpenAI، آماده برای ابزارهای کدنویسی.</p>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 Codism — تمامی حقوق محفوظ است.</div>
+  </div>
+</footer>
+
+<script src="assets/app.js?v=86250282"></script>
+
+</body>
+</html>

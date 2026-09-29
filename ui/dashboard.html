@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>داشبورد — Codism</title>
+<meta name="description" content="کلیدها، مصرف و مدیریت حساب Codism.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#D97757">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/design.css?v=86250282">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<script>window.CODISM_API_BASE="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel";</script>
+
+</head>
+<body>
+<header class="navbar">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;height:4rem">
+    <a href="index.html" style="display:flex;align-items:center;gap:.5rem;text-decoration:none">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#D97757"/><text x="14" y="16" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="13" font-weight="500">{}</text></svg>
+      <span style="font-family:var(--font-serif);font-weight:700;font-size:1.25rem;color:#1A1915">Codism</span>
+    </a>
+    <nav class="nav-links">
+      <a data-nav href="models.html">مدل‌ها</a>
+      <a data-nav href="pricing.html">تعرفه‌ها</a>
+      <a data-nav href="docs/">مستندات</a>
+      <a data-nav href="changelog.html">تغییرات</a>
+      <a data-nav href="status.html">وضعیت</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <a class="btn btn-ghost" href="login.html" data-auth-link>ورود</a>
+      <a class="btn btn-primary" href="register.html" data-auth-cta>شروع رایگان</a>
+      <button class="nav-toggle" aria-label="منو"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<main class="dash-body">
+<style>
+.dash-body{background:#FAF8F4;min-height:100vh;padding:1.5rem 0 3rem}
+.dash-container{max-width:1152px;margin:0 auto;padding-inline:1rem}
+.dash-tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:2rem}
+.dash-tabs button{padding:.5rem 1rem;border-radius:8px;font-size:.875rem;font-weight:600;color:#6B6659;background:transparent;border:1px solid transparent;cursor:pointer;transition:.15s}
+.dash-tabs button:hover{background:#F4F1EA}
+.dash-tabs button.active{background:#fff;border-color:#E8E2D5;box-shadow:0 1px 2px rgba(26,25,21,.05);color:#1A1915}
+.hidden{display:none !important}
+.view{animation:fadeIn .15s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.dash-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:1.5rem}
+.dash-head h1{font-size:1.5rem;font-weight:800;color:#1A1915;margin:0}
+.dash-head .dash-sub{font-size:.875rem;color:#6B6659;margin-top:.25rem}
+.dash-actions{display:flex;gap:.5rem;flex-wrap:wrap}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));gap:1rem;margin-bottom:1.5rem}
+.kpi{padding:1rem 1.25rem}
+.kpi .kpi-label{font-size:.75rem;font-weight:600;color:#6B6659;margin-bottom:.375rem}
+.kpi .kpi-value{font-family:var(--font-serif,'Source Serif 4',Georgia,serif);font-size:1.875rem;font-weight:700;color:#1A1915;direction:ltr;text-align:right}
+.kpi .kpi-sub{font-size:.75rem;color:#8A8475;margin-top:.25rem}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+@media(max-width:860px){.dash-grid{grid-template-columns:1fr}}
+.panel{padding:1.25rem}
+.panel h3{font-size:1rem;font-weight:700;color:#1A1915;margin:0 0 1rem}
+.panel-sub{font-size:.75rem;color:#8A8475;margin-top:.75rem}
+.hint{font-size:.75rem;color:#8A8475}
+.progress{height:.5rem;background:#F4F1EA;border-radius:999px;overflow:hidden}
+.progress > i{display:block;height:100%;background:#D97757;border-radius:inherit;transition:width .3s}
+.plan-feats{list-style:none;padding:0;margin:1rem 0;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#3D3A33}
+.plan-feats li{padding:.25rem 0}
+.chart{display:flex;align-items:flex-end;gap:4px;height:120px;padding:.5rem 0 0;border-bottom:1px solid #F4F1EA}
+.chart i{flex:1;background:#D97757;border-radius:4px 4px 0 0;min-height:2px;transition:height .3s;opacity:.9}
+.chart i:hover{opacity:1}
+.chart-x{display:flex;justify-content:space-between;font-size:.75rem;color:#8A8475;margin-top:.5rem}
+.field{margin-bottom:.875rem}
+.field .label{margin-bottom:.375rem}
+.modal-back{position:fixed;inset:0;background:rgba(26,25,21,.45);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;padding:1rem;z-index:100}
+.modal-back.hidden{display:none !important}
+.modal{max-width:480px;width:100%;padding:1.5rem;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:1.125rem;font-weight:700;color:#1A1915;margin:0 0 1rem}
+.modal-actions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem}
+.reveal-key{user-select:all}
+.table-wrap{overflow-x:auto}
+.w-full{width:100%}
+</style>
+<div class="dash-container">
+<!-- تب‌ها -->
+<div class="dash-tabs" role="tablist" aria-label="بخش‌های پنل">
+<button type="button" data-view="overview" class="active" role="tab" aria-selected="true">نمای کلی</button>
+<button type="button" data-view="keys" role="tab" aria-selected="false">کلیدهای API</button>
+<button type="button" data-view="usage" role="tab" aria-selected="false">مصرف</button>
+<button type="button" data-view="settings" role="tab" aria-selected="false">تنظیمات</button>
+<button type="button" data-view="admin-users" data-admin class="hidden" role="tab" aria-selected="false">کاربران</button>
+<button type="button" data-view="admin-stats" data-admin class="hidden" role="tab" aria-selected="false">آمار سراسری</button>
+</div>
+
+<!-- نمای کلی -->
+<section class="view" id="view-overview" aria-labelledby="title-overview">
+<div class="dash-head">
+<div>
+<h1 id="title-overview">نمای کلی</h1>
+<p class="dash-sub" data-user-email dir="ltr" style="font-size:.875rem;color:#6B6659">—</p>
+</div>
+<div class="dash-actions">
+<button type="button" class="btn btn-primary" data-goto="keys">+ کلید جدید</button>
+<a class="btn btn-outline" href="docs/getting-started.html">مستندات</a>
+</div>
+</div>
+
+<div class="kpi-row">
+<div class="kpi card">
+<div class="kpi-label">پلن فعال</div>
+<div class="kpi-value" data-plan-name>—</div>
+<div class="kpi-sub">همه مدل‌ها فعال است</div>
+</div>
+<div class="kpi card">
+<div class="kpi-label">توکن این ماه</div>
+<div class="kpi-value"><span data-kpi-month-tok>0</span></div>
+<div class="kpi-sub" data-plan-progress>از — سهمیه</div>
+</div>
+<div class="kpi card">
+<div class="kpi-label">درخواست امروز</div>
+<div class="kpi-value" data-kpi-today-req>0</div>
+<div class="kpi-sub" data-kpi-today-tok>0 توکن</div>
+</div>
+<div class="kpi card">
+<div class="kpi-label">ناموفق امروز</div>
+<div class="kpi-value" data-kpi-failed>0</div>
+<div class="kpi-sub">401/403/429/5xx</div>
+</div>
+</div>
+
+<div class="dash-grid">
+<div class="panel card">
+<h3>مصرف ۱۴ روز اخیر</h3>
+<div class="chart" aria-hidden="true">
+<i data-i="0" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="1" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="2" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="3" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="4" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="5" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="6" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="7" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="8" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="9" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="10" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="11" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="12" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="13" data-v="0" data-day="" style="height:2px"></i>
+</div>
+<div class="chart-x"><span>۱۴ روز پیش</span><span>امروز</span></div>
+<p class="panel-sub">توکن (پرامپت + پاسخ) به وقت تهران</p>
+</div>
+<div class="panel card">
+<h3>وضعیت پلن</h3>
+<div class="progress" aria-label="پیشرفت مصرف"><i data-plan-fill style="width:0%"></i></div>
+<p class="hint" data-plan-hint style="margin-top:.5rem">—</p>
+<ul class="plan-feats">
+<li>پلن: <b data-plan-name2>—</b></li>
+<li>سهمیه ماهانه: <span data-plan-quota>—</span></li>
+<li>ریست سهمیه: اول هر ماه (به وقت تهران)</li>
+<li>کلیدهای فعال: <span data-plan-keys>0</span></li>
+</ul>
+<button type="button" class="btn btn-outline w-full" data-goto="usage">گزارش کامل مصرف</button>
+</div>
+</div>
+
+<div class="dash-grid">
+<div class="panel card">
+<h3>شروع سریع</h3>
+<ol style="font-size:.875rem;line-height:2;padding-right:1.25rem;color:#3D3A33;margin:0">
+<li>از تب کلیدها یک کلید بسازید.</li>
+<li>Base URL را در ابزارتان تنظیم کنید: <code class="kbd" dir="ltr" data-base-url style="cursor:pointer" title="کلیک برای کپی">https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1</code></li>
+<li>مدل را <code class="kbd" dir="ltr">gpt-4o</code> بگذارید و اولین درخواست را بزنید.</li>
+<li>نتیجه را همین‌جا در تب مصرف ببینید.</li>
+</ol>
+</div>
+</div>
+</section>
+
+<!-- کلیدهای API -->
+<section class="view hidden" id="view-keys" aria-labelledby="title-keys">
+<div class="dash-head">
+<div>
+<h1 id="title-keys">کلیدهای API</h1>
+<p class="dash-sub">حداکثر ۱۰ کلید. کلید کامل فقط هنگام ساخت نمایش داده می‌شود.</p>
+</div>
+<div class="dash-actions">
+<button type="button" class="btn btn-primary" data-open-modal="createKeyModal">+ کلید جدید</button>
+</div>
+</div>
+<div class="panel card">
+<div class="table-wrap">
+<table class="table">
+<thead>
+<tr>
+<th>برچسب</th>
+<th>کلید</th>
+<th>وضعیت</th>
+<th>مدل‌های مجاز</th>
+<th>ساخته‌شده</th>
+<th>عملیات</th>
+</tr>
+</thead>
+<tbody data-keys-body>
+<!-- <tr><td colspan="6" style="text-align:center;padding:2rem;color:#8A8475">هنوز کلیدی نساخته‌اید. از دکمه «کلید جدید» شروع کنید.</td></tr> -->
+</tbody>
+</table>
+</div>
+</div>
+</section>
+
+<!-- مصرف -->
+<section class="view hidden" id="view-usage" aria-labelledby="title-usage">
+<div class="dash-head">
+<div>
+<h1 id="title-usage">مصرف</h1>
+<p class="dash-sub">به وقت تهران؛ توکن = پرامپت + پاسخ.</p>
+</div>
+<div class="dash-actions">
+<a class="btn btn-outline" data-export="csv" href="#">خروجی CSV</a>
+<a class="btn btn-outline" data-export="json" href="#">خروجی JSON</a>
+</div>
+</div>
+
+<div class="kpi-row">
+<div class="kpi card">
+<div class="kpi-label">توکن امروز</div>
+<div class="kpi-value" data-usage-today-tok>0</div>
+<div class="kpi-sub" data-usage-today-req>0 درخواست</div>
+</div>
+<div class="kpi card">
+<div class="kpi-label">توکن این ماه</div>
+<div class="kpi-value" data-usage-month-tok>0</div>
+<div class="kpi-sub" data-usage-month-req>0 درخواست</div>
+</div>
+<div class="kpi card">
+<div class="kpi-label">میانگین روزانه (۱۴ روز)</div>
+<div class="kpi-value" data-usage-avg>0</div>
+<div class="kpi-sub">توکن</div>
+</div>
+<div class="kpi card">
+<div class="kpi-label">درخواست‌های ناموفق (۱۴ روز)</div>
+<div class="kpi-value" data-usage-failed>0</div>
+<div class="kpi-sub">از لاگ درخواست‌ها</div>
+</div>
+</div>
+
+<div class="panel card">
+<h3>نمودار ۱۴ روز</h3>
+<div class="chart" data-usage-chart aria-hidden="true">
+<i data-i="0" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="1" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="2" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="3" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="4" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="5" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="6" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="7" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="8" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="9" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="10" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="11" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="12" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="13" data-v="0" data-day="" style="height:2px"></i>
+</div>
+<div class="chart-x"><span>۱۴ روز پیش</span><span>امروز</span></div>
+</div>
+
+<div class="dash-grid">
+<div class="panel card">
+<h3>به تفکیک مدل (۱۴ روز)</h3>
+<div class="table-wrap">
+<table class="table">
+<thead>
+<tr>
+<th>مدل</th>
+<th>درخواست</th>
+<th>توکن ورودی</th>
+<th>توکن خروجی</th>
+</tr>
+</thead>
+<tbody data-by-model-body></tbody>
+</table>
+</div>
+</div>
+<div class="panel card" style="display:flex;flex-direction:column;gap:1rem">
+<h3>گزارش‌گیری</h3>
+<p style="font-size:.875rem;color:#6B6659;line-height:1.8;margin:0">لاگ کامل درخواست‌های ۹۰ روز اخیر — شامل زمان، مسیر، مدل، وضعیت، کد خطا، توکن و تأخیر.</p>
+<a class="btn btn-outline w-full" data-export="csv" href="#">دانلود CSV</a>
+<a class="btn btn-outline w-full" data-export="json" href="#">دانلود JSON</a>
+</div>
+</div>
+
+<div class="panel card">
+<h3>درخواست‌های اخیر</h3>
+<div class="table-wrap">
+<table class="table">
+<thead>
+<tr>
+<th>زمان</th>
+<th>مسیر</th>
+<th>مدل</th>
+<th>وضعیت</th>
+<th>توکن</th>
+</tr>
+</thead>
+<tbody data-recent-body></tbody>
+</table>
+</div>
+</div>
+</section>
+
+<!-- تنظیمات -->
+<section class="view hidden" id="view-settings" aria-labelledby="title-settings">
+<div class="dash-head">
+<div>
+<h1 id="title-settings">تنظیمات</h1>
+<p class="dash-sub">مدیریت رمز عبور و اطلاعات حساب</p>
+</div>
+</div>
+<div class="dash-grid">
+<div class="panel card">
+<h3>تغییر رمز عبور</h3>
+<div class="field">
+<label class="label" for="pw-current">رمز فعلی</label>
+<input type="password" id="pw-current" class="input" data-pw-current dir="ltr" autocomplete="current-password">
+</div>
+<div class="field">
+<label class="label" for="pw-new">رمز جدید</label>
+<input type="password" id="pw-new" class="input" data-pw-new minlength="8" dir="ltr" autocomplete="new-password">
+<p class="hint" style="margin-top:.375rem">حداقل ۸ کاراکتر</p>
+</div>
+<div class="field">
+<label class="label" for="pw-new2">تکرار رمز جدید</label>
+<input type="password" id="pw-new2" class="input" data-pw-new2 dir="ltr" autocomplete="new-password">
+</div>
+<div data-pw-err style="color:#DC2626;font-size:.875rem;min-height:1.25rem;margin-top:.5rem"></div>
+<button type="button" class="btn btn-primary" data-save-pw>ذخیره رمز جدید</button>
+</div>
+<div class="panel card">
+<h3>حساب</h3>
+<dl style="font-size:.875rem;margin:0">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 0;border-bottom:1px solid #F4F1EA;gap:1rem">
+<dt style="color:#6B6659;flex-shrink:0">ایمیل</dt>
+<dd data-set-email dir="ltr" style="margin:0;color:#1A1915;word-break:break-all">—</dd>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 0;border-bottom:1px solid #F4F1EA;gap:1rem">
+<dt style="color:#6B6659">نام</dt>
+<dd data-set-name style="margin:0;color:#1A1915">—</dd>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 0;border-bottom:1px solid #F4F1EA;gap:1rem">
+<dt style="color:#6B6659">پلن</dt>
+<dd data-set-plan style="margin:0;color:#1A1915">—</dd>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 0;border-bottom:1px solid #F4F1EA;gap:1rem">
+<dt style="color:#6B6659">سهمیه ماهانه</dt>
+<dd data-set-quota style="margin:0;color:#1A1915">—</dd>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 0;gap:1rem">
+<dt style="color:#6B6659">عضویت از</dt>
+<dd data-set-since style="margin:0;color:#1A1915">—</dd>
+</div>
+</dl>
+<p class="hint" style="margin-top:1rem;line-height:1.8">برای تغییر پلن یا اطلاعات حساب با پشتیبانی در تماس باشید.</p>
+</div>
+</div>
+</section>
+
+<!-- ادمین: کاربران -->
+<section class="view hidden" id="view-admin-users" aria-labelledby="title-admin-users">
+<div class="dash-head">
+<div>
+<h1 id="title-admin-users">کاربران</h1>
+<p class="dash-sub">ساخت و مدیریت حساب‌های مشتریان.</p>
+</div>
+<div class="dash-actions">
+<button type="button" class="btn btn-primary" data-open-modal="createUserModal">+ کاربر جدید</button>
+</div>
+</div>
+<div class="panel card">
+<div class="table-wrap">
+<table class="table">
+<thead>
+<tr>
+<th>کاربر</th>
+<th>پلن</th>
+<th>وضعیت</th>
+<th>کلیدها</th>
+<th>سهمیه ماهانه</th>
+<th>ساخته‌شده</th>
+<th>عملیات</th>
+</tr>
+</thead>
+<tbody data-admin-users-body></tbody>
+</table>
+</div>
+</div>
+</section>
+
+<!-- ادمین: آمار سراسری -->
+<section class="view hidden" id="view-admin-stats" aria-labelledby="title-admin-stats">
+<div class="dash-head">
+<div>
+<h1 id="title-admin-stats">آمار سراسری</h1>
+<p class="dash-sub">کل پلتفرم، به وقت تهران.</p>
+</div>
+</div>
+<div class="kpi-row" style="grid-template-columns:repeat(auto-fit,minmax(9rem,1fr))">
+<div class="kpi card">
+<div class="kpi-label">کاربران</div>
+<div class="kpi-value" data-st-users>0</div>
+</div>
+<div class="kpi card">
+<div class="kpi-label">کلیدها</div>
+<div class="kpi-value" data-st-keys>0</div>
+</div>
+<div class="kpi card">
+<div class="kpi-label">کلیدهای فعال</div>
+<div class="kpi-value" data-st-active>0</div>
+</div>
+<div class="kpi card">
+<div class="kpi-label">درخواست امروز</div>
+<div class="kpi-value" data-st-req>0</div>
+</div>
+<div class="kpi card">
+<div class="kpi-label">توکن امروز</div>
+<div class="kpi-value" data-st-tok>0</div>
+</div>
+<div class="kpi card">
+<div class="kpi-label">ناموفق امروز</div>
+<div class="kpi-value" data-st-failed>0</div>
+</div>
+</div>
+<div class="panel card">
+<h3>مصرف ۱۴ روز (همه کاربران)</h3>
+<div class="chart" data-admin-chart aria-hidden="true">
+<i data-i="0" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="1" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="2" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="3" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="4" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="5" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="6" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="7" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="8" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="9" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="10" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="11" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="12" data-v="0" data-day="" style="height:2px"></i>
+<i data-i="13" data-v="0" data-day="" style="height:2px"></i>
+</div>
+<div class="chart-x"><span>۱۴ روز پیش</span><span>امروز</span></div>
+</div>
+</section>
+</div>
+
+<!-- مودال‌ها -->
+<div id="createKeyModal" class="modal-back hidden" aria-hidden="true">
+<div class="modal card" role="dialog" aria-modal="true" aria-labelledby="ck-title">
+<h3 id="ck-title">ساخت کلید جدید</h3>
+<div class="field">
+<label class="label" for="key-label">برچسب</label>
+<input type="text" id="key-label" class="input" data-key-label placeholder="مثلاً لپ‌تاپ شخصی">
+</div>
+<div class="field">
+<label class="label" for="key-models">محدودیت مدل (اختیاری)</label>
+<p class="hint" style="margin-bottom:.375rem">خالی = همه مدل‌ها</p>
+<select id="key-models" class="input" data-key-models multiple size="5" dir="ltr" style="text-align:left"></select>
+</div>
+<div class="error-text" style="color:#DC2626;font-size:.875rem;min-height:1.25rem"></div>
+<div class="modal-actions">
+<button type="button" class="btn btn-secondary" data-close-modal>انصراف</button>
+<button type="button" class="btn btn-primary" data-create-key>ساخت کلید</button>
+</div>
+</div>
+</div>
+
+<div id="revealKeyModal" class="modal-back hidden" aria-hidden="true">
+<div class="modal card" role="dialog" aria-modal="true" aria-labelledby="rk-title">
+<h3 id="rk-title">کلید شما ساخته شد</h3>
+<div class="alert alert-warn" style="background:#FFFBEB;border:1px solid #FDE68A;border-inline-start:4px solid #D97706;border-radius:8px;padding:.875rem 1rem;font-size:.875rem;color:#92400E">این کلید فقط همین یک‌بار نمایش داده می‌شود. همین حالا کپی کنید.</div>
+<div class="reveal-key" dir="ltr" data-new-key style="background:#F4F1EA;border:1px solid #E8E2D5;border-radius:8px;padding:.75rem 1rem;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:.875rem;word-break:break-all;margin-top:1rem;direction:ltr;text-align:left">—</div>
+<div class="modal-actions">
+<button type="button" class="btn btn-secondary" data-close-modal>بستن</button>
+<button type="button" class="btn btn-primary" data-copy-new-key>کپی کلید</button>
+</div>
+</div>
+</div>
+
+<div id="createUserModal" class="modal-back hidden" aria-hidden="true">
+<div class="modal card" role="dialog" aria-modal="true" aria-labelledby="cu-title">
+<h3 id="cu-title">کاربر جدید</h3>
+<div class="field">
+<label class="label" for="u-email">ایمیل</label>
+<input type="email" id="u-email" class="input" data-u-email dir="ltr" autocomplete="email">
+</div>
+<div class="field">
+<label class="label" for="u-name">نام</label>
+<input type="text" id="u-name" class="input" data-u-name autocomplete="name">
+</div>
+<div class="field">
+<label class="label" for="u-pass">رمز عبور</label>
+<input type="password" id="u-pass" class="input" data-u-pass minlength="8" dir="ltr" autocomplete="new-password">
+<p class="hint" style="margin-top:.375rem">۸+ کاراکتر</p>
+</div>
+<div class="field">
+<label class="label" for="u-plan">پلن</label>
+<select id="u-plan" class="input" data-u-plan dir="ltr" style="text-align:left">
+<option value="free">رایگان (free)</option>
+<option value="starter">استارتر (starter)</option>
+<option value="basic">بیسیک (basic)</option>
+<option value="pro">حرفه‌ای (pro)</option>
+<option value="scale">مقیاس (scale)</option>
+<option value="unlimited">نامحدود (unlimited)</option>
+</select>
+</div>
+<div class="error-text" style="color:#DC2626;font-size:.875rem;min-height:1.25rem"></div>
+<div class="modal-actions">
+<button type="button" class="btn btn-secondary" data-close-modal>انصراف</button>
+<button type="button" class="btn btn-primary" data-create-user>ساخت کاربر</button>
+</div>
+</div>
+</div>
+
+<div id="planModal" class="modal-back hidden" aria-hidden="true">
+<div class="modal card" role="dialog" aria-modal="true" aria-labelledby="pm-title">
+<h3 id="pm-title">تغییر پلن</h3>
+<p class="hint" data-plan-user dir="ltr" style="font-size:.875rem;color:#6B6659;margin-bottom:.75rem;direction:ltr;text-align:left">—</p>
+<div class="field">
+<label class="label" for="plan-select">پلن</label>
+<select id="plan-select" class="input" data-plan-select dir="ltr" style="text-align:left">
+<option value="free">رایگان (free)</option>
+<option value="starter">استارتر (starter)</option>
+<option value="basic">بیسیک (basic)</option>
+<option value="pro">حرفه‌ای (pro)</option>
+<option value="scale">مقیاس (scale)</option>
+<option value="unlimited">نامحدود (unlimited)</option>
+</select>
+<p class="hint" style="margin-top:.375rem">سهمیه ماهانه به استاندارد پلن بازنشانی می‌شود.</p>
+</div>
+<div class="modal-actions">
+<button type="button" class="btn btn-secondary" data-close-modal>انصراف</button>
+<button type="button" class="btn btn-primary" data-save-plan>ذخیره</button>
+</div>
+</div>
+</div>
+
+<div id="quotaModal" class="modal-back hidden" aria-hidden="true">
+<div class="modal card" role="dialog" aria-modal="true" aria-labelledby="qm-title">
+<h3 id="qm-title">ویرایش سهمیه</h3>
+<p class="hint" data-quota-user dir="ltr" style="font-size:.875rem;color:#6B6659;margin-bottom:.75rem;direction:ltr;text-align:left">—</p>
+<div class="field">
+<label class="label" for="quota-month">سهمیه ماهانه</label>
+<input type="number" id="quota-month" class="input" data-quota-month placeholder="خالی=نامحدود" dir="ltr" inputmode="numeric">
+<p class="hint" style="margin-top:.375rem">عدد توکن؛ خالی یعنی نامحدود</p>
+</div>
+<div class="field">
+<label class="label" for="quota-day">سهمیه روزانه</label>
+<input type="number" id="quota-day" class="input" data-quota-day placeholder="خالی=بدون سقف" dir="ltr" inputmode="numeric">
+</div>
+<div class="modal-actions">
+<button type="button" class="btn btn-secondary" data-close-modal>انصراف</button>
+<button type="button" class="btn btn-primary" data-save-quota>ذخیره</button>
+</div>
+</div>
+</div>
+
+<div id="resetPwModal" class="modal-back hidden" aria-hidden="true">
+<div class="modal card" role="dialog" aria-modal="true" aria-labelledby="rp-title">
+<h3 id="rp-title">ریست رمز عبور</h3>
+<p class="hint" data-reset-user dir="ltr" style="font-size:.875rem;color:#6B6659;margin-bottom:.75rem;direction:ltr;text-align:left">—</p>
+<div class="field">
+<label class="label" for="reset-pass">رمز جدید</label>
+<input type="password" id="reset-pass" class="input" data-reset-pass minlength="8" dir="ltr" autocomplete="new-password">
+</div>
+<div class="modal-actions">
+<button type="button" class="btn btn-secondary" data-close-modal>انصراف</button>
+<button type="button" class="btn btn-primary" data-save-reset>ریست رمز</button>
+</div>
+</div>
+</div>
+
+<script>
+(function(){
+  // بستن مودال با کلیک روی پس‌زمینه
+  document.addEventListener('click', function(e){
+    if(e.target.classList.contains('modal-back')){
+      e.target.classList.add('hidden');
+      e.target.setAttribute('aria-hidden','true');
+    }
+    var closeBtn = e.target.closest('[data-close-modal]');
+    if(closeBtn){
+      var mb = closeBtn.closest('.modal-back');
+      if(mb){ mb.classList.add('hidden'); mb.setAttribute('aria-hidden','true'); }
+    }
+  });
+  // Escape
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){
+      document.querySelectorAll('.modal-back:not(.hidden)').forEach(function(m){
+        m.classList.add('hidden'); m.setAttribute('aria-hidden','true');
+      });
+    }
+  });
+  // کپی Base URL با کلیک
+  var baseEl = document.querySelector('[data-base-url]');
+  if(baseEl){
+    baseEl.addEventListener('click', function(){
+      var t = baseEl.textContent.trim();
+      if(navigator.clipboard && t){ navigator.clipboard.writeText(t); }
+      var old = baseEl.getAttribute('title');
+      baseEl.setAttribute('title','کپی شد!');
+      setTimeout(function(){ baseEl.setAttribute('title', old || 'کلیک برای کپی'); }, 1200);
+    });
+  }
+})();
+</script>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h4>محصول</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="models.html">مدل‌ها</a></li>
+          <li><a href="pricing.html">تعرفه‌ها</a></li>
+          <li><a href="changelog.html">تغییرات</a></li>
+          <li><a href="status.html">وضعیت سرویس</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>منابع</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="docs/">مستندات</a></li>
+          <li><a href="docs/getting-started.html">شروع سریع</a></li>
+          <li><a href="docs/coding-agents.html">راهنمای ابزارهای کدنویسی</a></li>
+          <li><a href="docs/chat-completions.html">مرجع API</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>قانونی</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="terms.html">شرایط استفاده</a></li>
+          <li><a href="privacy.html">حریم خصوصی</a></li>
+          <li><a href="refund.html">سیاست بازپرداخت</a></li>
+        </ul>
+      </div>
+      <div>
+        <a href="index.html" style="display:flex;align-items:center;gap:.5rem;text-decoration:none;margin-bottom:.75rem">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#D97757"/><text x="14" y="16" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="13" font-weight="500">{}</text></svg>
+          <span style="font-family:var(--font-serif);font-weight:700;font-size:1.25rem;color:#1A1915">Codism</span>
+        </a>
+        <p style="font-size:.875rem;color:#6B6659;line-height:1.7;margin:0">مدل‌های هوش مصنوعی از یک API ساده — سازگار با OpenAI، آماده برای ابزارهای کدنویسی.</p>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 Codism — تمامی حقوق محفوظ است.</div>
+  </div>
+</footer>
+
+<script src="assets/app.js?v=86250282"></script>
+<script src="assets/dashboard.js?v=86250282"></script>
+</body>
+</html>

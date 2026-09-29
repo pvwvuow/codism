@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تعرفه‌ها — Codism</title>
+<meta name="description" content="پلن‌های توکنی شفاف: رایگان تا نامحدود. همه پلن‌ها همه مدل‌ها.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#D97757">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/design.css?v=86250282">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<script>window.CODISM_API_BASE="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel";</script>
+
+</head>
+<body>
+<header class="navbar">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;height:4rem">
+    <a href="index.html" style="display:flex;align-items:center;gap:.5rem;text-decoration:none">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#D97757"/><text x="14" y="16" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="13" font-weight="500">{}</text></svg>
+      <span style="font-family:var(--font-serif);font-weight:700;font-size:1.25rem;color:#1A1915">Codism</span>
+    </a>
+    <nav class="nav-links">
+      <a data-nav href="models.html">مدل‌ها</a>
+      <a data-nav href="pricing.html">تعرفه‌ها</a>
+      <a data-nav href="docs/">مستندات</a>
+      <a data-nav href="changelog.html">تغییرات</a>
+      <a data-nav href="status.html">وضعیت</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <a class="btn btn-ghost" href="login.html" data-auth-link>ورود</a>
+      <a class="btn btn-primary" href="register.html" data-auth-cta>شروع رایگان</a>
+      <button class="nav-toggle" aria-label="منو"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<main dir="rtl">
+  <!-- Page Head -->
+  <section class="page-head" style="padding:3rem 0 2rem;text-align:center;background:radial-gradient(600px 300px at 50% -10%, #FBF0EB 0%, transparent 70%), #FAF8F4;">
+    <div class="container">
+      <p class="section-eyebrow" style="color:#C96442;font-weight:700;font-size:.875rem;margin-bottom:.75rem;">تعرفه‌ها</p>
+      <h1 style="font-family:var(--font-sans);font-weight:800;font-size:2.25rem;color:#1A1915;line-height:1.3;margin:0 0 .75rem;">توکن بخرید، نه صندلی</h1>
+      <p class="muted" style="color:#6B6659;font-size:1rem;max-width:42rem;margin:0 auto;line-height:1.8;">همه پلن‌ها به همه ۳۰+ مدل با استریم، فراخوانی ابزار و تصویر دسترسی دارند. تنها تفاوت، حجم توکن ماهانه است.</p>
+      <div style="margin-top:1rem;">
+        <span class="badge badge-clay" style="background:#FBF0EB;color:#B0512F;border:1px solid #EBBBA6;padding:.375rem .75rem;border-radius:999px;font-size:.8125rem;">۱ میلیون توکن رایگان — بدون کارت بانکی</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Billing Toggle -->
+  <div class="container" style="display:flex;justify-content:center;padding:1.5rem 0 1rem;">
+    <div class="billing-toggle" data-billing="monthly" role="group" aria-label="نوع پرداخت" style="display:inline-flex;align-items:center;gap:.5rem;background:#fff;border:1px solid #E8E2D5;border-radius:999px;padding:.25rem;">
+      <button type="button" class="btn btn-primary btn-sm" data-billing-btn="monthly" style="border-radius:999px;">ماهانه</button>
+      <button type="button" class="btn btn-ghost btn-sm" data-billing-btn="yearly" style="border-radius:999px;">سالانه</button>
+      <span class="badge badge-clay" style="background:#FBF0EB;color:#B0512F;border-radius:999px;margin-inline-start:.25rem;">۲ ماه رایگان</span>
+    </div>
+  </div>
+
+  <!-- Plans Grid -->
+  <div class="container" style="padding-bottom:1.5rem;">
+    <div class="plans-grid grid-3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;">
+      <!-- رایگان -->
+      <div class="plan-card card" style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem;">
+        <div>
+          <h3 style="font-weight:800;font-size:1.125rem;color:#1A1915;margin:0 0 .25rem;">رایگان</h3>
+          <p class="muted" style="color:#6B6659;font-size:.875rem;line-height:1.7;margin:0;">هر مدل را بدون کارت امتحان کنید.</p>
+        </div>
+        <div style="padding:.75rem 0;border-top:1px solid #F4F1EA;border-bottom:1px solid #F4F1EA;">
+          <div style="display:flex;align-items:baseline;gap:.5rem;">
+            <span style="font-family:var(--font-sans);font-weight:800;font-size:1.5rem;color:#1A1915;">رایگان</span>
+          </div>
+          <span class="muted" style="font-size:.8125rem;color:#8A8475;">همیشگی — بدون کارت</span>
+          <div style="margin-top:.75rem;display:flex;align-items:baseline;gap:.375rem;">
+            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.375rem;color:#1A1915;">1M</span>
+            <span class="muted" style="font-size:.8125rem;color:#6B6659;">توکن / ماه</span>
+          </div>
+        </div>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#3D3A33;">
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>۱ میلیون توکن / ماه</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>۶۰ درخواست / دقیقه</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>همه مدل‌های چت</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>استریم و ابزار و تصویر</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>پشتیبانی انجمن</li>
+        </ul>
+        <a href="register.html" data-plan="free" class="btn btn-secondary" style="margin-top:auto;width:100%;">شروع رایگان</a>
+      </div>
+
+      <!-- استارتر -->
+      <div class="plan-card card" style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem;">
+        <div>
+          <h3 style="font-weight:800;font-size:1.125rem;color:#1A1915;margin:0 0 .25rem;">استارتر</h3>
+          <p class="muted" style="color:#6B6659;font-size:.875rem;line-height:1.7;margin:0;">برای پروژه‌های شخصی و نمونه‌کار.</p>
+        </div>
+        <div style="padding:.75rem 0;border-top:1px solid #F4F1EA;border-bottom:1px solid #F4F1EA;">
+          <div class="price-monthly">
+            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$1.2<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+          </div>
+          <div class="price-yearly" style="display:none;">
+            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$1<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+            <span dir="ltr" class="price-sub-yearly muted" style="font-size:.75rem;color:#8A8475;margin-inline-start:.5rem;">$12 سالانه</span>
+          </div>
+          <div style="margin-top:.5rem;display:flex;align-items:baseline;gap:.375rem;">
+            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.125rem;color:#1A1915;">30M</span>
+            <span dir="ltr" class="muted" style="font-size:.8125rem;color:#6B6659;">$0.04 هر ۱M توکن</span>
+          </div>
+        </div>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#3D3A33;">
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>۳۰ میلیون توکن / ماه</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>۱۲۰ درخواست / دقیقه</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>همه مدل‌ها</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>استریم و ابزار و تصویر</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>پشتیبانی ایمیلی</li>
+        </ul>
+        <a href="register.html" data-plan="starter" class="btn btn-primary" style="margin-top:auto;width:100%;">انتخاب استارتر</a>
+      </div>
+
+      <!-- بیسیک -->
+      <div class="plan-card card" style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem;">
+        <div>
+          <h3 style="font-weight:800;font-size:1.125rem;color:#1A1915;margin:0 0 .25rem;">بیسیک</h3>
+          <p class="muted" style="color:#6B6659;font-size:.875rem;line-height:1.7;margin:0;">برای اپ‌هایی با ترافیک روزانه‌ی پایدار.</p>
+        </div>
+        <div style="padding:.75rem 0;border-top:1px solid #F4F1EA;border-bottom:1px solid #F4F1EA;">
+          <div class="price-monthly">
+            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$3.5<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+          </div>
+          <div class="price-yearly" style="display:none;">
+            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$2.92<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+            <span dir="ltr" class="price-sub-yearly muted" style="font-size:.75rem;color:#8A8475;margin-inline-start:.5rem;">$35 سالانه</span>
+          </div>
+          <div style="margin-top:.5rem;display:flex;align-items:baseline;gap:.375rem;">
+            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.125rem;color:#1A1915;">100M</span>
+            <span dir="ltr" class="muted" style="font-size:.8125rem;color:#6B6659;">$0.035 هر ۱M</span>
+          </div>
+        </div>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#3D3A33;">
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>۱۰۰ میلیون توکن / ماه</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>۳۰۰ درخواست / دقیقه</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>همه مدل‌ها</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>تحلیل مصرف</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>پشتیبانی ایمیلی</li>
+        </ul>
+        <a href="register.html" data-plan="basic" class="btn btn-secondary" style="margin-top:auto;width:100%;">انتخاب بیسیک</a>
+      </div>
+
+      <!-- حرفه‌ای featured -->
+      <div class="plan-card card" style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem;border-color:#D97757;box-shadow:0 4px 16px rgba(217,119,87,.15);position:relative;">
+        <span class="badge badge-clay" style="position:absolute;top:-.625rem;right:1rem;background:#D97757;color:#fff;border-radius:999px;padding:.25rem .625rem;font-size:.75rem;">بهترین ارزش</span>
+        <div>
+          <h3 style="font-weight:800;font-size:1.125rem;color:#1A1915;margin:0 0 .25rem;">حرفه‌ای</h3>
+          <p class="muted" style="color:#6B6659;font-size:.875rem;line-height:1.7;margin:0;">برای بار کاری پروداکشن و تیم‌های کوچک.</p>
+        </div>
+        <div style="padding:.75rem 0;border-top:1px solid #F4F1EA;border-bottom:1px solid #F4F1EA;">
+          <div class="price-monthly">
+            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$5.75<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+          </div>
+          <div class="price-yearly" style="display:none;">
+            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$4.79<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+            <span dir="ltr" class="price-sub-yearly muted" style="font-size:.75rem;color:#8A8475;margin-inline-start:.5rem;">$57.5 سالانه</span>
+          </div>
+          <div style="margin-top:.5rem;display:flex;align-items:baseline;gap:.375rem;">
+            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.125rem;color:#1A1915;">200M</span>
+            <span dir="ltr" class="muted" style="font-size:.8125rem;color:#6B6659;">$0.0288 هر ۱M</span>
+          </div>
+        </div>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#3D3A33;">
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>۲۰۰ میلیون توکن / ماه</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>۶۰۰ درخواست / دقیقه</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>همه مدل‌ها</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>تحلیل مصرف</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>پشتیبانی اولویت‌دار</li>
+        </ul>
+        <a href="register.html" data-plan="pro" class="btn btn-primary" style="margin-top:auto;width:100%;">انتخاب حرفه‌ای</a>
+      </div>
+
+      <!-- مقیاس -->
+      <div class="plan-card card" style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem;">
+        <div>
+          <h3 style="font-weight:800;font-size:1.125rem;color:#1A1915;margin:0 0 .25rem;">مقیاس</h3>
+          <p class="muted" style="color:#6B6659;font-size:.875rem;line-height:1.7;margin:0;">برای حجم بالای چند-سرویسی.</p>
+        </div>
+        <div style="padding:.75rem 0;border-top:1px solid #F4F1EA;border-bottom:1px solid #F4F1EA;">
+          <div class="price-monthly">
+            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$11.5<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+          </div>
+          <div class="price-yearly" style="display:none;">
+            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$9.58<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+            <span dir="ltr" class="price-sub-yearly muted" style="font-size:.75rem;color:#8A8475;margin-inline-start:.5rem;">$115 سالانه</span>
+          </div>
+          <div style="margin-top:.5rem;display:flex;align-items:baseline;gap:.375rem;">
+            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.125rem;color:#1A1915;">500M</span>
+            <span dir="ltr" class="muted" style="font-size:.8125rem;color:#6B6659;">$0.023 هر ۱M</span>
+          </div>
+        </div>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#3D3A33;">
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>۵۰۰ میلیون توکن / ماه</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>۱۲۰۰ درخواست / دقیقه</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>همه مدل‌ها + دسترسی زودهنگام</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>تحلیل مصرف</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>پشتیبانی اولویت‌دار</li>
+        </ul>
+        <a href="register.html" data-plan="scale" class="btn btn-secondary" style="margin-top:auto;width:100%;">انتخاب مقیاس</a>
+      </div>
+
+      <!-- نامحدود -->
+      <div class="plan-card card" style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem;position:relative;">
+        <span class="badge" style="position:absolute;top:-.625rem;right:1rem;background:#1A1915;color:#fff;border-radius:999px;padding:.25rem .625rem;font-size:.75rem;">بدون سقف</span>
+        <div>
+          <h3 style="font-weight:800;font-size:1.125rem;color:#1A1915;margin:0 0 .25rem;">نامحدود</h3>
+          <p class="muted" style="color:#6B6659;font-size:.875rem;line-height:1.7;margin:0;">بدون سقف توکن ماهانه. محدودیت نرخ برقرار است.</p>
+        </div>
+        <div style="padding:.75rem 0;border-top:1px solid #F4F1EA;border-bottom:1px solid #F4F1EA;">
+          <div class="price-monthly">
+            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$50<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+          </div>
+          <div class="price-yearly" style="display:none;">
+            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.5rem;color:#1A1915;">$41.67<span style="font-size:.875rem;font-weight:400;color:#6B6659;">/ماه</span></span>
+            <span dir="ltr" class="price-sub-yearly muted" style="font-size:.75rem;color:#8A8475;margin-inline-start:.5rem;">$500 سالانه</span>
+          </div>
+          <div style="margin-top:.5rem;display:flex;align-items:baseline;gap:.375rem;">
+            <span dir="ltr" style="font-family:var(--font-serif);font-weight:700;font-size:1.125rem;color:#1A1915;">Unlimited</span>
+            <span class="muted" style="font-size:.8125rem;color:#6B6659;">توکن</span>
+          </div>
+        </div>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#3D3A33;">
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>توکن نامحدود</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>۳۰۰۰ درخواست / دقیقه</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>همه مدل‌ها + دسترسی زودهنگام</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>تحلیل مصرف</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>پشتیبانی اختصاصی</li>
+          <li style="display:flex;gap:.5rem;align-items:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8L6.5 11.5L13 4.5" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>محدودیت نرخ سفارشی</li>
+        </ul>
+        <a href="register.html" data-plan="unlimited" class="btn btn-primary" style="margin-top:auto;width:100%;">انتخاب نامحدود</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert -->
+  <div class="container" style="padding:1rem 1rem 0;">
+    <div class="alert alert-info" role="alert" style="display:flex;gap:.75rem;align-items:flex-start;background:#EFF6FF;border:1px solid #BFDBFE;border-inline-start:4px solid #2563EB;border-radius:8px;padding:.875rem 1rem;font-size:.875rem;color:#1E3A5F;line-height:1.8;">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" style="flex-shrink:0;margin-top:.125rem;"><circle cx="10" cy="10" r="8" stroke="#2563EB" stroke-width="1.5"/><path d="M10 9V13" stroke="#2563EB" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="7" r="1" fill="#2563EB"/></svg>
+      <div><b> وسط ماه توکن تمام شد؟ هیچ‌چیز نمی‌شکند.</b> بعد از اتمام سهمیه، درخواست‌ها از موجودی حساب به نرخ هر مدل محاسبه می‌شوند — با موجودی صفر خطای واضح <code class="kbd" dir="ltr">402</code> می‌گیرید.</div>
+    </div>
+  </div>
+
+  <!-- Compare Table -->
+  <section class="section" style="padding:2.5rem 0;">
+    <div class="container">
+      <h2 class="section-title" style="font-weight:800;font-size:1.5rem;color:#1A1915;text-align:center;margin:0 0 1.25rem;">مقایسه پلن‌ها</h2>
+      <div class="table-wrap compare-table card" style="overflow-x:auto;">
+        <table class="table" style="width:100%;font-size:.875rem;border-collapse:collapse;">
+          <thead>
+            <tr>
+              <th style="padding:.75rem 1rem;text-align:right;color:#6B6659;font-weight:600;border-bottom:1px solid #E8E2D5;background:#FAF8F4;white-space:nowrap;">پلن</th>
+              <th style="padding:.75rem 1rem;text-align:right;color:#6B6659;font-weight:600;border-bottom:1px solid #E8E2D5;background:#FAF8F4;white-space:nowrap;">قیمت / ماه</th>
+              <th style="padding:.75rem 1rem;text-align:right;color:#6B6659;font-weight:600;border-bottom:1px solid #E8E2D5;background:#FAF8F4;white-space:nowrap;">توکن / ماه</th>
+              <th style="padding:.75rem 1rem;text-align:right;color:#6B6659;font-weight:600;border-bottom:1px solid #E8E2D5;background:#FAF8F4;white-space:nowrap;">هر ۱M</th>
+              <th style="padding:.75rem 1rem;text-align:right;color:#6B6659;font-weight:600;border-bottom:1px solid #E8E2D5;background:#FAF8F4;white-space:nowrap;">درخواست / دقیقه</th>
+              <th style="padding:.75rem 1rem;text-align:right;color:#6B6659;font-weight:600;border-bottom:1px solid #E8E2D5;background:#FAF8F4;white-space:nowrap;">توکن / دقیقه</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">رایگان</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">رایگان</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">1M</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">—</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">60</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">100,000</td>
+            </tr>
+            <tr>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">استارتر</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">$1.2</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">30M</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">$0.04</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">120</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">200,000</td>
+            </tr>
+            <tr>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">بیسیک</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">$3.5</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">100M</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">$0.035</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">300</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">500,000</td>
+            </tr>
+            <tr>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">حرفه‌ای <span class="badge badge-clay" style="background:#FBF0EB;color:#B0512F;font-size:.6875rem;margin-inline-start:.375rem;">بهترین ارزش</span></td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">$5.75</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">200M</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">$0.0288</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">600</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">1,000,000</td>
+            </tr>
+            <tr>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;">مقیاس</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">$11.5</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">500M</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">$0.023</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">1,200</td>
+              <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;" dir="ltr">2,000,000</td>
+            </tr>
+            <tr>
+              <td style="padding:.75rem 1rem;color:#3D3A33;">نامحدود</td>
+              <td style="padding:.75rem 1rem;color:#3D3A33;" dir="ltr">$50</td>
+              <td style="padding:.75rem 1rem;color:#3D3A33;" dir="ltr">Unlimited</td>
+              <td style="padding:.75rem 1rem;color:#3D3A33;">—</td>
+              <td style="padding:.75rem 1rem;color:#3D3A33;" dir="ltr">3,000</td>
+              <td style="padding:.75rem 1rem;color:#3D3A33;" dir="ltr">5,000,000</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted" style="margin-top:.75rem;font-size:.8125rem;color:#8A8475;line-height:1.7;">توکن = پرامپت + پاسخ. نرخ‌ها هر دقیقه اعمال و در هدرهای <code class="kbd" dir="ltr">X-RateLimit-*</code> گزارش می‌شوند.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section-alt" style="background:#F4F1EA;padding:2.5rem 0;">
+    <div class="container">
+      <h2 class="section-title" style="font-weight:800;font-size:1.5rem;color:#1A1915;text-align:center;margin:0 0 1.25rem;">سوال‌های تعرفه</h2>
+      <div class="faq" style="max-width:48rem;margin:0 auto;display:flex;flex-direction:column;gap:.75rem;">
+        <details class="card" style="padding:0;">
+          <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem;">بسته‌های توکن چطور کار می‌کنند؟<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="flex-shrink:0;"><path d="M4 6L8 10L12 6" stroke="#8A8475" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8;">هر پلن سهمیه ماهانه دارد؛ هم پرامپت و هم پاسخ شمرده می‌شود و هر ماه ریست می‌شود. درخواست‌ها اول از سهمیه برداشت می‌شوند، پس تا تمام شدن آن هزینه‌ی به‌ازای هر تماس ندارید.</div>
+        </details>
+        <details class="card" style="padding:0;">
+          <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem;">توکن‌هایم تمام شد چه اتفاقی می‌افتد؟<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="flex-shrink:0;"><path d="M4 6L8 10L12 6" stroke="#8A8475" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8;">درخواست‌ها به موجودی حساب منتقل و به‌ازای هر توکن به نرخ منتشرشده‌ی همان مدل محاسبه می‌شوند. با موجودی خالی، پاسخ <span dir="ltr">HTTP 402</span> واضح می‌گیرید نه خطای مبهم — شارژ یا ارتقا کنید و بلافاصله ادامه دهید.</div>
+        </details>
+        <details class="card" style="padding:0;">
+          <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem;">"نامحدود" واقعاً نامحدود است؟<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="flex-shrink:0;"><path d="M4 6L8 10L12 6" stroke="#8A8475" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8;">سقف توکن ماهانه ندارد؛ فقط محدودیت‌های نرخ دقیقه‌ای (۳۰۰۰ درخواست و ۵ میلیون توکن در دقیقه) برای پایداری سرویس برقرار است. بیشتر لازم دارید؟ با پشتیبانی تماس بگیرید.</div>
+        </details>
+        <details class="card" style="padding:0;">
+          <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem;">بعداً می‌توانم پلن را عوض کنم؟<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="flex-shrink:0;"><path d="M4 6L8 10L12 6" stroke="#8A8475" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8;">بله، هر زمان. ارتقا فوری اعمال و سهمیه تازه می‌شود؛ کاهش از دوره‌ی بعدی اعمال می‌شود.</div>
+        </details>
+        <details class="card" style="padding:0;">
+          <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem;">کدام مدل‌ها شامل می‌شوند؟<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="flex-shrink:0;"><path d="M4 6L8 10L12 6" stroke="#8A8475" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8;">همه‌ی مدل‌های کاتالوگ در همه پلن‌ها فعال است، از مدل‌های اقتصادی تا قوی‌ترین مدل‌های استدلالی.</div>
+        </details>
+        <details class="card" style="padding:0;">
+          <summary style="padding:1rem 1.25rem;font-weight:600;color:#2A2823;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem;">پرداخت چگونه است؟<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="flex-shrink:0;"><path d="M4 6L8 10L12 6" stroke="#8A8475" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+          <div style="padding:0 1.25rem 1rem;color:#545046;font-size:.875rem;line-height:1.8;">پلن رایگان بدون کارت فعال می‌شود؛ برای پلن‌های پولی با پشتیبانی در تماس باشید. فعال‌سازی سریع است و هر زمان می‌توانید لغو کنید.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="container" style="text-align:center;padding:2.5rem 1rem;">
+    <p style="font-weight:600;color:#1A1915;margin:0 0 1rem;font-size:1rem;">هنوز مطمئن نیستید کدام پلن؟</p>
+    <a href="register.html" class="btn btn-primary btn-lg">شروع رایگان — هر زمان ارتقا دهید</a>
+  </div>
+
+  <script>
+  (function(){
+    var toggle=document.querySelector('.billing-toggle');
+    if(!toggle) return;
+    var btns=toggle.querySelectorAll('[data-billing-btn]');
+    function setBilling(mode){
+      toggle.setAttribute('data-billing',mode);
+      btns.forEach(function(b){
+        var isActive=b.getAttribute('data-billing-btn')===mode;
+        b.classList.toggle('btn-primary',isActive);
+        b.classList.toggle('btn-ghost',!isActive);
+      });
+      document.querySelectorAll('.price-monthly').forEach(function(el){ el.style.display = mode==='monthly' ? '' : 'none'; });
+      document.querySelectorAll('.price-yearly').forEach(function(el){ el.style.display = mode==='yearly' ? '' : 'none'; });
+    }
+    btns.forEach(function(b){ b.addEventListener('click', function(){ setBilling(b.getAttribute('data-billing-btn')); }); });
+    setBilling('monthly');
+  })();
+  </script>
+  <style>
+    @media (max-width: 900px){ .plans-grid{grid-template-columns:repeat(2,1fr) !important;} }
+    @media (max-width: 600px){ .plans-grid{grid-template-columns:1fr !important;} }
+  </style>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h4>محصول</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="models.html">مدل‌ها</a></li>
+          <li><a href="pricing.html">تعرفه‌ها</a></li>
+          <li><a href="changelog.html">تغییرات</a></li>
+          <li><a href="status.html">وضعیت سرویس</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>منابع</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="docs/">مستندات</a></li>
+          <li><a href="docs/getting-started.html">شروع سریع</a></li>
+          <li><a href="docs/coding-agents.html">راهنمای ابزارهای کدنویسی</a></li>
+          <li><a href="docs/chat-completions.html">مرجع API</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>قانونی</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="terms.html">شرایط استفاده</a></li>
+          <li><a href="privacy.html">حریم خصوصی</a></li>
+          <li><a href="refund.html">سیاست بازپرداخت</a></li>
+        </ul>
+      </div>
+      <div>
+        <a href="index.html" style="display:flex;align-items:center;gap:.5rem;text-decoration:none;margin-bottom:.75rem">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#D97757"/><text x="14" y="16" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="13" font-weight="500">{}</text></svg>
+          <span style="font-family:var(--font-serif);font-weight:700;font-size:1.25rem;color:#1A1915">Codism</span>
+        </a>
+        <p style="font-size:.875rem;color:#6B6659;line-height:1.7;margin:0">مدل‌های هوش مصنوعی از یک API ساده — سازگار با OpenAI، آماده برای ابزارهای کدنویسی.</p>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 Codism — تمامی حقوق محفوظ است.</div>
+  </div>
+</footer>
+
+<script src="assets/app.js?v=86250282"></script>
+
+</body>
+</html>

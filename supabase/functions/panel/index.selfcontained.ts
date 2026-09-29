@@ -1,9 +1,9 @@
-/*
+ /*
  Codism AI Panel — Supabase Edge Function (Deno)
  Env vars:
   SUPABASE_URL, SUPABASE_SERVICE_ROLE, UPSTREAM_API_KEY, UPSTREAM_BASE_URL (default https://codecraftapi.com/v1),
   MODEL_ALIASES (JSON), JWT_SECRET (>=32 chars), ADMIN_EMAIL, ADMIN_PASSWORD, MAX_BODY_MB (default 8),
-  PANEL_UI_URL (default https://pvwvuow.github.io/codism/)
+  PANEL_UI_URL (default https://pvwvuow.github.io/codism/), REGISTRATION_OPEN (default "true"), ALLOWED_MODELS (csv, optional)
 */
 const BROWSER_UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 const enc=new TextEncoder(),dec=new TextDecoder();
@@ -15,7 +15,15 @@ async function hashPassword(pw:string){const salt=crypto.getRandomValues(new Uin
 async function verifyPassword(pw:string,stored:string){const p=stored.split("$");if(p.length!==4||p[0]!=="pbkdf2")return false;const it=parseInt(p[1],10),saltHex=p[2],hashHex=p[3];if(!saltHex||!hashHex||isNaN(it))return false;try{const salt=hexDecode(saltHex),key=await crypto.subtle.importKey("raw",enc.encode(pw),"PBKDF2",false,["deriveBits"]),bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt,iterations:it,hash:"SHA-256"},key,256),dh=hexEncode(new Uint8Array(bits));if(dh.length!==hashHex.length)return false;let d=0;for(let i=0;i<dh.length;i++)d|=dh.charCodeAt(i)^hashHex.charCodeAt(i);return d===0}catch{return false}}
 async function jwtSign(payload:any,secret:string){const h=b64urlEncode(enc.encode(JSON.stringify({alg:"HS256",typ:"JWT"}))),pp=b64urlEncode(enc.encode(JSON.stringify(payload))),data=`${h}.${pp}`,key=await crypto.subtle.importKey("raw",enc.encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]),sig=await crypto.subtle.sign("HMAC",key,enc.encode(data));return `${data}.${b64urlEncode(new Uint8Array(sig))}`}
 async function jwtVerify(token:string,secret:string){const parts=token.split(".");if(parts.length!==3)return null;const data=`${parts[0]}.${parts[1]}`;try{const key=await crypto.subtle.importKey("raw",enc.encode(secret),{name:"HMAC",hash:"SHA-256"},false,["verify"]),sig=b64urlDecode(parts[2]);if(!await crypto.subtle.verify("HMAC",key,sig,enc.encode(data)))return null;const payload=JSON.parse(dec.decode(b64urlDecode(parts[1])));if(payload.exp&&Date.now()/1000>payload.exp)return null;return payload}catch{return null}}
-function getEnv(k:string,d?:string){const v=Deno.env.get(k);return v===undefined?d??"":v}
+ function getEnv(k:string,d?:string){const v=Deno.env.get(k);return v===undefined?d??"":v}
+const PLANS=["free","starter","basic","pro","scale","unlimited"] as const;
+type PlanName=typeof PLANS[number];
+const PLAN_MONTHLY_TOKENS:Record<PlanName,number|null>={free:1_000_000,starter:30_000_000,basic:100_000_000,pro:200_000_000,scale:500_000_000,unlimited:null};
+function planOf(v:any):PlanName|null{const s=String(v||"").toLowerCase();return (PLANS as readonly string[]).includes(s)?(s as PlanName):null}
+function planQuota(p:PlanName):number|null{return PLAN_MONTHLY_TOKENS[p]}
+const PLAN_RPM:Record<PlanName,number>={free:60,starter:120,basic:300,pro:600,scale:1200,unlimited:3000};
+const PLAN_LABEL_FA:Record<PlanName,string>={free:"رایگان",starter:"استارتر",basic:"بیسیک",pro:"پرو",scale:"اسکیل",unlimited:"بدون سقف"};
+const PLAN_PRICE_MONTHLY_USD:Record<PlanName,number>={free:0,starter:1.2,basic:3.5,pro:5.75,scale:11.5,unlimited:50};
 function isSupaMisconfigured(){return !(getEnv("SUPABASE_URL")||getEnv("PANEL_SUPABASE_URL"))||!(getEnv("SUPABASE_SERVICE_ROLE")||getEnv("PANEL_SERVICE_ROLE"))}
 function supaHeaders(){const k=getEnv("SUPABASE_SERVICE_ROLE")||getEnv("PANEL_SERVICE_ROLE");return{"apikey":k,"Authorization":`Bearer ${k}`,"Content-Type":"application/json"}}
 function supaUrl(path:string){if(isSupaMisconfigured()) throw new Error("server misconfiguration");return `${(getEnv("SUPABASE_URL")||getEnv("PANEL_SUPABASE_URL")).replace(/\/+$/,"")}/rest/v1${path}`}
@@ -48,47 +56,8 @@ async function getAuthPayload(req:Request){const a=req.headers.get("authorizatio
 async function requireJwt(req:Request){const p=await getAuthPayload(req);if(!p)return null;return p}
 function normalizePath(p:string){let s=p;const prefixes=["/functions/v1/panel","/panel"];for(const pre of prefixes){if(s===pre||s.startsWith(pre+"/")){let rest=s.slice(pre.length)||"/";if(!rest.startsWith("/"))rest="/"+rest;s=rest;break}}if(!s.startsWith("/"))s="/"+s;return s}
 function stripTrailing(p:string){if(p.length>1&&p.endsWith("/"))return p.slice(0,-1);return p}
-const HTML=`<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Codism AI Panel</title><style>*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Tahoma;background:#0a0a0f;color:#e5e7eb}header{position:sticky;top:0;background:#111119;border-bottom:1px solid #222;display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:56px}nav{display:flex;gap:6px;padding:8px 12px;background:#111119;border-bottom:1px solid #222;overflow:auto}nav button{border:1px solid #2a2a3a;background:#1a1a27;color:#cbd5e1;border-radius:999px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap}nav button.active{background:#7c3aed;color:#fff;border-color:#7c3aed}main{max-width:1100px;margin:0 auto;padding:16px}card{background:#15151f;border:1px solid #232334;border-radius:16px;padding:14px}grid{display:grid;gap:10px}g2{grid-template-columns:repeat(2,1fr)}g4{grid-template-columns:repeat(4,1fr)}@media(max-width:700px){g4{grid-template-columns:repeat(2,1fr)}}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px;border-bottom:1px solid #232334;text-align:right}th{color:#94a3b8;font-weight:600}input,select,textarea{width:100%;background:#0f0f18;border:1px solid #2a2a3a;color:#e5e7eb;border-radius:10px;padding:8px 10px;font-size:13px}button.primary{background:#7c3aed;color:#fff;border:0;border-radius:10px;padding:8px 14px;cursor:pointer}button.ghost{background:#1a1a27;border:1px solid #2a2a3a;color:#e5e7eb;border-radius:10px;padding:6px 10px;cursor:pointer}.badge{padding:2px 8px;border-radius:999px;font-size:11px;border:1px solid #2a2a3a}.ok{background:#052e1a;color:#86efac;border-color:#14532d}.bad{background:#2a1212;color:#fca5a5}.muted{color:#94a3b8;font-size:12px}.ltr{direction:ltr;text-align:left;font-family:ui-monospace,monospace}pre{background:#0f0f18;border:1px solid #232334;border-radius:12px;padding:12px;overflow:auto;white-space:pre-wrap;word-break:break-all}.hidden{display:none!important}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.kpi{font-weight:800;font-size:18px}</style></head><body>
-<header><b style="letter-spacing:1px">CODISM</b><span id="baseUrl" class="ltr" style="background:#000;color:#34d399;padding:4px 8px;border-radius:8px;font-size:11px">/v1</span><div class="row"><span id="meInfo" class="muted"></span><button class="ghost" onclick="logout()">خروج</button></div></header>
-<nav><button data-n="keys" onclick="go('keys')">کلیدها</button><button data-n="usage" onclick="go('usage')">مصرف من</button><button data-n="guide" onclick="go('guide')">راهنما</button><button data-n="admin-users" id="navAdminUsers" class="hidden" onclick="go('admin-users')">کاربران</button><button data-n="admin-stats" id="navAdminStats" class="hidden" onclick="go('admin-stats')">آمار کل</button></nav>
-<main>
-<section id="view-login"><div style="min-height:60vh;display:grid;place-items:center"><div class="card" style="width:100%;max-width:420px"><h2 style="margin:0 0 6px">ورود به پنل</h2><p class="muted">Codism AI Panel — ورود با ایمیل و رمز</p><div style="display:grid;gap:10px;margin-top:12px"><input id="le" placeholder="ایمیل" class="ltr"><input id="lp" type="password" placeholder="رمز عبور"><button class="primary" onclick="doLogin()">ورود</button><div id="loginMsg" class="muted" style="color:#fca5a5"></div></div></div></div></section>
-<section id="view-keys" class="hidden"><div class="row" style="justify-content:space-between"><h3>کلیدهای من</h3><button class="primary" onclick="createKey()">+ ساخت کلید</button></div><div class="row" style="margin:8px 0"><input id="kLabel" placeholder="برچسب کلید (مثلا my-app)" style="max-width:260px"><button class="ghost" onclick="createKey()">ایجاد</button></div><div class="card"><table><thead><tr><th>برچسب</th><th>کلید</th><th>وضعیت</th><th>مدل‌ها</th><th>تاریخ</th><th>حذف</th></tr></thead><tbody id="keysBody"></tbody></table></div></section>
-<section id="view-usage" class="hidden"><div class="grid g4" style="margin-bottom:10px"><div class="card"><div class="muted">امروز — توکن</div><div id="uTodayTok" class="kpi">-</div><div id="uTodayReq" class="muted">-</div></div><div class="card"><div class="muted">این ماه — توکن</div><div id="uMonthTok" class="kpi">-</div><div id="uMonthReq" class="muted">-</div></div><div class="card"><div class="muted">روزهای اخیر</div><div id="uDays" class="kpi">14</div></div><div class="card"><button class="ghost" onclick="loadUsage()">بروزرسانی</button></div></div><div class="card"><table><thead><tr><th>روز</th><th>درخواست</th><th>prompt</th><th>completion</th></tr></thead><tbody id="usageBody"></tbody></table></div><div class="card" style="margin-top:10px"><h4>درخواست‌های اخیر</h4><p class="muted">اگر مصرف صفر است، اینجا را ببینید — درخواست‌های ناموفق هم ثبت می‌شوند</p><table><thead><tr><th>زمان</th><th>مسیر</th><th>مدل</th><th>وضعیت</th><th>جزئیات</th></tr></thead><tbody id="recentBody"></tbody></table></div></section>
-<section id="view-guide" class="hidden"><div class="card"><h3>راهنما</h3><p class="muted">آدرس پایه شما:</p><code id="guideBase" class="ltr" style="display:block;background:#000;color:#34d399;padding:8px;border-radius:8px"></code><p class="muted">نمونه curl:</p><pre id="guideCurl" class="ltr"></pre><p class="muted">Python:</p><pre class="ltr">from openai import OpenAI
-client=OpenAI(base_url=BASE+"/v1",api_key="codism_XXX")
-client.chat.completions.create(model="gpt-4o-mini",messages=[{"role":"user","content":"سلام"}])</pre><p class="muted">JS:</p><pre class="ltr">import OpenAI from "openai"
-const client=new OpenAI({baseURL:BASE+"/v1",apiKey:"codism_XXX"})
-await client.chat.completions.create({model:"gpt-4o-mini",messages:[{role:"user",content:"hi"}]})</pre><div class="row"><select id="guideKeySel" class="ltr" style="max-width:360px"></select><button class="ghost" onclick="refreshGuide()">اعمال کلید</button></div></div></section>
-<section id="view-admin-users" class="hidden"><div class="row" style="justify-content:space-between"><h3>کاربران</h3></div><div class="card"><table><thead><tr><th>ایمیل</th><th>نام</th><th>نقش</th><th>فعال</th><th>سهمیه روزانه</th><th>سهمیه ماهانه</th><th>کلیدها</th><th>عملیات</th></tr></thead><tbody id="adminUsersBody"></tbody></table></div><div class="card" style="margin-top:10px"><h4>ایجاد کاربر</h4><div class="grid g4"><input id="auEmail" placeholder="ایمیل" class="ltr"><input id="auName" placeholder="نام"><input id="auPass" placeholder="رمز" type="password"><select id="auRole"><option value="user">user</option><option value="admin">admin</option></select></div><div class="grid g2" style="margin-top:8px"><input id="auDaily" type="number" placeholder="سهمیه روزانه (0=نامحدود)"><input id="auMonthly" type="number" placeholder="سهمیه ماهانه (0=نامحدود)"></div><div style="margin-top:8px"><button class="primary" onclick="adminCreateUser()">ایجاد</button><span id="auMsg" class="muted"></span></div></div></section>
-<section id="view-admin-stats" class="hidden"><div class="grid g4"><div class="card"><div class="muted">کاربران</div><div id="stUsers" class="kpi">-</div></div><div class="card"><div class="muted">کلیدها</div><div id="stKeys" class="kpi">-</div></div><div class="card"><div class="muted">کلید فعال</div><div id="stActive" class="kpi">-</div></div><div class="card"><div class="muted">درخواست امروز</div><div id="stReq" class="kpi">-</div></div><div class="card"><div class="muted">ناموفق امروز</div><div id="stFailed" class="kpi">-</div></div></div><div class="card" style="margin-top:10px"><div class="muted">توکن امروز</div><div id="stTok" class="kpi">-</div></div><div class="card" style="margin-top:10px"><table><thead><tr><th>روز</th><th>درخواست</th><th>توکن</th></tr></thead><tbody id="adminStatsBody"></tbody></table></div></section>
-</main>
-<script>
-let token=localStorage.getItem("codism_token")||"",cur=null,keys=[];
-const API_BASE=(typeof window!=="undefined"&&window.CODISM_API_BASE)||"";
-function api(p,o={}){o.headers=o.headers||{};if(token)o.headers["Authorization"]="Bearer "+token;if(o.body&&typeof o.body==="object"){o.headers["Content-Type"]="application/json";o.body=JSON.stringify(o.body)}return fetch(API_BASE+p,o).then(async r=>{const t=await r.text();let j;try{j=JSON.parse(t)}catch{j={raw:t}};if(!r.ok)throw new Error((j&&j.error)||t.slice(0,300));return j})}
-function show(id){document.querySelectorAll("main>section").forEach(s=>s.classList.add("hidden"));document.getElementById("view-"+id).classList.remove("hidden");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.n===id))}
-function go(h){location.hash="#/"+h}
-function route(){const h=location.hash.replace(/^#\\/?/,"")||"keys";if(!token){show("login");return}if(h==="login"){show("keys");return}if(h.startsWith("admin")&&cur&&cur.role!=="admin"){show("keys");return}if(document.getElementById("view-"+h))show(h);else show("keys");if(h==="keys")loadKeys();if(h==="usage")loadUsage();if(h==="guide")refreshGuide();if(h==="admin-users")loadAdminUsers();if(h==="admin-stats")loadAdminStats()}
-async function doLogin(){const e=document.getElementById("le").value.trim(),p=document.getElementById("lp").value;document.getElementById("loginMsg").textContent="";try{const j=await api("/api/auth/login",{method:"POST",body:{email:e,password:p}});token=j.token;localStorage.setItem("codism_token",token);await boot()}catch(e){document.getElementById("loginMsg").textContent=e.message}}
-function logout(){localStorage.removeItem("codism_token");token="";cur=null;location.hash="#/login";show("login")}
-async function boot(){if(!token){show("login");return}try{const j=await api("/api/me");cur=j.user;document.getElementById("meInfo").textContent=cur.email+" ("+cur.role+")";if(cur.role==="admin"){document.getElementById("navAdminUsers").classList.remove("hidden");document.getElementById("navAdminStats").classList.remove("hidden")}const base=(API_BASE||(location.origin+"/functions/v1/panel"))+"/v1";document.getElementById("baseUrl").textContent=base;document.getElementById("guideBase").textContent=base;route()}catch{logout()}}
-async function loadKeys(){try{keys=await api("/api/keys");const tb=document.getElementById("keysBody");tb.innerHTML=keys.map(k=>{const masked=k.key?k.key.slice(0,12)+"..."+k.key.slice(-4):"-";return \`<tr><td>\${k.label||"-"}</td><td class="ltr"><span>\${masked}</span> <button class="ghost" onclick="copyKey('\${k.key}')">کپی</button></td><td><span class="badge \${k.enabled?"ok":"bad"}">\${k.enabled?"فعال":"غیرفعال"}</span></td><td class="ltr">\${k.models||"*"}</td><td>\${new Date(k.created_at).toLocaleString("fa-IR")}</td><td><button class="ghost" onclick="delKey('\${k.id}')">حذف</button></td></tr>\`}).join("")||'<tr><td colspan=6 class="muted">کلیدی نیست</td></tr>';const sel=document.getElementById("guideKeySel");if(sel)sel.innerHTML=keys.map(k=>\`<option value="\${k.key}">\${k.label||k.key.slice(0,12)}</option>\`).join("");refreshGuide()}catch(e){}}
-async function createKey(){const label=document.getElementById("kLabel").value.trim();try{await api("/api/keys",{method:"POST",body:{label}});document.getElementById("kLabel").value="";loadKeys()}catch(e){alert(e.message)}}
-async function delKey(id){if(!confirm("حذف کلید؟"))return;await api("/api/keys/"+id,{method:"DELETE"});loadKeys()}
-function copyKey(k){navigator.clipboard.writeText(k);alert("کپی شد")}
-async function loadUsage(){try{const j=await api("/api/usage?days=14");document.getElementById("uTodayTok").textContent=(j.today.prompt_tokens+j.today.completion_tokens);document.getElementById("uTodayReq").textContent=j.today.requests+" درخواست";document.getElementById("uMonthTok").textContent=(j.month.prompt_tokens+j.month.completion_tokens);document.getElementById("uMonthReq").textContent=j.month.requests+" درخواست";document.getElementById("usageBody").innerHTML=j.by_day.map(r=>\`<tr><td>\${r.day.slice(0,10)}</td><td>\${r.requests}</td><td>\${r.prompt_tokens}</td><td>\${r.completion_tokens}</td></tr>\`).join("");const rb=document.getElementById("recentBody");if(rb){const hints={invalid_api_key:"کلید نامعتبر",missing_api_key:"کلید ارسال نشده",key_disabled:"کلید غیرفعال",user_disabled:"حساب غیرفعال",model_not_allowed:"این مدل برای کلید شما مجاز نیست",daily_quota_exceeded:"سهمیه روزانه تمام شد",monthly_quota_exceeded:"سهمیه ماهانه تمام شد",upstream_challenge:"سرویس موقتا در دسترس نیست",upstream_error:"سرویس موقتا در دسترس نیست",upstream_timeout:"پاسخ سرویس طولانی شد",body_too_large:"حجم درخواست بیش از حد",not_found:"مسیر اشتباه"};rb.innerHTML=(j.recent||[]).map(q=>\`<tr><td>\${new Date(q.ts).toLocaleString("fa-IR")}</td><td class="ltr">\${q.route}</td><td class="ltr">\${q.model||"-"}</td><td><span class="badge \${q.status<400?"ok":"bad"}">\${q.status}</span></td><td>\${q.status<400?((q.prompt_tokens+q.completion_tokens)+" توکن"):(hints[q.error_code]||q.error_code||"-")}</td></tr>\`).join("")||'<tr><td colspan=5 class="muted">موردی ثبت نشده</td></tr>'}}catch(e){}}
-function refreshGuide(){const base=(API_BASE||(location.origin+"/functions/v1/panel"))+"/v1";
-const sel=document.getElementById("guideKeySel");const key=sel&&sel.value?sel.value:"codism_XXX";document.getElementById("guideCurl").textContent='curl '+base+'/chat/completions -H "Authorization: Bearer '+key+'" -H "Content-Type: application/json" -d \'{"model":"gpt-4o-mini","messages":[{"role":"user","content":"سلام"}]}\''}
-async function loadAdminUsers(){try{const rows=await api("/api/admin/users");document.getElementById("adminUsersBody").innerHTML=rows.map(u=>\`<tr><td class="ltr">\${u.email}</td><td>\${u.name||""}</td><td>\${u.role}</td><td><button class="ghost" onclick="toggleUser('\${u.id}',\${!u.enabled})">\${u.enabled?"فعال":"غیرفعال"}</button></td><td><input class="ltr" style="width:110px" value="\${u.daily_quota_tokens||0}" onchange="editQuota('\${u.id}','daily',this.value)"></td><td><input class="ltr" style="width:110px" value="\${u.monthly_quota_tokens||0}" onchange="editQuota('\${u.id}','monthly',this.value)"></td><td>\${u.key_count||0}</td><td><button class="ghost" onclick="resetPw('\${u.id}')">رمز</button> <button class="ghost" onclick="delUser('\${u.id}')">حذف</button></td></tr>\`).join("")}catch(e){document.getElementById("adminUsersBody").innerHTML='<tr><td colspan=8>'+e.message+'</td></tr>'}}
-async function adminCreateUser(){const body={email:auEmail.value.trim(),name:auName.value.trim(),password:auPass.value,role:auRole.value,daily_quota_tokens:parseInt(auDaily.value||"0",10),monthly_quota_tokens:parseInt(auMonthly.value||"0",10)};document.getElementById("auMsg").textContent="";try{await api("/api/admin/users",{method:"POST",body});auEmail.value="";auName.value="";auPass.value="";loadAdminUsers()}catch(e){document.getElementById("auMsg").textContent=e.message}}
-async function toggleUser(id,enabled){try{await api("/api/admin/users/"+id,{method:"PATCH",body:{enabled}});loadAdminUsers()}catch(e){alert(e.message)}}
-async function editQuota(id,kind,val){const body={};if(kind==="daily")body.daily_quota_tokens=parseInt(val,10);else body.monthly_quota_tokens=parseInt(val,10);try{await api("/api/admin/users/"+id,{method:"PATCH",body})}catch(e){alert(e.message)}}
-async function resetPw(id){const p=prompt("رمز جدید:");if(!p)return;try{await api("/api/admin/users/"+id,{method:"PATCH",body:{password:p}});alert("انجام شد")}catch(e){alert(e.message)}}
-async function delUser(id){if(!confirm("حذف کاربر؟"))return;try{await api("/api/admin/users/"+id,{method:"DELETE"});loadAdminUsers()}catch(e){alert(e.message)}}
-async function loadAdminStats(){try{const j=await api("/api/admin/stats");document.getElementById("stUsers").textContent=j.totals.users;document.getElementById("stKeys").textContent=j.totals.keys;document.getElementById("stActive").textContent=j.totals.active_keys;document.getElementById("stReq").textContent=j.totals.requests_today;document.getElementById("stTok").textContent=j.totals.tokens_today;const sf=document.getElementById("stFailed");if(sf)sf.textContent=j.totals.failed_today??0;document.getElementById("adminStatsBody").innerHTML=j.by_day.map(r=>\`<tr><td>\${r.day.slice(0,10)}</td><td>\${r.requests}</td><td>\${r.tokens}</td></tr>\`).join("")}catch(e){}}
-window.addEventListener("hashchange",route);boot();
-</script></body></html>`;
+// UI moved to GitHub Pages (ui-src/ -> gh-pages). This function is API-only; GET / redirects to PANEL_UI_URL.
+
 
 Deno.serve(async (req:Request)=>{
  try{
@@ -107,9 +76,163 @@ Deno.serve(async (req:Request)=>{
   return new Response(null,{status:204,headers:h});
  }
  const norm=stripTrailing(pathname);
+type ModelCaps={reasoning:boolean,tools:boolean,vision:boolean,json:boolean,web:boolean};
+type ModelInfo={id:string,provider:string,capabilities:ModelCaps,context:number};
+const STATIC_FALLBACK_MODELS:ModelInfo[]=[
+ {id:"claude-fable-5",provider:"anthropic",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:200000},
+ {id:"claude-fable-5.1",provider:"anthropic",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:200000},
+ {id:"claude-mythos-preview",provider:"anthropic",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:200000},
+ {id:"claude-opus-4.6",provider:"anthropic",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:200000},
+ {id:"claude-opus-4.7",provider:"anthropic",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:200000},
+ {id:"claude-opus-4.8",provider:"anthropic",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:200000},
+ {id:"claude-opus-5",provider:"anthropic",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:200000},
+ {id:"claude-opus-5.5",provider:"anthropic",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:200000},
+ {id:"claude-sonnet-5",provider:"anthropic",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:200000},
+ {id:"deepseek-v4-flash-0731",provider:"deepseek",capabilities:{reasoning:true,tools:true,vision:false,json:true,web:false},context:163840},
+ {id:"deepseek-v4-pro-0813",provider:"deepseek",capabilities:{reasoning:true,tools:true,vision:false,json:true,web:false},context:163840},
+ {id:"deepseek-v4-pro-max",provider:"deepseek",capabilities:{reasoning:true,tools:true,vision:false,json:true,web:false},context:163840},
+ {id:"gemini-3.1-pro",provider:"google",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:1000000},
+ {id:"gemini-3.6-flash",provider:"google",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:1000000},
+ {id:"gemini-3.7-flash",provider:"google",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:1000000},
+ {id:"gemma-2-2b",provider:"google",capabilities:{reasoning:false,tools:false,vision:false,json:true,web:false},context:8192},
+ {id:"glm-5.2",provider:"zhipu",capabilities:{reasoning:true,tools:true,vision:false,json:true,web:false},context:200000},
+ {id:"glm-5.3",provider:"zhipu",capabilities:{reasoning:true,tools:true,vision:false,json:true,web:false},context:200000},
+ {id:"gpt-5.5",provider:"openai",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:400000},
+ {id:"gpt-5.5-pro",provider:"openai",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:400000},
+ {id:"gpt-5.6-luna",provider:"openai",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:400000},
+ {id:"gpt-5.6-sol",provider:"openai",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:400000},
+ {id:"gpt-5.6-terra",provider:"openai",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:400000},
+ {id:"grok-4.5",provider:"xai",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:256000},
+ {id:"grok-4.6",provider:"xai",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:256000},
+ {id:"kimi-k2.6",provider:"moonshot",capabilities:{reasoning:true,tools:true,vision:false,json:true,web:false},context:262144},
+ {id:"kimi-k3",provider:"moonshot",capabilities:{reasoning:true,tools:true,vision:false,json:true,web:false},context:262144},
+ {id:"muse-spark-1.1",provider:"bytedance",capabilities:{reasoning:false,tools:true,vision:false,json:true,web:false},context:128000},
+ {id:"qwen3.7-max",provider:"qwen",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:262144},
+ {id:"qwen3.8-27b",provider:"qwen",capabilities:{reasoning:true,tools:true,vision:false,json:true,web:false},context:262144},
+ {id:"qwen3.8-max",provider:"qwen",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:262144},
+ {id:"seed-2.1-pro",provider:"bytedance",capabilities:{reasoning:true,tools:true,vision:false,json:true,web:false},context:262144},
+ {id:"seed-2.1-turbo",provider:"bytedance",capabilities:{reasoning:true,tools:true,vision:false,json:true,web:false},context:262144},
+];
+function modelMeta(id:string):ModelInfo{
+  const f=STATIC_FALLBACK_MODELS.find(m=>m.id===id);
+  if(f) return f;
+  const lower=id.toLowerCase();
+  let provider="openai";
+  if(lower.includes("claude")) provider="anthropic";
+  else if(lower.includes("gemini")) provider="google";
+  else if(lower.includes("deepseek")) provider="deepseek";
+  else if(lower.includes("qwen")) provider="qwen";
+  else if(lower.includes("llama")) provider="meta";
+  else if(lower.includes("moonshot")||lower.includes("kimi")) provider="moonshot";
+  else if(lower.includes("glm")||lower.includes("zhipu")) provider="zhipu";
+  else if(lower.includes("doubao")) provider="bytedance";
+  else if(lower.includes("mistral")) provider="mistral";
+  else if(lower.includes("grok")) provider="xai";
+  else if(lower.includes("seed")||lower.includes("muse")) provider="bytedance";
+  else if(lower.includes("gpt")) provider="openai";
+  else if(lower.includes("fable")||lower.includes("mythos")||lower.includes("opus")||lower.includes("sonnet")) provider="anthropic";
+  return {id,provider,capabilities:{reasoning:false,tools:true,vision:false,json:true,web:false},context:128000};
+}
+if(norm==="/api/models"&&req.method==="GET"){
+  const now=Date.now();
+  const g=(globalThis as any);
+  if(g.__codismModelsCache&&now-g.__codismModelsCache.ts<30*60*1000){
+    return jsonRes(200,{data:g.__codismModelsCache.data});
+  }
+  try{
+    const allowedRaw=getEnv("ALLOWED_MODELS","");
+    const allowedSet:Set<string>|null=allowedRaw?new Set(allowedRaw.split(",").map((s:string)=>s.trim()).filter(Boolean)):null;
+    let upstreamModels:ModelInfo[]|null=null;
+    const base=upstreamBase();
+    const key=getEnv("UPSTREAM_API_KEY")||getEnv("PANEL_UPSTREAM_KEY")||"";
+    if(base&&key){
+      const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),4000);
+      try{
+        const r=await fetch(`${base}/models`,{headers:{"Authorization":`Bearer ${key}`,"User-Agent":BROWSER_UA},signal:ctrl.signal});
+        if(r.ok){
+          const j=await r.json().catch(()=>null) as any;
+          const arr=j?.data||j?.models||j;
+          if(Array.isArray(arr)){
+            upstreamModels=(arr.map((m:any)=>{
+              const id=String(m.id||m.name||"");
+              if(!id) return null;
+              const meta=modelMeta(id);
+              if(typeof m.context_length==="number") meta.context=m.context_length;
+              else if(typeof m.context==="number") meta.context=m.context;
+              else if(typeof m.max_tokens==="number") meta.context=m.max_tokens;
+              return meta;
+            }).filter(Boolean) as ModelInfo[]);
+          }
+        }
+      }catch{}finally{clearTimeout(to)}
+    }
+    let data:ModelInfo[]=upstreamModels&&upstreamModels.length?upstreamModels:STATIC_FALLBACK_MODELS.slice();
+    if(allowedSet) data=data.filter(m=>allowedSet.has(m.id));
+    const aliases=parseAliases();
+    const aliasKeys=Object.keys(aliases);
+    if(aliasKeys.length){
+      const seen=new Set(data.map(m=>m.id));
+      for(const aid of aliasKeys){
+        if(!seen.has(aid)&&(!allowedSet||allowedSet.has(aid))){
+          data.push(modelMeta(aid));
+          seen.add(aid);
+        }
+      }
+    }
+    g.__codismModelsCache={ts:now,data};
+    return jsonRes(200,{data});
+  }catch{
+    return jsonRes(200,{data:STATIC_FALLBACK_MODELS});
+  }
+}
+if(norm==="/api/status"&&req.method==="GET"){
+  const now=Date.now();
+  const g2=(globalThis as any);
+  if(g2.__codismStatusCache&&now-g2.__codismStatusCache.ts<5*60*1000){
+    return jsonRes(200,g2.__codismStatusCache.payload);
+  }
+  const start=Date.now();
+  let ok=true;let latency_ms=0;
+  try{
+    const base=upstreamBase();
+    const key=getEnv("UPSTREAM_API_KEY")||getEnv("PANEL_UPSTREAM_KEY")||"";
+    const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),4000);
+    try{
+      const r=await fetch(`${base}/models`,{method:"GET",headers:{...(key?{"Authorization":`Bearer ${key}`}:{}),"User-Agent":BROWSER_UA},signal:ctrl.signal});
+      ok=r.ok;
+    }catch{ok=false}finally{clearTimeout(to);latency_ms=Date.now()-start}
+  }catch{ok=false;latency_ms=Date.now()-start}
+  const payload={ok:true,upstream:{ok,latency_ms,checked_at:new Date().toISOString()}};
+  g2.__codismStatusCache={ts:now,payload};
+  return jsonRes(200,payload);
+}
  // health
  if(norm==="/health"&&method==="GET") return jsonRes(200,{ok:true,service:"codism-panel"});
  if(norm==="/"&&(method==="GET"||method==="HEAD")) return new Response(null,{status:302,headers:withCors(new Headers({location:getEnv("PANEL_UI_URL","https://pvwvuow.github.io/codism/"),"cache-control":"no-store"}))});
+ const regFails=new Map<string,{count:number,first:number}>();
+ function isRegRateLimited(ip:string){const e=regFails.get(ip);if(!e) return false;if(Date.now()-e.first>3600000){regFails.delete(ip);return false}return e.count>=5}
+ function addRegFail(ip:string){const now=Date.now();const e=regFails.get(ip);if(!e||now-e.first>3600000) regFails.set(ip,{count:1,first:now});else e.count++}
+ function resetRegFail(ip:string){regFails.delete(ip)}
+ // register
+ if(norm==="/api/auth/register"&&method==="POST"){
+  if(getEnv("REGISTRATION_OPEN","true")==="false") return jsonRes(403,{error:"registration_closed",code:"registration_closed"});
+  const ip=getIp(req);
+  if(isRegRateLimited(ip)) return panelErr(429,"Too many attempts");
+  let body:any={};try{body=await req.json()}catch{}
+  const email=(body.email||"").trim(),password=body.password||"",name=(body.name||"").trim();
+  if(!email||!password||password.length<8||!name||name.length<2) return jsonRes(400,{error:"validation_error",code:"validation_error"});
+  const ex=await sbGet(`/users?email=eq.${encodeURIComponent(email)}&select=id`);
+  if(ex.length){addRegFail(ip);return jsonRes(409,{error:"email_exists",code:"email_exists"})}
+  const h=await hashPassword(password);
+  const plan=planOf("free")||"free";
+  const mq=planQuota(plan);
+  let ins:any;try{ins=await sbPost("/users",{email,name,password_hash:h,role:"user",enabled:true,plan,daily_quota_tokens:0,monthly_quota_tokens:mq||0,phone:body.phone||null})}catch(e:any){addRegFail(ip);return panelErr(400,String(e.message||e))}
+  const user=ins[0];
+  resetRegFail(ip);
+  const exp=Math.floor(Date.now()/1000)+12*3600;
+  const token=await jwtSign({sub:user.id,email:user.email,role:user.role,exp},getEnv("JWT_SECRET"));
+  return jsonRes(201,{token,user:{id:user.id,email:user.email,name:user.name,role:user.role,plan:user.plan||plan,daily_quota_tokens:user.daily_quota_tokens,monthly_quota_tokens:user.monthly_quota_tokens}});
+ }
  // login
  if(norm==="/api/auth/login"&&method==="POST"){
   const ip=getIp(req);
@@ -136,6 +259,20 @@ Deno.serve(async (req:Request)=>{
   const rows=await sbGet(`/users?id=eq.${encodeURIComponent(p.sub)}&select=id,email,name,role,enabled,daily_quota_tokens,monthly_quota_tokens`);
   if(!rows[0]||!rows[0].enabled) return null;
   return {...p,db:rows[0]};
+ }
+ if(norm==="/api/auth/password"&&method==="POST"){
+  const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
+  let b:any={};try{b=await req.json()}catch{}
+  const cur=b.current_password||b.currentPassword||"",nw=b.new_password||b.newPassword||"";
+  if(!nw||nw.length<8) return jsonRes(400,{error:"validation_error",code:"validation_error"});
+  const rows=await sbGet(`/users?id=eq.${encodeURIComponent(a.sub)}&select=id,password_hash`);
+  const u=rows[0];
+  if(!u) return panelErr(401,"Unauthorized");
+  const ok=await verifyPassword(cur,u.password_hash);
+  if(!ok) return jsonRes(401,{error:"invalid_credentials",code:"invalid_credentials"});
+  const h=await hashPassword(nw);
+  await sbPatch(`/users?id=eq.${encodeURIComponent(a.sub)}`,{password_hash:h});
+  return jsonRes(200,{ok:true});
  }
  // /api/me
  if(norm==="/api/me"&&method==="GET"){
@@ -191,29 +328,50 @@ Deno.serve(async (req:Request)=>{
   const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
   const days=Math.min(90,Math.max(1,parseInt(url.searchParams.get("days")||"14",10)||14));
   const [tFrom,tTo]=todayBounds(),[mFrom,mTo]=monthBounds();
-  const [by,td,mo]=await Promise.all([sbRpc("usage_by_day",{p_user:a.sub,p_days:days,p_offset_min:TZ_OFF_MIN}),sbRpc("usage_sum",{p_user:a.sub,p_from:tFrom,p_to:tTo}),sbRpc("usage_sum",{p_user:a.sub,p_from:mFrom,p_to:mTo})]);
+  const [by,td,mo,bm]=await Promise.all([sbRpc("usage_by_day",{p_user:a.sub,p_days:days,p_offset_min:TZ_OFF_MIN}),sbRpc("usage_sum",{p_user:a.sub,p_from:tFrom,p_to:tTo}),sbRpc("usage_sum",{p_user:a.sub,p_from:mFrom,p_to:mTo}),sbRpc("usage_by_model",{p_user:a.sub,p_days:days,p_offset_min:TZ_OFF_MIN})]);
   const recent=await sbGet(`/request_log?user_id=eq.${encodeURIComponent(a.sub)}&select=ts,route,model,status,error_code,prompt_tokens,completion_tokens,latency_ms&order=ts.desc&limit=25`);
-  return jsonRes(200,{by_day:by,today:td[0]||{prompt_tokens:0,completion_tokens:0,requests:0},month:mo[0]||{prompt_tokens:0,completion_tokens:0,requests:0},recent});
+  return jsonRes(200,{by_day:by,by_model:bm,today:td[0]||{prompt_tokens:0,completion_tokens:0,requests:0},month:mo[0]||{prompt_tokens:0,completion_tokens:0,requests:0},recent});
+ }
+ if(norm==="/api/usage/export"&&method==="GET"){
+  const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
+  const fmt=(url.searchParams.get("format")||"json").toLowerCase();
+  const days=Math.min(90,Math.max(1,parseInt(url.searchParams.get("days")||"90",10)||90));
+  void days;
+  const rows=await sbGet(`/request_log?user_id=eq.${encodeURIComponent(a.sub)}&select=ts,route,model,status,error_code,prompt_tokens,completion_tokens,latency_ms&order=ts.desc&limit=10000`);
+  if(fmt==="csv"){
+   const header="ts,route,model,status,error_code,prompt_tokens,completion_tokens,latency_ms";
+   const esc=(v:any)=>{const s=v==null?"":String(v);if(s.includes(",")||s.includes('"')||s.includes("\n")) return '"'+s.replace(/"/g,'""')+'"';return s};
+   const lines=rows.map((r:any)=>[r.ts,r.route,r.model,r.status,r.error_code,r.prompt_tokens,r.completion_tokens,r.latency_ms].map(esc).join(","));
+   const csv=header+"\n"+lines.join("\n");
+   const h=withCors(new Headers({"content-type":"text/csv; charset=utf-8","content-disposition":'attachment; filename="codism-usage.csv"'}));
+   return new Response(csv,{status:200,headers:h});
+  }else{
+   const h=withCors(new Headers({"content-type":"application/json; charset=utf-8","content-disposition":'attachment; filename="codism-usage.json"'}));
+   return new Response(JSON.stringify(rows),{status:200,headers:h});
+  }
  }
  // admin routes
  if(pathname.startsWith("/api/admin/")){
   const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
   if(a.role!=="admin") return panelErr(403,"Admin only");
   if(norm==="/api/admin/users"&&method==="GET"){
-   const users=await sbGet(`/users?select=id,email,name,role,enabled,daily_quota_tokens,monthly_quota_tokens,created_at&order=created_at.desc`);
+   const users=await sbGet(`/users?select=id,email,name,role,enabled,plan,daily_quota_tokens,monthly_quota_tokens,created_at&order=created_at.desc`);
    const keys=await sbGet(`/api_keys?select=user_id`);
    const cnt=new Map<string,number>();for(const k of keys) cnt.set(k.user_id,(cnt.get(k.user_id)||0)+1);
-   const out=users.map((u:any)=>({id:u.id,email:u.email,name:u.name,role:u.role,enabled:u.enabled,daily_quota_tokens:u.daily_quota_tokens,monthly_quota_tokens:u.monthly_quota_tokens,created_at:u.created_at,key_count:cnt.get(u.id)||0}));
+   const out=users.map((u:any)=>({id:u.id,email:u.email,name:u.name,role:u.role,enabled:u.enabled,plan:u.plan||planOf("free"),daily_quota_tokens:u.daily_quota_tokens,monthly_quota_tokens:u.monthly_quota_tokens,created_at:u.created_at,key_count:cnt.get(u.id)||0}));
    return jsonRes(200,out);
   }
   if(norm==="/api/admin/users"&&method==="POST"){
    let b:any={};try{b=await req.json()}catch{}
-   const email=(b.email||"").trim(),name=(b.name||"").trim(),password=b.password||"",role=b.role==="admin"?"admin":"user",dq=parseInt(b.daily_quota_tokens??0,10)||0,mq=parseInt(b.monthly_quota_tokens??0,10)||0;
+   const email=(b.email||"").trim(),name=(b.name||"").trim(),password=b.password||"",role=b.role==="admin"?"admin":"user";
    if(!email||!password||!name) return panelErr(400,"missing fields");
    const ex=await sbGet(`/users?email=eq.${encodeURIComponent(email)}&select=id`);
    if(ex.length) return panelErr(409,"email exists");
    const h=await hashPassword(password);
-   try{const ins=await sbPost("/users",{email,name,password_hash:h,role,enabled:true,daily_quota_tokens:dq,monthly_quota_tokens:mq});return jsonRes(200,ins[0]||{ok:true})}catch(e:any){return panelErr(400,String(e.message||e))}
+   const plan=planOf(b.plan||"free")||"free";
+   const mq=planQuota(plan);
+   const dq:any=0;
+   try{const ins=await sbPost("/users",{email,name,password_hash:h,role,enabled:true,plan,daily_quota_tokens:dq,monthly_quota_tokens:mq||0});return jsonRes(200,ins[0]||{ok:true})}catch(e:any){return panelErr(400,String(e.message||e))}
   }
   if(pathname.startsWith("/api/admin/users/")&&method==="PATCH"){
    const id=pathname.split("/")[4];
@@ -228,6 +386,7 @@ Deno.serve(async (req:Request)=>{
    if(b.monthly_quota_tokens!==undefined) patch.monthly_quota_tokens=parseInt(b.monthly_quota_tokens,10)||0;
    if(b.role) patch.role=b.role;
    if(b.password) patch.password_hash=await hashPassword(b.password);
+   if(b.plan!==undefined){const pl=planOf(b.plan)||"free";patch.plan=pl;patch.monthly_quota_tokens=planQuota(pl)||0;patch.daily_quota_tokens=0}
    if(Object.keys(patch).length===0) return panelErr(400,"no fields");
    await sbPatch(`/users?id=eq.${encodeURIComponent(id)}`,patch);
    return jsonRes(200,{ok:true});
