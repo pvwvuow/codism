@@ -531,7 +531,9 @@
       const todayTok = (Number(today.prompt_tokens) || 0) + (Number(today.completion_tokens) || 0);
       const monthTok = (Number(month.prompt_tokens) || 0) + (Number(month.completion_tokens) || 0);
       const avg = byDay.length ? Math.round(byDay.reduce((a, r) => a + (Number(r.prompt_tokens) || 0) + (Number(r.completion_tokens) || 0), 0) / 14) : 0;
-      const failed = recent.filter((r) => Number(r.status) >= 400).length;
+      // today in Tehran = UTC + 210min
+      const tehranToday = new Date(Date.now() + 210 * 60000).toISOString().slice(0, 10);
+      const failed = recent.filter((r) => Number(r.status) >= 400 && String(r.ts || "").slice(0, 10) === tehranToday).length;
 
       // try multiple selectors
       setText("[data-usage-today-tok]", fmtTok(todayTok));
@@ -627,44 +629,49 @@
       qa("[data-export]").forEach((el) => {
         const fmt = el.getAttribute("data-export") || el.getAttribute("data-format") || "csv";
         const href = API_BASE + "/api/usage/export?format=" + encodeURIComponent(fmt) + "&days=90";
-        if (el.tagName.toLowerCase() === "a") {
-          el.setAttribute("href", href);
-          el.setAttribute("download", "");
-        } else {
-          el.addEventListener("click", (e) => {
-            e.preventDefault();
-            const a = document.createElement("a");
-            a.href = href;
-            a.setAttribute("download", "");
-            // need auth header for fetch? but export is via browser fetch with token? Use fetch blob
-            // fallback: open with token via fetch
-            fetch(href, { headers: H() })
-              .then((res) => {
-                if (!res.ok) throw new Error("خطای غیرمنتظره");
-                return res.blob();
-              })
-              .then((blob) => {
-                const url = URL.createObjectURL(blob);
-                a.href = url;
-                a.download = "usage-" + fmt + ".zip";
-                if (fmt === "csv") a.download = "usage.csv";
-                if (fmt === "json") a.download = "usage.json";
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => {
-                  URL.revokeObjectURL(url);
-                  a.remove();
-                }, 1000);
-              })
-              .catch((err) => showToast(err.message || "خطای غیرمنتظره", false));
-          });
-        }
+        el.addEventListener("click", (e) => {
+          e.preventDefault();
+          fetch(href, { headers: H() })
+            .then((res) => {
+              if (!res.ok) throw new Error(res.status === 401 ? "نشست شما منقضی شده — دوباره وارد شوید" : "خطای غیرمنتظره");
+              return res.blob();
+            })
+            .then((blob) => {
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = fmt === "csv" ? "codism-usage.csv" : "codism-usage.json";
+              document.body.appendChild(a);
+              a.click();
+              setTimeout(() => {
+                URL.revokeObjectURL(url);
+                a.remove();
+              }, 1000);
+            })
+            .catch((err) => showToast(err.message || "خطای غیرمنتظره", false));
+        });
       });
-      // also handle generic export links
+      // also handle generic export links (same authed fetch flow)
       qa("a[data-export-csv], a[data-export-json]").forEach((a) => {
         const fmt = a.hasAttribute("data-export-csv") ? "csv" : "json";
-        a.href = API_BASE + "/api/usage/export?format=" + fmt + "&days=90";
-        a.setAttribute("download", "");
+        a.setAttribute("data-export", fmt);
+        a.removeAttribute("data-export-csv");
+        a.removeAttribute("data-export-json");
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          fetch(API_BASE + "/api/usage/export?format=" + fmt + "&days=90", { headers: H() })
+            .then((res) => (res.ok ? res.blob() : Promise.reject(new Error("خطا"))))
+            .then((blob) => {
+              const url = URL.createObjectURL(blob);
+              const tmp = document.createElement("a");
+              tmp.href = url;
+              tmp.download = fmt === "csv" ? "codism-usage.csv" : "codism-usage.json";
+              document.body.appendChild(tmp);
+              tmp.click();
+              setTimeout(() => { URL.revokeObjectURL(url); tmp.remove(); }, 1000);
+            })
+            .catch(() => showToast("دریافت گزارش ناموفق بود", false));
+        });
       });
     } catch (e) {
       console.error("usage", e);
@@ -834,12 +841,15 @@
           }
         });
       });
-      document.addEventListener("click", () => {
-        qa(".menu-list", tbody).forEach((l) => {
-          l.classList.add("hidden");
-          l.style.display = "none";
+      if (!window.__codismMenuCloseBound) {
+        window.__codismMenuCloseBound = true;
+        document.addEventListener("click", () => {
+          qa(".menu-list").forEach((l) => {
+            l.classList.add("hidden");
+            l.style.display = "none";
+          });
         });
-      });
+      }
 
       // actions
       qa('[data-act="toggle"]', tbody).forEach((b) => {

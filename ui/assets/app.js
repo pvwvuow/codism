@@ -44,7 +44,7 @@
     google: "Google",
     deepseek: "DeepSeek",
     qwen: "Qwen",
-    meta: "Anthropic",
+    meta: "Meta",
     moonshot: "Moonshot",
     zhipu: "Zhipu",
     bytedance: "ByteDance",

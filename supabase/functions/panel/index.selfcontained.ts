@@ -41,8 +41,11 @@ function withCors(h:Headers){if(!h.has("access-control-allow-origin"))h.set("acc
 function jsonRes(status:number,obj:any,extra?:Record<string,string>){const h=withCors(new Headers({"content-type":"application/json",...(extra||{})}));return new Response(JSON.stringify(obj),{status,headers:h})}
 function openaiErr(status:number,msg:string,type="invalid_request_error",code="invalid_request_error"){return jsonRes(status,{error:{message:msg,type,code}})}
 function panelErr(status:number,msg:string){return jsonRes(status,{error:msg})}
+async function readJson(req:Request):Promise<any>{const cl=req.headers.get("content-length");const lim=maxBodyBytes();if(cl&&parseInt(cl,10)>lim) throw new Error("body_too_large");const t=await req.text();if(t.length>lim) throw new Error("body_too_large");try{return JSON.parse(t)}catch{return {}}}
 function getIp(req:Request){return req.headers.get("cf-connecting-ip")||(req.headers.get("x-forwarded-for")||"").split(",")[0].trim()||req.headers.get("x-real-ip")||"0.0.0.0"}
 const loginFails=new Map<string,number[]>();
+// NOTE: per-isolate best-effort limiting (multi-isolate bypass possible) — acceptable for this scale
+const regFails=new Map<string,{count:number,first:number}>();
 function isRateLimited(ip:string){const arr=loginFails.get(ip)||[],now=Date.now(),win=5*60*1000;const f=arr.filter(t=>now-t<win);loginFails.set(ip,f);return f.length>=10}
 function addFail(ip:string){const a=loginFails.get(ip)||[];a.push(Date.now());loginFails.set(ip,a)}
 function resetFail(ip:string){loginFails.delete(ip)}
@@ -61,6 +64,7 @@ function stripTrailing(p:string){if(p.length>1&&p.endsWith("/"))return p.slice(0
 
 Deno.serve(async (req:Request)=>{
  try{
+ if(!getEnv("JWT_SECRET")||getEnv("JWT_SECRET").length<16) console.error("JWT_SECRET missing/short — logins will fail");
  await ensureAdmin();
  const url=new URL(req.url);
  let pathname=normalizePath(url.pathname);
@@ -139,6 +143,8 @@ if(norm==="/api/models"&&req.method==="GET"){
   if(g.__codismModelsCache&&now-g.__codismModelsCache.ts<30*60*1000){
     return jsonRes(200,{data:g.__codismModelsCache.data});
   }
+  if(g.__codismModelsPromise){await g.__codismModelsPromise;return jsonRes(200,{data:g.__codismModelsCache.data})}
+  g.__codismModelsPromise=(async()=>{})().catch(()=>{});
   try{
     const allowedRaw=getEnv("ALLOWED_MODELS","");
     const allowedSet:Set<string>|null=allowedRaw?new Set(allowedRaw.split(",").map((s:string)=>s.trim()).filter(Boolean)):null;
@@ -179,7 +185,7 @@ if(norm==="/api/models"&&req.method==="GET"){
         }
       }
     }
-    g.__codismModelsCache={ts:now,data};
+    g.__codismModelsCache={ts:now,data};delete g.__codismModelsPromise;
     return jsonRes(200,{data});
   }catch{
     return jsonRes(200,{data:STATIC_FALLBACK_MODELS});
@@ -209,7 +215,6 @@ if(norm==="/api/status"&&req.method==="GET"){
  // health
  if(norm==="/health"&&method==="GET") return jsonRes(200,{ok:true,service:"codism-panel"});
  if(norm==="/"&&(method==="GET"||method==="HEAD")) return new Response(null,{status:302,headers:withCors(new Headers({location:getEnv("PANEL_UI_URL","https://pvwvuow.github.io/codism/"),"cache-control":"no-store"}))});
- const regFails=new Map<string,{count:number,first:number}>();
  function isRegRateLimited(ip:string){const e=regFails.get(ip);if(!e) return false;if(Date.now()-e.first>3600000){regFails.delete(ip);return false}return e.count>=5}
  function addRegFail(ip:string){const now=Date.now();const e=regFails.get(ip);if(!e||now-e.first>3600000) regFails.set(ip,{count:1,first:now});else e.count++}
  function resetRegFail(ip:string){regFails.delete(ip)}
@@ -218,15 +223,15 @@ if(norm==="/api/status"&&req.method==="GET"){
   if(getEnv("REGISTRATION_OPEN","true")==="false") return jsonRes(403,{error:"registration_closed",code:"registration_closed"});
   const ip=getIp(req);
   if(isRegRateLimited(ip)) return panelErr(429,"Too many attempts");
-  let body:any={};try{body=await req.json()}catch{}
+  let body:any;try{body=await readJson(req)}catch(e:any){if(String(e.message)==="body_too_large")return panelErr(413,"body too large");body={}}
   const email=(body.email||"").trim(),password=body.password||"",name=(body.name||"").trim();
-  if(!email||!password||password.length<8||!name||name.length<2) return jsonRes(400,{error:"validation_error",code:"validation_error"});
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!password||password.length<8||password.length>200||!name||name.length<2||name.length>100||(body.phone&&String(body.phone).length>20)) return jsonRes(400,{error:"validation_error",code:"validation_error"});
   const ex=await sbGet(`/users?email=eq.${encodeURIComponent(email)}&select=id`);
   if(ex.length){addRegFail(ip);return jsonRes(409,{error:"email_exists",code:"email_exists"})}
   const h=await hashPassword(password);
   const plan=planOf("free")||"free";
   const mq=planQuota(plan);
-  let ins:any;try{ins=await sbPost("/users",{email,name,password_hash:h,role:"user",enabled:true,plan,daily_quota_tokens:0,monthly_quota_tokens:mq||0,phone:body.phone||null})}catch(e:any){addRegFail(ip);return panelErr(400,String(e.message||e))}
+  let ins:any;try{ins=await sbPost("/users",{email,name,password_hash:h,role:"user",enabled:true,plan,daily_quota_tokens:0,monthly_quota_tokens:mq||0,phone:body.phone||null})}catch(e:any){console.error("register insert failed:",String(e.message||e));const msg=String(e.message||"");if(msg.includes("duplicate")||msg.includes("23505")||msg.includes("already exists")){addRegFail(ip);return jsonRes(409,{error:"email_exists",code:"email_exists"})}return jsonRes(400,{error:"create_failed",code:"create_failed"})}
   const user=ins[0];
   resetRegFail(ip);
   const exp=Math.floor(Date.now()/1000)+12*3600;
@@ -237,7 +242,7 @@ if(norm==="/api/status"&&req.method==="GET"){
  if(norm==="/api/auth/login"&&method==="POST"){
   const ip=getIp(req);
   if(isRateLimited(ip)) return panelErr(429,"Too many attempts");
-  let body:any={};try{body=await req.json()}catch{}
+  let body:any;try{body=await readJson(req)}catch(e:any){if(String(e.message)==="body_too_large")return panelErr(413,"body too large");body={}}
   const email=(body.email||"").trim(),password=body.password||"";
   if(!email||!password) return panelErr(400,"email & password required");
   const rows=await sbGet(`/users?email=eq.${encodeURIComponent(email)}&select=id,email,name,password_hash,role,enabled,daily_quota_tokens,monthly_quota_tokens`);
@@ -262,7 +267,7 @@ if(norm==="/api/status"&&req.method==="GET"){
  }
  if(norm==="/api/auth/password"&&method==="POST"){
   const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
-  let b:any={};try{b=await req.json()}catch{}
+  let b:any;try{b=await readJson(req)}catch(e:any){if(String(e.message)==="body_too_large")return panelErr(413,"body too large");b={}}
   const cur=b.current_password||b.currentPassword||"",nw=b.new_password||b.newPassword||"";
   if(!nw||nw.length<8) return jsonRes(400,{error:"validation_error",code:"validation_error"});
   const rows=await sbGet(`/users?id=eq.${encodeURIComponent(a.sub)}&select=id,password_hash`);
@@ -290,7 +295,7 @@ if(norm==="/api/status"&&req.method==="GET"){
  }
  if(norm==="/api/keys"&&method==="POST"){
   const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
-  let b:any={};try{b=await req.json()}catch{}
+  let b:any;try{b=await readJson(req)}catch(e:any){if(String(e.message)==="body_too_large")return panelErr(413,"body too large");b={}}
   let label=(b.label||"").trim();
   let models="*";
   if(typeof b.models==="string"){
@@ -336,11 +341,11 @@ if(norm==="/api/status"&&req.method==="GET"){
   const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
   const fmt=(url.searchParams.get("format")||"json").toLowerCase();
   const days=Math.min(90,Math.max(1,parseInt(url.searchParams.get("days")||"90",10)||90));
-  void days;
-  const rows=await sbGet(`/request_log?user_id=eq.${encodeURIComponent(a.sub)}&select=ts,route,model,status,error_code,prompt_tokens,completion_tokens,latency_ms&order=ts.desc&limit=10000`);
+  const since=new Date(Date.now()-days*86400000).toISOString();
+  const rows=await sbGet(`/request_log?user_id=eq.${encodeURIComponent(a.sub)}&select=ts,route,model,status,error_code,prompt_tokens,completion_tokens,latency_ms&ts=gte.${encodeURIComponent(since)}&order=ts.desc&limit=10000`);
   if(fmt==="csv"){
    const header="ts,route,model,status,error_code,prompt_tokens,completion_tokens,latency_ms";
-   const esc=(v:any)=>{const s=v==null?"":String(v);if(s.includes(",")||s.includes('"')||s.includes("\n")) return '"'+s.replace(/"/g,'""')+'"';return s};
+   const esc=(v:any)=>{const s=v==null?"":String(v);if(/[",\n\r]/.test(s)) return '"'+s.replace(/"/g,'""')+'"';return s};
    const lines=rows.map((r:any)=>[r.ts,r.route,r.model,r.status,r.error_code,r.prompt_tokens,r.completion_tokens,r.latency_ms].map(esc).join(","));
    const csv=header+"\n"+lines.join("\n");
    const h=withCors(new Headers({"content-type":"text/csv; charset=utf-8","content-disposition":'attachment; filename="codism-usage.csv"'}));
@@ -362,7 +367,7 @@ if(norm==="/api/status"&&req.method==="GET"){
    return jsonRes(200,out);
   }
   if(norm==="/api/admin/users"&&method==="POST"){
-   let b:any={};try{b=await req.json()}catch{}
+   let b:any;try{b=await readJson(req)}catch(e:any){if(String(e.message)==="body_too_large")return panelErr(413,"body too large");b={}}
    const email=(b.email||"").trim(),name=(b.name||"").trim(),password=b.password||"",role=b.role==="admin"?"admin":"user";
    if(!email||!password||!name) return panelErr(400,"missing fields");
    const ex=await sbGet(`/users?email=eq.${encodeURIComponent(email)}&select=id`);
@@ -371,11 +376,11 @@ if(norm==="/api/status"&&req.method==="GET"){
    const plan=planOf(b.plan||"free")||"free";
    const mq=planQuota(plan);
    const dq:any=0;
-   try{const ins=await sbPost("/users",{email,name,password_hash:h,role,enabled:true,plan,daily_quota_tokens:dq,monthly_quota_tokens:mq||0});return jsonRes(200,ins[0]||{ok:true})}catch(e:any){return panelErr(400,String(e.message||e))}
+   try{const ins=await sbPost("/users",{email,name,password_hash:h,role,enabled:true,plan,daily_quota_tokens:dq,monthly_quota_tokens:mq||0});return jsonRes(200,ins[0]||{ok:true})}catch(e:any){console.error("admin create user failed:",String(e.message||e));const m2=String(e.message||"");if(m2.includes("duplicate")||m2.includes("23505"))return panelErr(409,"email exists");return panelErr(400,"create failed")}
   }
   if(pathname.startsWith("/api/admin/users/")&&method==="PATCH"){
    const id=pathname.split("/")[4];
-   let b:any={};try{b=await req.json()}catch{}
+   let b:any;try{b=await readJson(req)}catch(e:any){if(String(e.message)==="body_too_large")return panelErr(413,"body too large");b={}}
    if(id===a.sub){
     if(b.enabled===false) return panelErr(403,"cannot disable self");
     if(b.role&&b.role!=="admin") return panelErr(403,"cannot demote self");
@@ -462,10 +467,14 @@ if(norm==="/api/status"&&req.method==="GET"){
   if(bodyJson&&typeof bodyJson.model==="string"&&expandedModel!==bodyJson.model){bodyJson.model=expandedModel;raw=enc.encode(JSON.stringify(bodyJson))}
   // quota
   if((uRow.daily_quota_tokens||0)>0){
-   const [f,t]=todayBounds();const r=await sbRpc("usage_sum",{p_user:uRow.id,p_from:f,p_to:t});const s=r[0]||{prompt_tokens:0,completion_tokens:0};const tot=(Number(s.prompt_tokens)||0)+(Number(s.completion_tokens)||0);if(tot>=uRow.daily_quota_tokens){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,429,"daily_quota_exceeded",0,0,Date.now()-t0);return openaiErr(429,"daily token quota exceeded","insufficient_quota","daily_quota_exceeded")}
+   const [f,t]=todayBounds();const r=await sbRpc("usage_sum",{p_user:uRow.id,p_from:f,p_to:t});
+   if(!r||!r.length){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,503,"quota_unavailable",0,0,Date.now()-t0);return openaiErr(503,"quota check unavailable, try again","api_error","quota_unavailable")}
+   const s=r[0]||{prompt_tokens:0,completion_tokens:0};const tot=(Number(s.prompt_tokens)||0)+(Number(s.completion_tokens)||0);if(tot>=uRow.daily_quota_tokens){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,429,"daily_quota_exceeded",0,0,Date.now()-t0);return openaiErr(429,"daily token quota exceeded","insufficient_quota","daily_quota_exceeded")}
   }
   if((uRow.monthly_quota_tokens||0)>0){
-   const [f,t]=monthBounds();const r=await sbRpc("usage_sum",{p_user:uRow.id,p_from:f,p_to:t});const s=r[0]||{prompt_tokens:0,completion_tokens:0};const tot=(Number(s.prompt_tokens)||0)+(Number(s.completion_tokens)||0);if(tot>=uRow.monthly_quota_tokens){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,429,"monthly_quota_exceeded",0,0,Date.now()-t0);return openaiErr(429,"monthly token quota exceeded","insufficient_quota","monthly_quota_exceeded")}
+   const [f,t]=monthBounds();const r=await sbRpc("usage_sum",{p_user:uRow.id,p_from:f,p_to:t});
+   if(!r||!r.length){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,503,"quota_unavailable",0,0,Date.now()-t0);return openaiErr(503,"quota check unavailable, try again","api_error","quota_unavailable")}
+   const s=r[0]||{prompt_tokens:0,completion_tokens:0};const tot=(Number(s.prompt_tokens)||0)+(Number(s.completion_tokens)||0);if(tot>=uRow.monthly_quota_tokens){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,429,"monthly_quota_exceeded",0,0,Date.now()-t0);return openaiErr(429,"monthly token quota exceeded","insufficient_quota","monthly_quota_exceeded")}
   }
   // stream handling: merge stream_options
   let isStream=false;if(bodyJson&&bodyJson.stream===true) isStream=true;
