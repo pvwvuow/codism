@@ -107,7 +107,7 @@ Deno.serve(async (req:Request)=>{
  const norm=stripTrailing(pathname);
  // health
  if(norm==="/health"&&method==="GET") return jsonRes(200,{ok:true,service:"codism-panel"});
- if(norm==="/"&&method==="GET") return new Response(null,{status:302,headers:withCors(new Headers({location:getEnv("PANEL_UI_URL","https://pvwvuow.github.io/codism/")}))});
+ if(norm==="/"&&(method==="GET"||method==="HEAD")) return new Response(null,{status:302,headers:withCors(new Headers({location:getEnv("PANEL_UI_URL","https://pvwvuow.github.io/codism/"),"cache-control":"no-store"}))});
  // login
  if(norm==="/api/auth/login"&&method==="POST"){
   const ip=getIp(req);
