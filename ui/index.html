@@ -38,3 +38,4 @@ async function resetPw(id){const p=prompt("رمز جدید:");if(!p)return;try{a
 async function delUser(id){if(!confirm("حذف کاربر؟"))return;try{await api("/api/admin/users/"+id,{method:"DELETE"});loadAdminUsers()}catch(e){alert(e.message)}}
 async function loadAdminStats(){try{const j=await api("/api/admin/stats");document.getElementById("stUsers").textContent=j.totals.users;document.getElementById("stKeys").textContent=j.totals.keys;document.getElementById("stActive").textContent=j.totals.active_keys;document.getElementById("stReq").textContent=j.totals.requests_today;document.getElementById("stTok").textContent=j.totals.tokens_today;document.getElementById("adminStatsBody").innerHTML=j.by_day.map(r=>`<tr><td>${r.day.slice(0,10)}</td><td>${r.requests}</td><td>${r.tokens}</td></tr>`).join("")}catch(e){}}
 window.addEventListener("hashchange",route);boot();
+</script></body></html>
