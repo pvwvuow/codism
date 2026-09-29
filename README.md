@@ -26,7 +26,7 @@ UPSTREAM_BASE_URL=https://codecraftapi.com/v1
 UPSTREAM_API_KEY=cc_...
 PUBLIC_BASE_URL=https://tvframe.vip
 ADMIN_EMAIL=admin@tvframe.vip
-ADMIN_PASSWORD=Admin123!
+ADMIN_PASSWORD=<set-a-strong-password-at-deploy-time>
 ```
 
 ## دیپلوی روی tvframe.vip
