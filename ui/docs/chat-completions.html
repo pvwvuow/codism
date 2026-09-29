@@ -11,10 +11,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/design.css?v=06976493">
-<script src="../assets/i18n.js?v=06976493"></script>
+<link rel="stylesheet" href="../assets/design.css?v=10575440">
+<script src="../assets/i18n.js?v=10575440"></script>
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
-<script>window.CODISM_API_BASE="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel";</script>
+<script>window.CODISM_API_BASE="https://api.tvframe.vip";</script>
 
 </head>
 <body>
@@ -78,7 +78,7 @@
           <span class="badge badge-clay">POST</span>
           <code class="kbd">/v1/chat/completions</code>
         </div>
-        <p class="docs-endpoint-note" dir="ltr" style="font-size:.8rem;color:#6B6659;margin-top:.5rem;">https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1/chat/completions</p>
+        <p class="docs-endpoint-note" dir="ltr" style="font-size:.8rem;color:#6B6659;margin-top:.5rem;">https://api.tvframe.vip/v1/chat/completions</p>
 
         <section id="request-body" class="docs-section">
           <h2>بدنه درخواست</h2>
@@ -139,7 +139,7 @@
               <span class="terminal-dots"><i></i><i></i><i></i></span>
               <span class="terminal-title">curl</span>
             </div>
-            <pre><code>curl https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1/chat/completions \
+            <pre><code>curl https://api.tvframe.vip/v1/chat/completions \
   -H "Authorization: Bearer codism_your_key_here" \
   -H "Content-Type: application/json" \
   -d '{"model":"gpt-4o","messages":[{"role":"user","content":"Hi"}],"temperature":0.7,"max_tokens":512}'</code></pre>
@@ -245,7 +245,7 @@
   </div>
 </footer>
 
-<script src="../assets/app.js?v=06976493"></script>
+<script src="../assets/app.js?v=10575440"></script>
 
 </body>
 </html>

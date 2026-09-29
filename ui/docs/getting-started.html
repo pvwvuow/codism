@@ -11,10 +11,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/design.css?v=06976493">
-<script src="../assets/i18n.js?v=06976493"></script>
+<link rel="stylesheet" href="../assets/design.css?v=10575440">
+<script src="../assets/i18n.js?v=10575440"></script>
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
-<script>window.CODISM_API_BASE="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel";</script>
+<script>window.CODISM_API_BASE="https://api.tvframe.vip";</script>
 
 </head>
 <body>
@@ -80,8 +80,8 @@
         <section id="base-url" style="margin-bottom:2rem">
           <h3 style="font-size:1rem;font-weight:700;color:#1A1915;margin:0 0 .75rem">Base URL شما</h3>
           <div class="terminal" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 1.25rem;background:#1C1C1A;border:1px solid #161615;border-radius:12px">
-            <code class="reveal-key" dir="ltr" style="font-family:var(--font-mono);font-size:.875rem;color:#E8E2D5;word-break:break-all">https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1</code>
-            <button class="btn btn-sm btn-secondary" data-copy="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1" onclick="navigator.clipboard.writeText(this.dataset.copy).then(()=>{const t=this.textContent;this.textContent='کپی شد!';setTimeout(()=>this.textContent=t,1500)})" style="flex-shrink:0">کپی</button>
+            <code class="reveal-key" dir="ltr" style="font-family:var(--font-mono);font-size:.875rem;color:#E8E2D5;word-break:break-all">https://api.tvframe.vip/v1</code>
+            <button class="btn btn-sm btn-secondary" data-copy="https://api.tvframe.vip/v1" onclick="navigator.clipboard.writeText(this.dataset.copy).then(()=>{const t=this.textContent;this.textContent='کپی شد!';setTimeout(()=>this.textContent=t,1500)})" style="flex-shrink:0">کپی</button>
           </div>
         </section>
 
@@ -100,7 +100,7 @@
               <span style="margin-left:.5rem;font-family:var(--font-mono);font-size:.75rem;color:#A8A294">curl</span>
             </div>
             <pre style="margin:0;padding:1rem 1.25rem;overflow-x:auto;font-family:var(--font-mono);font-size:.8rem;line-height:1.7;color:#E8E2D5;text-align:left"><code><span style="color:#8A8475"># cURL</span>
-<span style="color:#D97757">curl</span> <span style="color:#7FB069">https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1/chat/completions</span> \
+<span style="color:#D97757">curl</span> <span style="color:#7FB069">https://api.tvframe.vip/v1/chat/completions</span> \
   <span style="color:#8AB4F8">-H</span> <span style="color:#7FB069">"Authorization: Bearer codism_your_key_here"</span> \
   <span style="color:#8AB4F8">-H</span> <span style="color:#7FB069">"Content-Type: application/json"</span> \
   <span style="color:#8AB4F8">-d</span> <span style="color:#7FB069">'{
@@ -125,7 +125,7 @@
 
 client = OpenAI(
   <span style="color:#8AB4F8">api_key</span>=<span style="color:#7FB069">"codism_your_key_here"</span>,
-  <span style="color:#8AB4F8">base_url</span>=<span style="color:#7FB069">"https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1"</span>,
+  <span style="color:#8AB4F8">base_url</span>=<span style="color:#7FB069">"https://api.tvframe.vip/v1"</span>,
 )
 
 response = client.chat.completions.create(
@@ -146,7 +146,7 @@ response = client.chat.completions.create(
 
 <span style="color:#D97757">const</span> client = <span style="color:#D97757">new</span> OpenAI({
   <span style="color:#8AB4F8">apiKey</span>: <span style="color:#7FB069">"codism_your_key_here"</span>,
-  <span style="color:#8AB4F8">baseURL</span>: <span style="color:#7FB069">"https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1"</span>,
+  <span style="color:#8AB4F8">baseURL</span>: <span style="color:#7FB069">"https://api.tvframe.vip/v1"</span>,
 });
 
 <span style="color:#D97757">const</span> response = <span style="color:#D97757">await</span> client.chat.completions.create({
@@ -175,7 +175,7 @@ console.<span style="color:#8AB4F8">log</span>(response.choices[<span style="col
                 </tr>
                 <tr>
                   <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33">Base URL</td>
-                  <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA"><code class="kbd" dir="ltr">https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1</code></td>
+                  <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA"><code class="kbd" dir="ltr">https://api.tvframe.vip/v1</code></td>
                 </tr>
                 <tr>
                   <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33">API Key</td>
@@ -275,7 +275,7 @@ console.<span style="color:#8AB4F8">log</span>(response.choices[<span style="col
   </div>
 </footer>
 
-<script src="../assets/app.js?v=06976493"></script>
+<script src="../assets/app.js?v=10575440"></script>
 
 </body>
 </html>

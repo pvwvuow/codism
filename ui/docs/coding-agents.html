@@ -11,10 +11,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/design.css?v=06976493">
-<script src="../assets/i18n.js?v=06976493"></script>
+<link rel="stylesheet" href="../assets/design.css?v=10575440">
+<script src="../assets/i18n.js?v=10575440"></script>
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
-<script>window.CODISM_API_BASE="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel";</script>
+<script>window.CODISM_API_BASE="https://api.tvframe.vip";</script>
 
 </head>
 <body>
@@ -91,7 +91,7 @@
 <tbody>
 <tr>
 <td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;font-size:.875rem;font-weight:600">Base URL</td>
-<td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA"><code class="kbd" dir="ltr">https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1</code></td>
+<td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA"><code class="kbd" dir="ltr">https://api.tvframe.vip/v1</code></td>
 </tr>
 <tr>
 <td style="padding:.75rem 1rem;color:#3D3A33;font-size:.875rem;font-weight:600">API Key</td>
@@ -106,7 +106,7 @@
 <ol style="margin:0;padding-inline-start:1.25rem;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#545046;line-height:1.8">
 <li>در تنظیمات Kilo Code بخش API را باز کنید.</li>
 <li><strong style="color:#1A1915">Provider</strong> را روی <code class="kbd" dir="ltr">OpenAI Compatible</code> بگذارید.</li>
-<li><strong style="color:#1A1915">Base URL</strong> را <code class="kbd" dir="ltr">https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1</code> وارد کنید.</li>
+<li><strong style="color:#1A1915">Base URL</strong> را <code class="kbd" dir="ltr">https://api.tvframe.vip/v1</code> وارد کنید.</li>
 <li><strong style="color:#1A1915">API Key</strong> خود (<code class="kbd" dir="ltr">codism_…</code>) را وارد کنید و <strong style="color:#1A1915">Model</strong> را <code class="kbd" dir="ltr">gpt-4o</code> بگذارید.</li>
 </ol>
 </section>
@@ -126,7 +126,7 @@
 <ol style="margin:0;padding-inline-start:1.25rem;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#545046;line-height:1.8">
 <li>در Cursor به <code class="kbd" dir="ltr">Settings → Models</code> بروید.</li>
 <li><strong style="color:#1A1915">OpenAI API Key</strong> را با کلید <code class="kbd" dir="ltr">codism_…</code> پر کنید.</li>
-<li><strong style="color:#1A1915">Override Base URL</strong> را روی <code class="kbd" dir="ltr">https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1</code> بگذارید.</li>
+<li><strong style="color:#1A1915">Override Base URL</strong> را روی <code class="kbd" dir="ltr">https://api.tvframe.vip/v1</code> بگذارید.</li>
 <li>روی <strong style="color:#1A1915">Verify</strong> بزنید تا اتصال بررسی شود.</li>
 </ol>
 </section>
@@ -146,7 +146,7 @@
   "provider": {
     "codism": {
       "apiKey": "codism_your_key_here",
-      "baseURL": "https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1"
+      "baseURL": "https://api.tvframe.vip/v1"
     }
   }
 }</code></pre>
@@ -163,7 +163,7 @@
 <span style="width:12px;height:12px;border-radius:50%;background:#28C840;display:inline-block"></span>
 <span style="margin-inline-start:.75rem;font-family:var(--font-mono);font-size:.75rem;color:#A8A294">terminal</span>
 </div>
-<pre dir="ltr" style="margin:0;padding:1rem 1.25rem;overflow-x:auto;text-align:left"><code style="font-family:var(--font-mono);font-size:.8rem;color:#E8E2D5;line-height:1.7">export ANTHROPIC_BASE_URL="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1"
+<pre dir="ltr" style="margin:0;padding:1rem 1.25rem;overflow-x:auto;text-align:left"><code style="font-family:var(--font-mono);font-size:.8rem;color:#E8E2D5;line-height:1.7">export ANTHROPIC_BASE_URL="https://api.tvframe.vip/v1"
 export ANTHROPIC_AUTH_TOKEN="codism_your_key_here"
 claude</code></pre>
 </div>
@@ -175,7 +175,7 @@ claude</code></pre>
 <ol style="margin:0;padding-inline-start:1.25rem;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#545046;line-height:1.8">
 <li>فایل <code class="kbd" dir="ltr">config.yaml</code> افزونه Continue را باز کنید.</li>
 <li>مدل را با <code class="kbd" dir="ltr">provider: openai</code> تعریف کنید.</li>
-<li><code class="kbd" dir="ltr">apiBase</code> را برابر <code class="kbd" dir="ltr">https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel/v1</code> بگذارید و کلید <code class="kbd" dir="ltr">codism_…</code> را وارد کنید.</li>
+<li><code class="kbd" dir="ltr">apiBase</code> را برابر <code class="kbd" dir="ltr">https://api.tvframe.vip/v1</code> بگذارید و کلید <code class="kbd" dir="ltr">codism_…</code> را وارد کنید.</li>
 </ol>
 </section>
 
@@ -258,7 +258,7 @@ claude</code></pre>
   </div>
 </footer>
 
-<script src="../assets/app.js?v=06976493"></script>
+<script src="../assets/app.js?v=10575440"></script>
 
 </body>
 </html>
