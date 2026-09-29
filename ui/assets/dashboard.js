@@ -2,7 +2,11 @@
   "use strict";
   const API_BASE = (typeof window !== "undefined" && window.CODISM_API_BASE) || "";
   const T = () => localStorage.getItem("codism_token");
-  const H = () => ({ Authorization: "Bearer " + T(), "Content-Type": "application/json" });
+  const H = () => {
+    const t = T();
+    if (!t) { location.replace("login.html"); throw new Error("no session"); }
+    return { Authorization: "Bearer " + t, "Content-Type": "application/json" };
+  }; // never sends "Bearer null"
 
   if (!T()) {
     location.replace("login.html");
@@ -475,7 +479,7 @@
             let dateStr = "—";
             try {
               const d = new Date(k.created_at);
-              dateStr = d.toLocaleDateString("fa-IR") + ' <small dir="ltr" style="color:#8A8475">' + esc(d.toLocaleTimeString("fa-IR")) + "</small>";
+              dateStr = esc(d.toLocaleDateString("fa-IR")) + ' <small dir="ltr" style="color:#8A8475">' + esc(d.toLocaleTimeString("fa-IR")) + "</small>";
             } catch {}
             tr.innerHTML =
               '<td>' + label + "</td>" +
@@ -530,7 +534,7 @@
       // kpis
       const todayTok = (Number(today.prompt_tokens) || 0) + (Number(today.completion_tokens) || 0);
       const monthTok = (Number(month.prompt_tokens) || 0) + (Number(month.completion_tokens) || 0);
-      const avg = byDay.length ? Math.round(byDay.reduce((a, r) => a + (Number(r.prompt_tokens) || 0) + (Number(r.completion_tokens) || 0), 0) / 14) : 0;
+      const avg = byDay.length ? Math.round(byDay.reduce((a, r) => a + (Number(r.prompt_tokens) || 0) + (Number(r.completion_tokens) || 0), 0) / byDay.length) : 0;
       // today in Tehran = UTC + 210min
       const tehranToday = new Date(Date.now() + 210 * 60000).toISOString().slice(0, 10);
       const failed = recent.filter((r) => Number(r.status) >= 400 && String(r.ts || "").slice(0, 10) === tehranToday).length;
@@ -606,7 +610,7 @@
             let timeStr = "—";
             try {
               const d = new Date(r.ts);
-              timeStr = d.toLocaleDateString("fa-IR") + " " + d.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" });
+              timeStr = esc(d.toLocaleDateString("fa-IR")) + " " + esc(d.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }));
             } catch {}
             const route = r.route ? '<code class="kbd" dir="ltr" style="font-size:.75rem">' + esc(r.route) + "</code>" : "—";
             const model = r.model ? '<span dir="ltr" style="font-family:var(--font-mono);font-size:.75rem">' + esc(r.model) + "</span>" : "—";
@@ -626,6 +630,7 @@
       }
 
       // export buttons
+      // note: export always uses authed fetch+blob (raw href would 401 — endpoint needs Authorization header)
       qa("[data-export]").forEach((el) => {
         const fmt = el.getAttribute("data-export") || el.getAttribute("data-format") || "csv";
         const href = API_BASE + "/api/usage/export?format=" + encodeURIComponent(fmt) + "&days=90";
@@ -692,7 +697,7 @@
       setText("[data-set-quota]", quota == null || quota === 0 ? "نامحدود" : fmtTok(quota) + " توکن");
       let since = "—";
       try {
-        if (u.created_at) since = new Date(u.created_at).toLocaleDateString("fa-IR");
+        if (u.created_at) since = esc(new Date(u.created_at).toLocaleDateString("fa-IR"));
       } catch {}
       setText("[data-set-since]", since);
       // also fill inputs if exist
@@ -799,7 +804,7 @@
         const quotaTxt = u.monthly_quota_tokens == null || u.monthly_quota_tokens === 0 ? "نامحدود" : fmtTok(u.monthly_quota_tokens);
         let dateStr = "—";
         try {
-          dateStr = new Date(u.created_at).toLocaleDateString("fa-IR");
+          dateStr = esc(new Date(u.created_at).toLocaleDateString("fa-IR"));
         } catch {}
         const userCell =
           '<div style="font-weight:600">' + esc(u.name || "—") + '</div><div dir="ltr" style="font-size:.75rem;color:#6B6659">' + esc(u.email || "") + "</div>";
@@ -1040,7 +1045,7 @@
         const dVal = dInput ? dInput.value.trim() : "";
         const payload = {};
         payload.monthly_quota_tokens = mVal === "" ? 0 : Number(mVal);
-        if (dInput) payload.daily_quota_tokens = dVal === "" ? null : Number(dVal);
+        if (dInput) payload.daily_quota_tokens = dVal === "" ? 0 : Number(dVal); // 0 = uncapped (DB column NOT NULL)
         if (!adminSelectedUser) return;
         try {
           await api("/api/admin/users/" + encodeURIComponent(adminSelectedUser), { method: "PATCH", body: JSON.stringify(payload) });
