@@ -825,6 +825,10 @@
         if (en) payload.enabled = !!en.checked;
         if (m) payload.monthly_quota_tokens = m.value.trim() === "" ? 0 : Number(m.value);
         if (d) payload.daily_quota_tokens = d.value.trim() === "" ? 0 : Number(d.value);
+        if (!Number.isFinite(payload.monthly_quota_tokens) || !Number.isFinite(payload.daily_quota_tokens)) {
+          showToast(TR("عدد نامعتبر", "Invalid number"), false);
+          return;
+        }
         if (pw && pw.value) {
           if (pw.value.length < 8) { showToast(TR("حداقل ۸ کاراکتر", "At least 8 characters"), false); return; }
           payload.password = pw.value;
@@ -871,7 +875,7 @@
         const tr = document.createElement("tr");
         const planFa = PLAN_FA[u.plan] || esc(u.plan || "starter");
         const enabledBadge = u.enabled ? '<span class="badge badge-ok">فعال</span>' : '<span class="badge badge-bad">غیرفعال</span>';
-        const quotaTxt = u.monthly_quota_tokens == null || u.monthly_quota_tokens === 0 ? TR("نامحدود", "Unlimited") : fmtTok(u.monthly_quota_tokens) + " " + TR("توکن", "tok");
+        const quotaTxt = u.monthly_quota_tokens == null || u.monthly_quota_tokens === 0 ? TR("نامحدود", "Unlimited") : fmtTok(u.monthly_quota_tokens) + " " + TR("توکن", "tokens");
         let dateStr = "—";
         try {
           dateStr = esc(new Date(u.created_at).toLocaleDateString(LOC()));

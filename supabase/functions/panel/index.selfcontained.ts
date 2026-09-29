@@ -208,7 +208,7 @@ if(norm==="/api/status"&&req.method==="GET"){
       ok=r.ok;
     }catch{ok=false}finally{clearTimeout(to);latency_ms=Date.now()-start}
   }catch{ok=false;latency_ms=Date.now()-start}
-  const payload={ok:true,registration_open:getEnv("REGISTRATION_OPEN","true")!=="false",upstream:{ok,latency_ms,checked_at:new Date().toISOString()}};
+  const payload={ok:true,registration_open:getEnv("REGISTRATION_OPEN","true").toLowerCase().trim()!=="false",upstream:{ok,latency_ms,checked_at:new Date().toISOString()}};
   g2.__codismStatusCache={ts:now,payload};
   return jsonRes(200,payload);
 }
@@ -363,7 +363,7 @@ if(norm==="/api/status"&&req.method==="GET"){
    const users=await sbGet(`/users?select=id,email,name,role,enabled,plan,daily_quota_tokens,monthly_quota_tokens,created_at&order=created_at.desc`);
    const keys=await sbGet(`/api_keys?select=user_id`);
    const cnt=new Map<string,number>();for(const k of keys) cnt.set(k.user_id,(cnt.get(k.user_id)||0)+1);
-   const out=users.map((u:any)=>({id:u.id,email:u.email,name:u.name,role:u.role,enabled:u.enabled,plan:u.plan||"starter",daily_quota_tokens:u.daily_quota_tokens,monthly_quota_tokens:u.monthly_quota_tokens,created_at:u.created_at,key_count:cnt.get(u.id)||0}));
+   const out=users.map((u:any)=>({id:u.id,email:u.email,name:u.name,role:u.role,enabled:u.enabled,plan:planOf(u.plan)||"starter",daily_quota_tokens:u.daily_quota_tokens,monthly_quota_tokens:u.monthly_quota_tokens,created_at:u.created_at,key_count:cnt.get(u.id)||0}));
    return jsonRes(200,out);
   }
   if(norm==="/api/admin/users"&&method==="POST"){

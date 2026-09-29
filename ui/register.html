@@ -11,8 +11,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/design.css?v=06099827">
-<script src="assets/i18n.js?v=06099827"></script>
+<link rel="stylesheet" href="assets/design.css?v=06976493">
+<script src="assets/i18n.js?v=06976493"></script>
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <script>window.CODISM_API_BASE="https://lmdevpnsviwjdycwhahh.supabase.co/functions/v1/panel";</script>
 
@@ -90,7 +90,9 @@
   }catch(e){}
   var form=document.getElementById("regForm");
   if(!form) return;
-  // registration gate: hide the form when the server says closed
+  // registration gate: block submit while checking, hide form when server says closed
+  var gateBtn=form.querySelector('button[type="submit"]');
+  if(gateBtn) gateBtn.disabled=true;
   (async function(){
     try{
       var r=await fetch(API_BASE+"/api/status");
@@ -99,8 +101,13 @@
         var c=document.getElementById("regClosed");
         if(c){ c.hidden=false; c.style.display="block"; }
         form.style.display="none";
+        return;
       }
-    }catch(e){}
+      if(gateBtn) gateBtn.disabled=false;
+    }catch(e){
+      // status unreachable: fail open (server 403 still enforces the gate)
+      if(gateBtn) gateBtn.disabled=false;
+    }
   })();
   var errEl=form.querySelector("[data-err]");
   var btn=form.querySelector('button[type="submit"]');
@@ -220,7 +227,7 @@
   </div>
 </footer>
 
-<script src="assets/app.js?v=06099827"></script>
+<script src="assets/app.js?v=06976493"></script>
 
 </body>
 </html>
