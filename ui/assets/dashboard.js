@@ -1050,8 +1050,8 @@
             const isOk = Number(r.status) < 400;
             const badge = isOk ? '<span class="badge badge-ok">' + esc(String(r.status)) + '</span>' : '<span class="badge badge-bad">' + esc(String(r.status)) + '</span>';
             const hint = !isOk && r.error_code ? '<div style="font-size:.75rem;color:#DC2626;margin-top:2px">' + esc(r.error_code) + '</div>' : '';
-            const tok = faNum((Number(r.prompt_tokens) || 0) + (Number(r.completion_tokens) || 0)) + ' توکن';
-            tr.innerHTML = '<td>' + esc(timeStr) + '</td><td>' + user + '</td><td>' + model + '</td><td>' + badge + hint + '</td><td dir="ltr">' + esc(tok) + '</td>';
+            const tok = faNum((Number(r.prompt_tokens) || 0) + (Number(r.completion_tokens) || 0)) + ' ' + TR("توکن", "tokens");
+            tr.innerHTML = '<td>' + timeStr + '</td><td>' + user + '</td><td>' + model + '</td><td>' + badge + hint + '</td><td dir="ltr">' + esc(tok) + '</td>';
             recentBody.appendChild(tr);
           });
         }
@@ -1066,7 +1066,7 @@
           top.forEach((u) => {
             const tr = document.createElement("tr");
             const user = u.user_display ? '<span dir="ltr">' + esc(u.user_display) + '</span>' : '—';
-            tr.innerHTML = '<td>' + user + '</td><td>' + faNum(u.requests || 0) + '</td><td dir="ltr">' + faNum(u.tokens || 0) + ' توکن</td>';
+            tr.innerHTML = '<td>' + user + '</td><td>' + faNum(u.requests || 0) + '</td><td dir="ltr">' + faNum(u.tokens || 0) + ' ' + TR("توکن", "tokens") + '</td>';
             topBody.appendChild(tr);
           });
         }
