@@ -42,13 +42,16 @@ function jsonRes(status:number,obj:any,extra?:Record<string,string>){const h=wit
 function openaiErr(status:number,msg:string,type="invalid_request_error",code="invalid_request_error"){return jsonRes(status,{error:{message:msg,type,code}})}
 function panelErr(status:number,msg:string){return jsonRes(status,{error:msg})}
 async function readJson(req:Request):Promise<any>{const cl=req.headers.get("content-length");const lim=maxBodyBytes();if(cl&&parseInt(cl,10)>lim) throw new Error("body_too_large");const t=await req.text();if(t.length>lim) throw new Error("body_too_large");try{return JSON.parse(t)}catch{return {}}}
-function getIp(req:Request){return req.headers.get("cf-connecting-ip")||(req.headers.get("x-forwarded-for")||"").split(",")[0].trim()||req.headers.get("x-real-ip")||"0.0.0.0"}
+function getIp(req:Request){const s=getEnv("PANEL_PROXY_SECRET","");if(s&&req.headers.get("x-panel-proxy")===s){const r=req.headers.get("x-panel-real-ip");if(r&&r.trim()) return r.trim()}return req.headers.get("cf-connecting-ip")||(req.headers.get("x-forwarded-for")||"").split(",")[0].trim()||req.headers.get("x-real-ip")||"0.0.0.0"}
 const loginFails=new Map<string,number[]>();
 // NOTE: per-isolate best-effort limiting (multi-isolate bypass possible) — acceptable for this scale
 const regFails=new Map<string,{count:number,first:number}>();
 function isRateLimited(ip:string){const arr=loginFails.get(ip)||[],now=Date.now(),win=5*60*1000;const f=arr.filter(t=>now-t<win);loginFails.set(ip,f);return f.length>=10}
 function addFail(ip:string){const a=loginFails.get(ip)||[];a.push(Date.now());loginFails.set(ip,a)}
 function resetFail(ip:string){loginFails.delete(ip)}
+async function verifyTurnstile(token:string,ip:string){const s=getEnv("TURNSTILE_SECRET","");if(!s) return true;try{const fd=new URLSearchParams({secret:s,response:token,remoteip:ip});const r=await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify",{method:"POST",headers:{"content-type":"application/x-www-form-urlencoded"},body:fd.toString()});const j=await r.json().catch(()=>null) as any;return !!(j&&j.success)}catch{return false}}
+const keyRpm=new Map<string,number[]>();
+function isKeyRpmLimited(keyId:string,limit:number){const now=Date.now(),arr=(keyRpm.get(keyId)||[]).filter((t:number)=>now-t<60000);if(arr.length>=limit){keyRpm.set(keyId,arr);return true}arr.push(now);keyRpm.set(keyId,arr);return false}
 function parseAliases():Record<string,string>{try{const v=getEnv("MODEL_ALIASES");if(!v)return {};return JSON.parse(v)}catch{return {}}}
 function upstreamBase(){return getEnv("UPSTREAM_BASE_URL","https://codecraftapi.com/v1").replace(/\/+$/,"")}
 function maxBodyBytes(){return (parseInt(getEnv("MAX_BODY_MB","8"),10)||8)*1024*1024}
@@ -80,6 +83,7 @@ Deno.serve(async (req:Request)=>{
   return new Response(null,{status:204,headers:h});
  }
  const norm=stripTrailing(pathname);
+{const _ps=getEnv("PANEL_PROXY_SECRET","");if(_ps){const _ph=req.headers.get("x-panel-proxy")||"";if(_ph!==_ps){if(!(method==="OPTIONS"||(norm==="/health"&&method==="GET")||(norm==="/"&&(method==="GET"||method==="HEAD")))) return panelErr(403,"origin_lock")}}}
 type ModelCaps={reasoning:boolean,tools:boolean,vision:boolean,json:boolean,web:boolean};
 type ModelInfo={id:string,provider:string,capabilities:ModelCaps,context:number};
 const STATIC_FALLBACK_MODELS:ModelInfo[]=[
@@ -208,7 +212,7 @@ if(norm==="/api/status"&&req.method==="GET"){
       ok=r.ok;
     }catch{ok=false}finally{clearTimeout(to);latency_ms=Date.now()-start}
   }catch{ok=false;latency_ms=Date.now()-start}
-  const payload={ok:true,registration_open:getEnv("REGISTRATION_OPEN","true").toLowerCase().trim()!=="false",upstream:{ok,latency_ms,checked_at:new Date().toISOString()}};
+  const payload={ok:true,registration_open:getEnv("REGISTRATION_OPEN","true").toLowerCase().trim()!=="false",turnstile_site_key:getEnv("TURNSTILE_SITE_KEY",""),upstream:{ok,latency_ms,checked_at:new Date().toISOString()}};
   g2.__codismStatusCache={ts:now,payload};
   return jsonRes(200,payload);
 }
@@ -226,6 +230,7 @@ if(norm==="/api/status"&&req.method==="GET"){
   let body:any;try{body=await readJson(req)}catch(e:any){if(String(e.message)==="body_too_large")return panelErr(413,"body too large");body={}}
   const email=(body.email||"").trim(),password=body.password||"",name=(body.name||"").trim();
   if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!password||password.length<8||password.length>200||!name||name.length<2||name.length>100||(body.phone&&String(body.phone).length>20)) return jsonRes(400,{error:"validation_error",code:"validation_error"});
+ {const _tsec=getEnv("TURNSTILE_SECRET","");if(_tsec){const _tok=(body.turnstile_token||"").trim();if(!_tok||!await verifyTurnstile(_tok,ip)) return jsonRes(400,{error:"turnstile_failed",code:"turnstile_failed"})}}
   const ex=await sbGet(`/users?email=eq.${encodeURIComponent(email)}&select=id`);
   if(ex.length){addRegFail(ip);return jsonRes(409,{error:"email_exists",code:"email_exists"})}
   const h=await hashPassword(password);
@@ -432,7 +437,23 @@ if(norm==="/api/status"&&req.method==="GET"){
   if(pathname.startsWith("/api/admin/upstream-keys/")&&method==="DELETE"){const id=pathname.split("/")[4];await sbDelete(`/upstream_keys?id=eq.${encodeURIComponent(id)}`);return jsonRes(200,{ok:true})}
   if(norm==="/api/admin/stats"&&method==="GET"){
    const [totals,by]=await Promise.all([sbRpc("admin_totals",{p_offset_min:TZ_OFF_MIN}),sbRpc("admin_usage_by_day",{p_days:14,p_offset_min:TZ_OFF_MIN})]);
-   return jsonRes(200,{totals:totals[0]||{users:0,keys:0,active_keys:0,requests_today:0,tokens_today:0,failed_today:0},by_day:by});
+   let recent:any[]=[];let top_users:any[]=[];
+   try{
+    const rec:any[]=await sbGet("/request_log?select=ts,route,model,status,error_code,prompt_tokens,completion_tokens,user_id&order=ts.desc&limit=20");
+    const [mFrom,mTo]=monthBounds();
+    const ulog:any[]=await sbGet(`/usage_log?select=user_id,prompt_tokens,completion_tokens&created_at=gte.${encodeURIComponent(mFrom)}&created_at=lt.${encodeURIComponent(mTo)}&limit=10000`);
+    const g=new Map<string,{requests:number,tokens:number}>();
+    for(const r of (Array.isArray(ulog)?ulog:[])){const uid=r.user_id;if(!uid)continue;const cur=g.get(uid)||{requests:0,tokens:0};cur.requests+=1;cur.tokens+=(Number(r.prompt_tokens)||0)+(Number(r.completion_tokens)||0);g.set(uid,cur);}
+    let topArr=[...g.entries()].map(([uid,v])=>({user_id:uid,requests:v.requests,tokens:v.tokens})).sort((a,b)=>b.tokens-a.tokens).slice(0,10);
+    const idSet=new Set<string>();
+    for(const r of (Array.isArray(rec)?rec:[])) if(r.user_id) idSet.add(r.user_id);
+    for(const t of topArr) if(t.user_id) idSet.add(t.user_id);
+    const uMap=new Map<string,any>();
+    if(idSet.size){const ids=[...idSet].join(",");const users:any[]=await sbGet(`/users?id=in.(${ids})&select=id,email,username,name`);for(const u of (Array.isArray(users)?users:[])) uMap.set(u.id,u);}
+    recent=(Array.isArray(rec)?rec:[]).map((r:any)=>({ts:r.ts,route:r.route,model:r.model,status:r.status,error_code:r.error_code,prompt_tokens:r.prompt_tokens,completion_tokens:r.completion_tokens,user_id:r.user_id,user_display:(()=>{const u=uMap.get(r.user_id);return u?(u.email||u.username||u.name||null):null})()}));
+    top_users=topArr.map((t:any)=>({user_id:t.user_id,user_display:(()=>{const u=uMap.get(t.user_id);return u?(u.email||u.username||u.name||null):null})(),requests:t.requests,tokens:t.tokens}));
+   }catch{}
+   return jsonRes(200,{totals:totals[0]||{users:0,keys:0,active_keys:0,requests_today:0,tokens_today:0,failed_today:0},by_day:by,recent,top_users});
   }
   return panelErr(404,"not found");
  }
@@ -479,8 +500,9 @@ if(norm==="/api/status"&&req.method==="GET"){
   const kRows=await sbGet(`/api_keys?key=eq.${encodeURIComponent(keyText)}&select=id,user_id,enabled,models`);
   const kRow=kRows[0];if(!kRow){logRequest(null,null,"/v1/chat/completions",method,null,401,"invalid_api_key",0,0,Date.now()-t0);return openaiErr(401,"Invalid API key.","invalid_request_error","invalid_api_key")}
   if(!kRow.enabled){logRequest(kRow.user_id,kRow.id,"/v1/chat/completions",method,null,403,"key_disabled",0,0,Date.now()-t0);return openaiErr(403,"This API key has been disabled.","insufficient_quota","key_disabled")}
-  const uRows=await sbGet(`/users?id=eq.${encodeURIComponent(kRow.user_id)}&select=id,enabled,daily_quota_tokens,monthly_quota_tokens,subscription_expires_at,upstream_key_id`);
-  const uRow=uRows[0];if(!uRow||!uRow.enabled){logRequest(uRow?uRow.id:null,kRow.id,"/v1/chat/completions",method,null,403,"user_disabled",0,0,Date.now()-t0);return openaiErr(403,"User disabled.","insufficient_quota","user_disabled")}if(uRow.subscription_expires_at&&Date.now()>Date.parse(uRow.subscription_expires_at)){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,null,403,"subscription_expired",0,0,Date.now()-t0);return openaiErr(403,"Your subscription has expired. Please renew it.","insufficient_quota","subscription_expired")}
+  const uRows=await sbGet(`/users?id=eq.${encodeURIComponent(kRow.user_id)}&select=id,enabled,plan,daily_quota_tokens,monthly_quota_tokens,subscription_expires_at,upstream_key_id`);
+  const uRow=uRows[0];if(!uRow||!uRow.enabled){logRequest(uRow?uRow.id:null,kRow.id,"/v1/chat/completions",method,null,403,"user_disabled",0,0,Date.now()-t0);return openaiErr(403,"User disabled.","insufficient_quota","user_disabled")}
+ {const _lim=(PLAN_RPM as any)[uRow.plan]||120;if(isKeyRpmLimited(kRow.id,_lim)){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,null,429,"rpm_exceeded",0,0,Date.now()-t0);return openaiErr(429,"Rate limit exceeded. Too many requests for this key.","rate_limit_error","rpm_exceeded")}}if(uRow.subscription_expires_at&&Date.now()>Date.parse(uRow.subscription_expires_at)){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,null,403,"subscription_expired",0,0,Date.now()-t0);return openaiErr(403,"Your subscription has expired. Please renew it.","insufficient_quota","subscription_expired")}
   let bodyJson:any=null;if(raw)try{bodyJson=JSON.parse(dec.decode(raw))}catch{}
   const aliases=parseAliases();
   let expandedModel=bodyJson?.model||"";
