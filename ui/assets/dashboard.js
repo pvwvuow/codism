@@ -390,6 +390,25 @@
       setText("[data-kpi-today-tok]", fmtTok(todayTok));
       const enabledCount = keys.filter((k) => k.enabled).length;
       setText("[data-plan-keys]", faNum(enabledCount));
+      const exp = me.user && me.user.subscription_expires_at;
+      const subLine = q("[data-sub-line]");
+      if(subLine){
+        if(!exp){subLine.hidden=true;}
+        else {
+          subLine.hidden=false;
+          const ms=Date.parse(exp)-Date.now();
+          const rem=q("[data-sub-remaining]");
+          if(rem){
+            if(ms<=0) rem.textContent=TR("منقضی شده","Expired");
+            else {
+              const days=Math.floor(ms/86400000), hours=Math.floor((ms%86400000)/3600000);
+              rem.textContent = days>=1 ? faNum(days)+" "+TR("روز باقی‌مانده","days remaining") : faNum(hours)+" "+TR("ساعت باقی‌مانده","hours remaining");
+            }
+          }
+          if(ms<7*86400000 && ms>0) rem.style.color="#DC2626";
+          else if(rem) rem.style.color="";
+        }
+      }
       // quota
       const quota = me.user ? me.user.monthly_quota_tokens : null;
       const quotaEl = q("[data-plan-quota]");
@@ -531,6 +550,7 @@
 
   // Loader: usage
   async function loadUsage() {
+    if (!STATE.me) { try { STATE.me = await api("/api/me"); } catch {} }
     try {
       const usage = await api("/api/usage?days=14");
       STATE.usage = usage;
@@ -563,6 +583,17 @@
       // generic
       qa("[data-kpi-usage-avg]").forEach((el) => (el.textContent = fmtTok(avg)));
       qa("[data-kpi-usage-failed]").forEach((el) => (el.textContent = faNum(failed)));
+      const quota = STATE.me && STATE.me.user ? Number(STATE.me.user.monthly_quota_tokens) || 0 : 0;
+      if (quota > 0) {
+        const v = fmtTok(monthTok) + " " + TR("از", "of") + " " + fmtTok(quota);
+        const pct = Math.min(100, Math.round(monthTok / quota * 100));
+        setText("[data-usage-quota]", v);
+        setText("[data-usage-quota-pct]", faNum(pct) + TR("٪ از سهمیه مصرف شده", "% of quota used"));
+      } else {
+        setText("[data-usage-quota]", TR("نامحدود", "Unlimited"));
+        setText("[data-usage-quota-pct]", "");
+      }
+
 
       // chart
       const chartEls = qa("[data-usage-chart], [data-chart-usage], [data-overview-chart], [data-chart]");
@@ -697,7 +728,8 @@
       if (!STATE.me) STATE.me = await api("/api/me");
       const me = STATE.me;
       const u = me.user || {};
-      setText("[data-set-email]", u.email || "—");
+      const emailInput=q("[data-set-email]");
+      if(emailInput) emailInput.value=u.email||"";
       setText("[data-set-name]", u.name || "—");
       const planFa = PLAN_FA[u.plan] || PLAN_FA.starter;
       setText("[data-set-plan]", planFa);
@@ -708,14 +740,29 @@
         if (u.created_at) since = esc(new Date(u.created_at).toLocaleDateString(LOC()));
       } catch {}
       setText("[data-set-since]", since);
-      // also fill inputs if exist
-      const emailInput = q("[data-set-email-input]");
-      if (emailInput) emailInput.value = u.email || "";
-      const nameInput = q("[data-set-name-input]");
-      if (nameInput) nameInput.value = u.name || "";
+      const usernameInput=q("[data-set-username]");
+      if(usernameInput) usernameInput.value=u.username||"";
     } catch (e) {
       console.error("settings", e);
     }
+  }
+  function setupProfileForm(){
+    const btn=q("[data-save-profile]");
+    if(!btn) return;
+    btn.addEventListener("click", async ()=>{
+      const emailEl=q("[data-set-email]");
+      const usernameEl=q("[data-set-username]");
+      const emailVal=emailEl ? emailEl.value.trim() : "";
+      const usernameVal=usernameEl ? usernameEl.value.trim() : "";
+      try{
+        await api("/api/auth/profile",{method:"POST",body:JSON.stringify({email:emailVal,username:usernameVal})});
+        showToast(TR("ذخیره شد","Saved"),true);
+        STATE.me=null;
+        await loadSettings();
+      }catch(err){
+        showToast(err.message||TR("خطای غیرمنتظره","Unexpected error"),false);
+      }
+    });
   }
 
   function setupPasswordForm() {
@@ -795,7 +842,16 @@
   let adminSelectedUser = null;
   function openEditUser(u) {
     adminSelectedUser = u;
-    setText("[data-edit-user]", (u.email || "") + " / " + (u.name || "—"));
+    setText("[data-edit-user]", (u.email || u.username || "—") + " / " + (u.name || "—"));
+    const un = q("[data-edit-username]");
+    if (un) un.value = u.username || "";
+    const em = q("[data-edit-email]");
+    if (em) em.value = u.email || "";
+    const sub = q("[data-edit-sub]");
+    if (sub) sub.value = u.subscription_expires_at ? new Date(u.subscription_expires_at).toISOString().slice(0,10) : "";
+    fillUpstreamSelects();
+    const up = q("[data-edit-upstream]");
+    if (up) up.value = u.upstream_key_id ? String(u.upstream_key_id) : "";
     const planSel = q("[data-edit-plan]");
     if (planSel) planSel.value = PLAN_FA[u.plan] ? u.plan : "starter";
     const en = q("[data-edit-enabled]");
@@ -833,13 +889,24 @@
           if (pw.value.length < 8) { showToast(TR("حداقل ۸ کاراکتر", "At least 8 characters"), false); return; }
           payload.password = pw.value;
         }
+        const unEl = q("[data-edit-username]");
+        payload.username = unEl ? unEl.value.trim() : "";
+        const emEl = q("[data-edit-email]");
+        payload.email = emEl ? emEl.value.trim() : "";
+        const sv = q("[data-edit-sub]") ? q("[data-edit-sub]").value : "";
+        payload.subscription_expires_at = sv ? new Date(sv + "T23:59:59").toISOString() : null;
+        const uvEl = q("[data-edit-upstream]");
+        payload.upstream_key_id = uvEl && uvEl.value ? uvEl.value : null;
         try {
           await api("/api/admin/users/" + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify(payload) });
           showToast(TR("تغییرات ذخیره شد", "Changes saved"), true);
           closeAllModals();
           loadAdminUsers();
         } catch (err) {
-          showToast(err.message || TR("خطای غیرمنتظره", "Unexpected error"), false);
+          const m = String((err && err.message) || "");
+          if (/username/i.test(m)) showToast(TR("نام کاربری تکراری است", "Username already exists"), false);
+          else if (/email/i.test(m)) showToast(TR("ایمیل تکراری است", "Email already exists"), false);
+          else showToast(m || TR("خطای غیرمنتظره", "Unexpected error"), false);
         }
       });
     }
@@ -860,15 +927,17 @@
     }
   }
   async function loadAdminUsers() {
+    if (!STATE.me) { try { STATE.me = await api("/api/me"); } catch {} }
     const isAdmin = STATE.me && STATE.me.user && STATE.me.user.role === "admin";
     if (!isAdmin) return;
     try {
+      try { STATE.upkeys = await api("/api/admin/upstream-keys"); } catch {}
       const users = await api("/api/admin/users");
       const tbody = q("[data-admin-users-body]");
       if (!tbody) return;
       tbody.innerHTML = "";
       if (!users.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:1rem;color:#8A8475">کاربری یافت نشد</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:1rem;color:#8A8475">کاربری یافت نشد</td></tr>';
         return;
       }
       users.forEach((u) => {
@@ -880,14 +949,38 @@
         try {
           dateStr = esc(new Date(u.created_at).toLocaleDateString(LOC()));
         } catch {}
-        const userCell =
-          '<div style="font-weight:600">' + esc(u.name || "—") + '</div><div dir="ltr" style="font-size:.75rem;color:#6B6659">' + esc(u.email || "") + "</div>";
+        const primary = u.email || u.username || "—";
+        let userCell = '<div style="font-weight:600">' + esc(u.name || "—") + '</div><div dir="ltr" style="font-size:.75rem;color:#6B6659">' + esc(primary) + "</div>";
+        if (u.email && u.username) {
+          const other = primary === u.email ? u.username : u.email;
+          userCell += '<div dir="ltr" style="font-size:.75rem;color:#6B6659">' + esc(other) + "</div>";
+        }
+        let usageCell = fmtTok(Number(u.usage_month_tokens) || 0);
+        if (u.usage_month_requests) {
+          usageCell += ' <span style="color:#8A8475;font-size:.75rem">(' + faNum(u.usage_month_requests) + ' ' + TR("درخواست", "requests") + ')</span>';
+        }
+        let subCell;
+        if (!u.subscription_expires_at) {
+          subCell = TR("بدون انقضا", "No expiry");
+        } else {
+          const ms = Date.parse(u.subscription_expires_at) - Date.now();
+          if (ms <= 0) {
+            subCell = '<span style="color:#DC2626">' + TR("منقضی", "Expired") + "</span>";
+          } else {
+            const days = Math.ceil(ms / 86400000);
+            let txt = days >= 1 ? faNum(days) + " " + TR("روز", "days") : TR("کمتر از یک روز", "<1 day");
+            if (days <= 7) txt = '<span style="color:#DC2626">' + txt + "</span>";
+            subCell = txt;
+          }
+        }
         const editBtn = '<button class="btn btn-ghost btn-sm" data-edit-open="' + esc(String(u.id)) + '">' + TR("ویرایش", "Edit") + "</button>";
         tr.innerHTML =
           "<td>" + userCell + "</td>" +
           '<td><span class="badge badge-clay">' + esc(planFa) + "</span></td>" +
           "<td>" + enabledBadge + "</td>" +
           "<td>" + faNum(u.key_count || 0) + "</td>" +
+          "<td>" + usageCell + "</td>" +
+          "<td>" + subCell + "</td>" +
           "<td>" + esc(quotaTxt) + "</td>" +
           "<td>" + esc(dateStr) + "</td>" +
           "<td>" + editBtn + "</td>";
@@ -905,12 +998,13 @@
     } catch (e) {
       console.error("admin users", e);
       const tbody = q("[data-admin-users-body]");
-      if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#DC2626;padding:1rem">' + esc(e.message || "خطای غیرمنتظره") + "</td></tr>";
+      if (tbody) tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#DC2626;padding:1rem">' + esc(e.message || "خطای غیرمنتظره") + "</td></tr>";
     }
   }
 
   // Loader: admin-stats
   async function loadAdminStats() {
+    if (!STATE.me) { try { STATE.me = await api("/api/me"); } catch {} }
     const isAdmin = STATE.me && STATE.me.user && STATE.me.user.role === "admin";
     if (!isAdmin) return;
     try {
@@ -933,9 +1027,156 @@
       const byDay = stats.by_day || [];
       const chart = q("[data-admin-chart]") || q("#admin-chart") || q("[data-admin-stats-chart]");
       if (chart) renderChart(chart, byDay);
+      const recentWrap = q("[data-admin-recent-wrap]");
+      const topWrap = q("[data-admin-top-wrap]");
+      if (stats.recent === undefined && recentWrap) recentWrap.hidden = true;
+      if (stats.top_users === undefined && topWrap) topWrap.hidden = true;
+      const recentBody = q("[data-admin-recent-body]");
+      if (recentBody) {
+        recentBody.innerHTML = "";
+        const recent = stats.recent || [];
+        if (!recent.length) {
+          recentBody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:1rem;color:#8A8475">' + TR("فعالیتی ثبت نشده", "No activity") + '</td></tr>';
+        } else {
+          recent.forEach((r) => {
+            const tr = document.createElement("tr");
+            let timeStr = "—";
+            try {
+              const d = new Date(r.ts);
+              timeStr = esc(d.toLocaleDateString(LOC())) + " " + esc(d.toLocaleTimeString(LOC(), { hour: "2-digit", minute: "2-digit" }));
+            } catch {}
+            const user = r.user_display ? '<span dir="ltr">' + esc(r.user_display) + '</span>' : '—';
+            const model = r.model ? '<span dir="ltr" style="font-family:var(--font-mono);font-size:.75rem">' + esc(r.model) + '</span>' : '—';
+            const isOk = Number(r.status) < 400;
+            const badge = isOk ? '<span class="badge badge-ok">' + esc(String(r.status)) + '</span>' : '<span class="badge badge-bad">' + esc(String(r.status)) + '</span>';
+            const hint = !isOk && r.error_code ? '<div style="font-size:.75rem;color:#DC2626;margin-top:2px">' + esc(r.error_code) + '</div>' : '';
+            const tok = faNum((Number(r.prompt_tokens) || 0) + (Number(r.completion_tokens) || 0)) + ' توکن';
+            tr.innerHTML = '<td>' + esc(timeStr) + '</td><td>' + user + '</td><td>' + model + '</td><td>' + badge + hint + '</td><td dir="ltr">' + esc(tok) + '</td>';
+            recentBody.appendChild(tr);
+          });
+        }
+      }
+      const topBody = q("[data-admin-top-body]");
+      if (topBody) {
+        topBody.innerHTML = "";
+        const top = stats.top_users || [];
+        if (!top.length) {
+          topBody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:1rem;color:#8A8475">' + TR("فعالیتی ثبت نشده", "No activity") + '</td></tr>';
+        } else {
+          top.forEach((u) => {
+            const tr = document.createElement("tr");
+            const user = u.user_display ? '<span dir="ltr">' + esc(u.user_display) + '</span>' : '—';
+            tr.innerHTML = '<td>' + user + '</td><td>' + faNum(u.requests || 0) + '</td><td dir="ltr">' + faNum(u.tokens || 0) + ' توکن</td>';
+            topBody.appendChild(tr);
+          });
+        }
+      }
     } catch (e) {
       console.error("admin stats", e);
     }
+  }
+
+  function fillUpstreamSelects() {
+    const list = STATE.upkeys || [];
+    qa("[data-u-upstream],[data-edit-upstream]").forEach((sel) => {
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">' + TR("پیش‌فرض (استخر مشترک)", "Default (shared pool)") + "</option>" +
+        list.map((k) => '<option value="' + esc(String(k.id)) + '">' + esc(k.label || k.key_masked) + (k.enabled ? "" : " (" + TR("غیرفعال", "disabled") + ")") + "</option>").join("");
+      if (cur && list.some((k) => String(k.id) === String(cur))) sel.value = cur; else sel.value = "";
+    });
+  }
+
+  async function loadAdminUpkeys() {
+    if (!STATE.me) { try { STATE.me = await api("/api/me"); } catch {} }
+    const isAdmin = STATE.me && STATE.me.user && STATE.me.user.role === "admin";
+    if (!isAdmin) return;
+    try {
+      const keys = await api("/api/admin/upstream-keys");
+      STATE.upkeys = keys;
+      const tbody = q("[data-uk-body]");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+      if (!keys.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:1rem;color:#8A8475">' + TR("کلیدی ثبت نشده است", "No upstream keys yet") + "</td></tr>";
+        fillUpstreamSelects();
+        return;
+      }
+      keys.forEach((k) => {
+        const tr = document.createElement("tr");
+        const enBadge = k.enabled ? '<span class="badge badge-ok">' + TR("فعال", "Active") + '</span>' : '<span class="badge badge-bad">' + TR("غیرفعال", "Disabled") + "</span>";
+        const toggleBtn = '<button class="btn btn-ghost btn-sm" data-uk-toggle="' + esc(String(k.id)) + '">' + (k.enabled ? TR("غیرفعال", "Disable") : TR("فعال", "Enable")) + "</button>";
+        const delBtn = '<button class="btn btn-ghost btn-sm" style="color:#DC2626" data-uk-del="' + esc(String(k.id)) + '">' + TR("حذف", "Delete") + "</button>";
+        tr.innerHTML =
+          "<td>" + esc(k.label || "—") + "</td>" +
+          '<td dir="ltr">' + esc(k.key_masked || "—") + "</td>" +
+          "<td>" + enBadge + "</td>" +
+          "<td>" + faNum(k.assigned_users || 0) + "</td>" +
+          "<td>" + toggleBtn + " " + delBtn + "</td>";
+        tbody.appendChild(tr);
+      });
+      qa("[data-uk-toggle]", tbody).forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-uk-toggle");
+          const k = (STATE.upkeys || []).find((x) => String(x.id) === String(id));
+          if (!k) return;
+          try {
+            await api("/api/admin/upstream-keys/" + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify({ enabled: !k.enabled }) });
+            showToast(TR("ذخیره شد", "Saved"), true);
+            loadAdminUpkeys();
+          } catch (err) {
+            showToast(err.message || TR("خطای غیرمنتظره", "Unexpected error"), false);
+          }
+        });
+      });
+      qa("[data-uk-del]", tbody).forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-uk-del");
+          if (!confirm(TR("این کلید حذف شود؟ کاربرانش به استخر مشترک برمی‌گردند.", "Delete this key? Its users will fall back to the shared pool."))) return;
+          try {
+            await api("/api/admin/upstream-keys/" + encodeURIComponent(id), { method: "DELETE" });
+            showToast(TR("حذف شد", "Deleted"), true);
+            loadAdminUpkeys();
+          } catch (err) {
+            showToast(err.message || TR("خطای غیرمنتظره", "Unexpected error"), false);
+          }
+        });
+      });
+      fillUpstreamSelects();
+    } catch (e) {
+      console.error("upkeys", e);
+      const tbody = q("[data-uk-body]");
+      if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#DC2626;padding:1rem">' + esc(e.message || "خطای غیرمنتظره") + "</td></tr>";
+    }
+  }
+
+  function setupAdminUpkeys() {
+    const btn = q("[data-uk-add]");
+    if (btn) {
+      btn.addEventListener("click", async () => {
+        const labelEl = q("[data-uk-label]");
+        const keyEl = q("[data-uk-key]");
+        const errEl = q("[data-uk-err]");
+        if (errEl) errEl.textContent = "";
+        const label = labelEl ? labelEl.value.trim() : "";
+        const key = keyEl ? keyEl.value.trim() : "";
+        if (!label || !key) {
+          if (errEl) errEl.textContent = TR("برچسب و کلید را وارد کنید", "Label and key are required");
+          return;
+        }
+        try {
+          await api("/api/admin/upstream-keys", { method: "POST", body: JSON.stringify({ label, key }) });
+          showToast(TR("کلید اضافه شد", "Key added"), true);
+          if (labelEl) labelEl.value = "";
+          if (keyEl) keyEl.value = "";
+          loadAdminUpkeys();
+        } catch (err) {
+          const m = String((err && err.message) || "");
+          if (errEl) errEl.textContent = /exists|23505/i.test(m) ? TR("این کلید قبلاً ثبت شده است", "Key already exists") : (m || TR("خطای غیرمنتظره", "Unexpected error"));
+        }
+      });
+    }
+    const openCreate = q('[data-open-modal="createUserModal"]');
+    if (openCreate) openCreate.addEventListener("click", () => fillUpstreamSelects());
   }
 
   // Create user form
@@ -945,29 +1186,52 @@
     const btn = form.querySelector('button[type="submit"]') || q("[data-create-user-submit]");
     const handler = async (e) => {
       if (e) e.preventDefault();
-      const email = (q("[data-new-user-email]") || form.querySelector('input[name="email"]') || {}).value || "";
-      const name = (q("[data-new-user-name]") || form.querySelector('input[name="name"]') || {}).value || "";
-      const password = (q("[data-new-user-password]") || form.querySelector('input[name="password"]') || {}).value || "";
-      const plan = (q("[data-new-user-plan]") || form.querySelector('select[name="plan"]') || {}).value || "starter";
-      if (!email || !password) {
-        showToast(TR("ایمیل و رمز الزامی است", "Email and password are required"), false);
+      const email = ((q("[data-u-email]") || {}).value || "").trim();
+      const username = ((q("[data-u-username]") || {}).value || "").trim();
+      const name = (q("[data-u-name]") || {}).value || "";
+      const password = (q("[data-u-pass]") || {}).value || "";
+      const plan = (q("[data-u-plan]") || {}).value || "starter";
+      const subMonths = (q("[data-u-sub]") || {}).value || "";
+      const upstreamValue = (q("[data-u-upstream]") || {}).value || "";
+      if (!password) {
+        showToast(TR("رمز عبور الزامی است", "Password is required"), false);
         return;
       }
+      if (!email && !username) {
+        showToast(TR("ایمیل یا نام کاربری (حداقل یکی) لازم است", "Email or username (at least one) is required"), false);
+        return;
+      }
+      const payload = { name, password, plan, subscription_expires_at: null, upstream_key_id: upstreamValue || null };
+      if (email) payload.email = email;
+      if (username) payload.username = username;
+      if (subMonths) {
+        const d = new Date();
+        d.setMonth(d.getMonth() + Number(subMonths));
+        payload.subscription_expires_at = d.toISOString();
+      }
       try {
-        await api("/api/admin/users", { method: "POST", body: JSON.stringify({ email, name, password, plan }) });
+        await api("/api/admin/users", { method: "POST", body: JSON.stringify(payload) });
         showToast(TR("کاربر ساخته شد", "User created"), true);
         closeAllModals();
-        form.reset && form.reset();
+        if (q("[data-u-email]")) q("[data-u-email]").value = "";
+        if (q("[data-u-username]")) q("[data-u-username]").value = "";
+        if (q("[data-u-name]")) q("[data-u-name]").value = "";
+        if (q("[data-u-pass]")) q("[data-u-pass]").value = "";
+        if (q("[data-u-sub]")) q("[data-u-sub]").value = "";
+        if (q("[data-u-upstream]")) q("[data-u-upstream]").value = "";
         loadAdminUsers();
       } catch (err) {
-        if (err.code === "email_exists" || err.status === 409) showToast(TR("ایمیل تکراری است", "Email already exists"), false);
-        else showToast(err.message || "خطای غیرمنتظره", false);
+        const msg = err.message || "";
+        if (/username/i.test(msg)) showToast(TR("نام کاربری تکراری است", "Username already exists"), false);
+        else if (/email/i.test(msg)) showToast(TR("ایمیل تکراری است", "Email already exists"), false);
+        else showToast(msg || "خطای غیرمنتظره", false);
       }
     };
     if (form.tagName.toLowerCase() === "form") form.addEventListener("submit", handler);
     else if (btn) btn.addEventListener("click", handler);
     else form.addEventListener("click", handler);
   }
+
 
   // Keys create modal
   function setupKeysCreate() {
@@ -1085,6 +1349,7 @@
   VIEW_LOADERS.settings = loadSettings;
   VIEW_LOADERS["admin-users"] = loadAdminUsers;
   VIEW_LOADERS["admin-stats"] = loadAdminStats;
+  VIEW_LOADERS["admin-upkeys"] = loadAdminUpkeys;
   VIEW_LOADERS.admin = loadAdminUsers;
 
   // Boot
@@ -1094,6 +1359,9 @@
     setupPasswordForm();
     setupKeysCreate();
     setupAdminCreateUser();
+  setupProfileForm();
+  setupAdminUpkeys();
+
     setupEditUser();
 
     try {

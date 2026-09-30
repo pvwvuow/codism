@@ -11,8 +11,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/design.css?v=10575440">
-<script src="assets/i18n.js?v=10575440"></script>
+<link rel="stylesheet" href="assets/design.css?v=62944207">
+<script src="assets/i18n.js?v=62944207"></script>
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <script>window.CODISM_API_BASE="https://api.tvframe.vip";</script>
 
@@ -93,6 +93,7 @@
 <button type="button" data-view="settings" role="tab" aria-selected="false">تنظیمات</button>
 <button type="button" data-view="admin-users" data-admin class="hidden" role="tab" aria-selected="false">کاربران</button>
 <button type="button" data-view="admin-stats" data-admin class="hidden" role="tab" aria-selected="false">آمار سراسری</button>
+<button type="button" data-view="admin-upkeys" data-admin class="hidden" role="tab" aria-selected="false">کلیدهای آپ‌استریم</button>
 </div>
 
 <!-- نمای کلی -->
@@ -162,6 +163,7 @@
 <li>سهمیه ماهانه: <span data-plan-quota>—</span></li>
 <li>ریست سهمیه: اول هر ماه (به وقت تهران)</li>
 <li>کلیدهای فعال: <span data-plan-keys>0</span></li>
+<li data-sub-line hidden>اشتراک: <b data-sub-remaining>—</b></li>
 </ul>
 <button type="button" class="btn btn-outline w-full" data-goto="usage">گزارش کامل مصرف</button>
 </div>
@@ -245,6 +247,11 @@
 <div class="kpi-label">درخواست‌های ناموفق (۱۴ روز)</div>
 <div class="kpi-value" data-usage-failed>۰</div>
 <div class="kpi-sub">از لاگ درخواست‌ها</div>
+</div>
+<div class="kpi card">
+<div class="kpi-label">سهمیه این ماه</div>
+<div class="kpi-value" data-usage-quota>—</div>
+<div class="kpi-sub" data-usage-quota-pct></div>
 </div>
 </div>
 
@@ -345,7 +352,11 @@
 <dl style="font-size:.875rem;margin:0">
 <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 0;border-bottom:1px solid #F4F1EA;gap:1rem">
 <dt style="color:#6B6659;flex-shrink:0">ایمیل</dt>
-<dd data-set-email dir="ltr" style="margin:0;color:#1A1915;word-break:break-all">—</dd>
+<dd style="margin:0;flex:1;max-width:72%"><input type="email" class="input" data-set-email dir="ltr" placeholder="ایمیل" style="width:100%"></dd>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 0;border-bottom:1px solid #F4F1EA;gap:1rem">
+<dt style="color:#6B6659;flex-shrink:0">نام کاربری</dt>
+<dd style="margin:0;flex:1;max-width:72%"><input type="text" class="input" data-set-username dir="ltr" autocomplete="off" placeholder="نام کاربری" style="width:100%"></dd>
 </div>
 <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 0;border-bottom:1px solid #F4F1EA;gap:1rem">
 <dt style="color:#6B6659">نام</dt>
@@ -364,7 +375,7 @@
 <dd data-set-since style="margin:0;color:#1A1915">—</dd>
 </div>
 </dl>
-<p class="hint" style="margin-top:1rem;line-height:1.8">برای تغییر پلن یا اطلاعات حساب با پشتیبانی در تماس باشید.</p>
+<p class="hint" style="margin-top:1rem;line-height:1.8">ایمیل و نام کاربری را می‌توانید همین‌جا ویرایش کنید؛ حداقل یکی از آن‌ها باید پر بماند. برای تغییر پلن با پشتیبانی در تماس باشید.</p>
 </div>
 </div>
 </section>
@@ -389,12 +400,55 @@
 <th>پلن</th>
 <th>وضعیت</th>
 <th>کلیدها</th>
+<th>مصرف این ماه</th>
+<th>اشتراک</th>
 <th>سهمیه ماهانه</th>
 <th>ساخته‌شده</th>
 <th>عملیات</th>
 </tr>
 </thead>
 <tbody data-admin-users-body></tbody>
+</table>
+</div>
+</div>
+</section>
+
+<!-- ادمین: کلیدهای آپ‌استریم -->
+<section class="view hidden" id="view-admin-upkeys" aria-labelledby="title-admin-upkeys">
+<div class="dash-head">
+<div>
+<h1 id="title-admin-upkeys">کلیدهای آپ‌استریم</h1>
+<p class="dash-sub">کلیدهای API سایت codecraft که می‌توانید به هر کاربر اختصاص دهید؛ کاربر بدون کلید اختصاصی از استخر مشترک استفاده می‌کند.</p>
+</div>
+</div>
+<div class="panel card" style="margin-bottom:1.5rem">
+<h3 style="font-size:1rem;font-weight:700;margin:0 0 1rem">افزودن کلید جدید</h3>
+<div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-end">
+<div class="field" style="flex:1;min-width:180px;margin:0">
+<label class="label" for="uk-label">برچسب</label>
+<input type="text" id="uk-label" class="input" data-uk-label placeholder="مثلاً کلید ۲">
+</div>
+<div class="field" style="flex:2;min-width:240px;margin:0">
+<label class="label" for="uk-key">کلید</label>
+<input type="text" id="uk-key" class="input" data-uk-key dir="ltr" placeholder="cc_...">
+</div>
+<button type="button" class="btn btn-primary" data-uk-add>افزودن</button>
+</div>
+<div class="error-text" data-uk-err style="color:#DC2626;font-size:.875rem;min-height:1.25rem;margin-top:.5rem"></div>
+</div>
+<div class="panel card">
+<div class="table-wrap">
+<table class="table">
+<thead>
+<tr>
+<th>برچسب</th>
+<th>کلید</th>
+<th>وضعیت</th>
+<th>کاربران</th>
+<th>عملیات</th>
+</tr>
+</thead>
+<tbody data-uk-body></tbody>
 </table>
 </div>
 </div>
@@ -454,6 +508,28 @@
 </div>
 <div class="chart-x"><span>۱۴ روز پیش</span><span>امروز</span></div>
 </div>
+<div data-admin-recent-wrap>
+<div class="panel card">
+<h3>فعالیت اخیر کاربران</h3>
+<div class="table-wrap">
+<table class="table">
+<thead><tr><th>زمان</th><th>کاربر</th><th>مدل</th><th>وضعیت</th><th>توکن</th></tr></thead>
+<tbody data-admin-recent-body></tbody>
+</table>
+</div>
+</div>
+</div>
+<div data-admin-top-wrap>
+<div class="panel card">
+<h3>بیشترین مصرف این ماه</h3>
+<div class="table-wrap">
+<table class="table">
+<thead><tr><th>کاربر</th><th>درخواست</th><th>توکن</th></tr></thead>
+<tbody data-admin-top-body></tbody>
+</table>
+</div>
+</div>
+</div>
 </section>
 </div>
 
@@ -494,8 +570,13 @@
 <div class="modal card" role="dialog" aria-modal="true" aria-labelledby="cu-title">
 <h3 id="cu-title">کاربر جدید</h3>
 <div class="field">
-<label class="label" for="u-email">ایمیل</label>
+<label class="label" for="u-email">ایمیل (اختیاری)</label>
 <input type="email" id="u-email" class="input" data-u-email dir="ltr" autocomplete="email">
+</div>
+<div class="field">
+<label class="label" for="u-username">نام کاربری (اختیاری)</label>
+<input type="text" id="u-username" class="input" data-u-username dir="ltr" autocomplete="off" placeholder="مثلاً ali_shop">
+<p class="hint" style="margin-top:.375rem">حداقل یکی از ایمیل یا نام کاربری لازم است؛ حروف انگلیسی، عدد و خط تیره.</p>
 </div>
 <div class="field">
 <label class="label" for="u-name">نام</label>
@@ -516,6 +597,24 @@
 <option value="unlimited">نامحدود (unlimited)</option>
 </select>
 </div>
+<div class="field">
+<label class="label" for="u-sub">مدت اشتراک</label>
+<select id="u-sub" class="input" data-u-sub>
+<option value="">بدون انقضا</option>
+<option value="1">۱ ماه</option>
+<option value="3">۳ ماه</option>
+<option value="6">۶ ماه</option>
+<option value="12">۱۲ ماه</option>
+</select>
+<p class="hint" style="margin-top:.375rem">پس از انقضا، درخواست‌های کاربر بسته می‌شود.</p>
+</div>
+<div class="field">
+<label class="label" for="u-upstream">کلید آپ‌استریم (codecraft)</label>
+<select id="u-upstream" class="input" data-u-upstream dir="ltr" style="text-align:left">
+<option value="">پیش‌فرض (استخر مشترک)</option>
+</select>
+<p class="hint" style="margin-top:.375rem">درخواست‌های این کاربر با این کلید به آپ‌استریم می‌رود.</p>
+</div>
 <div class="error-text" style="color:#DC2626;font-size:.875rem;min-height:1.25rem"></div>
 <div class="modal-actions">
 <button type="button" class="btn btn-secondary" data-close-modal>انصراف</button>
@@ -531,6 +630,15 @@
 <div class="field">
 <label class="label" for="eu-enabled">وضعیت</label>
 <label style="display:flex;align-items:center;gap:.5rem;font-size:.875rem;color:#3D3A33;cursor:pointer"><input type="checkbox" id="eu-enabled" data-edit-enabled checked> فعال</label>
+</div>
+<div class="field">
+<label class="label" for="eu-username">نام کاربری</label>
+<input type="text" id="eu-username" class="input" data-edit-username dir="ltr" autocomplete="off" placeholder="خالی = بدون نام کاربری">
+</div>
+<div class="field">
+<label class="label" for="eu-email">ایمیل</label>
+<input type="email" id="eu-email" class="input" data-edit-email dir="ltr" autocomplete="off" placeholder="خالی = بدون ایمیل">
+<p class="hint" style="margin-top:.375rem">حداقل یکی از ایمیل یا نام کاربری باید پر بماند.</p>
 </div>
 <div class="field">
 <label class="label" for="eu-plan">پلن</label>
@@ -550,6 +658,17 @@
 <div class="field">
 <label class="label" for="eu-quota-day">سهمیه روزانه (توکن)</label>
 <input type="number" id="eu-quota-day" class="input" data-edit-quota-day placeholder="خالی = بدون سقف" dir="ltr" inputmode="numeric">
+</div>
+<div class="field">
+<label class="label" for="eu-sub">انقضای اشتراک</label>
+<input type="date" id="eu-sub" class="input" data-edit-sub dir="ltr">
+<p class="hint" style="margin-top:.375rem">خالی = بدون انقضا؛ پس از این تاریخ درخواست‌های کاربر بسته می‌شود.</p>
+</div>
+<div class="field">
+<label class="label" for="eu-upstream">کلید آپ‌استریم (codecraft)</label>
+<select id="eu-upstream" class="input" data-edit-upstream dir="ltr" style="text-align:left">
+<option value="">پیش‌فرض (استخر مشترک)</option>
+</select>
 </div>
 <div class="field">
 <label class="label" for="eu-pass">رمز عبور جدید (اختیاری)</label>
@@ -644,7 +763,7 @@
   </div>
 </footer>
 
-<script src="assets/app.js?v=10575440"></script>
-<script src="assets/dashboard.js?v=10575440"></script>
+<script src="assets/app.js?v=62944207"></script>
+<script src="assets/dashboard.js?v=62944207"></script>
 </body>
 </html>

@@ -245,7 +245,7 @@ if(norm==="/api/status"&&req.method==="GET"){
   let body:any;try{body=await readJson(req)}catch(e:any){if(String(e.message)==="body_too_large")return panelErr(413,"body too large");body={}}
   const email=(body.email||"").trim(),password=body.password||"";
   if(!email||!password) return panelErr(400,"email & password required");
-  const rows=await sbGet(`/users?email=eq.${encodeURIComponent(email)}&select=id,email,name,password_hash,role,enabled,daily_quota_tokens,monthly_quota_tokens`);
+  const rows=await sbGet(email.includes("@")?`/users?email=eq.${encodeURIComponent(email)}&select=id,email,name,password_hash,role,enabled,daily_quota_tokens,monthly_quota_tokens,username,subscription_expires_at`:`/users?username=eq.${encodeURIComponent(email.trim().toLowerCase())}&select=id,email,name,password_hash,role,enabled,daily_quota_tokens,monthly_quota_tokens,username,subscription_expires_at`);
   const user=rows[0];
   if(!user){addFail(ip);return panelErr(401,"Invalid credentials")}
   if(!user.enabled){addFail(ip);return panelErr(403,"Account disabled")}
@@ -254,14 +254,15 @@ if(norm==="/api/status"&&req.method==="GET"){
   resetFail(ip);
   const exp=Math.floor(Date.now()/1000)+12*3600;
   const token=await jwtSign({sub:user.id,email:user.email,role:user.role,exp},getEnv("JWT_SECRET"));
-  return jsonRes(200,{token,user:{id:user.id,email:user.email,name:user.name,role:user.role,daily_quota_tokens:user.daily_quota_tokens,monthly_quota_tokens:user.monthly_quota_tokens}});
+  return jsonRes(200,{token,user:{id:user.id,email:user.email,name:user.name,role:user.role,daily_quota_tokens:user.daily_quota_tokens,monthly_quota_tokens:user.monthly_quota_tokens,username:user.username,subscription_expires_at:user.subscription_expires_at}});
  }
  // helper to auth
  async function authOr401():Promise<any>{
   const p=await requireJwt(req);
   if(!p) return null;
   // verify user still enabled
-  const rows=await sbGet(`/users?id=eq.${encodeURIComponent(p.sub)}&select=id,email,name,role,enabled,plan,daily_quota_tokens,monthly_quota_tokens`);
+  const rows=await sbGet(`/users?id=eq.${encodeURIComponent(p.sub)}&select=id,email,name,role,enabled,plan,daily_quota_tokens,monthly_quota_tokens,username,subscription_expires_at,upstream_key_id`);
+
   if(!rows[0]||!rows[0].enabled) return null;
   return {...p,db:rows[0]};
  }
@@ -278,6 +279,19 @@ if(norm==="/api/status"&&req.method==="GET"){
   const h=await hashPassword(nw);
   await sbPatch(`/users?id=eq.${encodeURIComponent(a.sub)}`,{password_hash:h});
   return jsonRes(200,{ok:true});
+ }
+ if(norm==="/api/auth/profile"&&method==="POST"){
+  const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
+  let b:any;try{b=await readJson(req)}catch(e:any){if(String(e.message)==="body_too_large")return panelErr(413,"body too large");b={}}
+  const curRows=await sbGet(`/users?id=eq.${encodeURIComponent(a.sub)}&select=email,username`);const cur=curRows[0]||{};
+  const p:any={};let em:any=undefined,un:any=undefined;
+  if(b.name!==undefined){const v=String(b.name).trim();if(v.length<2||v.length>100) return jsonRes(400,{error:"validation_error",code:"validation_error"});p.name=v;}
+  if(b.email!==undefined){if(b.email===""){p.email=null;em=null;}else{const v=String(b.email).trim();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return jsonRes(400,{error:"validation_error",code:"validation_error"});const ex=await sbGet(`/users?email=eq.${encodeURIComponent(v)}&id=neq.${encodeURIComponent(a.sub)}&select=id`);if(ex.length) return jsonRes(409,{error:"email_exists",code:"email_exists"});p.email=v;em=v;}}
+  if(b.username!==undefined){if(b.username===""){p.username=null;un=null;}else{const v=String(b.username).trim().toLowerCase();if(!/^[a-z0-9_-]{3,32}$/.test(v)) return jsonRes(400,{error:"validation_error",code:"validation_error"});const ex=await sbGet(`/users?username=eq.${encodeURIComponent(v)}&id=neq.${encodeURIComponent(a.sub)}&select=id`);if(ex.length) return jsonRes(409,{error:"username_exists",code:"username_exists"});p.username=v;un=v;}}
+  const finalEmail=em!==undefined?em:cur.email;const finalUsername=un!==undefined?un:cur.username;if(!finalEmail&&!finalUsername) return jsonRes(400,{error:"validation_error",code:"validation_error"});
+  if(!Object.keys(p).length) return jsonRes(400,{error:"validation_error",code:"validation_error"});
+  await sbPatch(`/users?id=eq.${encodeURIComponent(a.sub)}`,p);
+  const rows=await sbGet(`/users?id=eq.${encodeURIComponent(a.sub)}&select=id,email,username,name,role,plan,daily_quota_tokens,monthly_quota_tokens,subscription_expires_at`);return jsonRes(200,{ok:true,user:rows[0]});
  }
  // /api/me
  if(norm==="/api/me"&&method==="GET"){
@@ -360,25 +374,31 @@ if(norm==="/api/status"&&req.method==="GET"){
   const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
   if(a.role!=="admin") return panelErr(403,"Admin only");
   if(norm==="/api/admin/users"&&method==="GET"){
-   const users=await sbGet(`/users?select=id,email,name,role,enabled,plan,daily_quota_tokens,monthly_quota_tokens,created_at&order=created_at.desc`);
+   const users=await sbGet(`/users?select=id,email,name,role,enabled,plan,daily_quota_tokens,monthly_quota_tokens,created_at,username,subscription_expires_at,upstream_key_id&order=created_at.desc`);
    const keys=await sbGet(`/api_keys?select=user_id`);
    const cnt=new Map<string,number>();for(const k of keys) cnt.set(k.user_id,(cnt.get(k.user_id)||0)+1);
-   const out=users.map((u:any)=>({id:u.id,email:u.email,name:u.name,role:u.role,enabled:u.enabled,plan:planOf(u.plan)||"starter",daily_quota_tokens:u.daily_quota_tokens,monthly_quota_tokens:u.monthly_quota_tokens,created_at:u.created_at,key_count:cnt.get(u.id)||0}));
+   const uk=await sbGet(`/upstream_keys?select=id,label`);const ukMap=new Map<string,string>();for(const x of uk) ukMap.set(x.id,x.label);
+   const usageRows=await sbRpc("admin_user_usage",{});const uMap=new Map<string,any>();for(const r of usageRows) uMap.set(r.user_id,r);
+   const out=users.map((u:any)=>{const us=uMap.get(u.id)||{};return {id:u.id,email:u.email,name:u.name,role:u.role,enabled:u.enabled,plan:planOf(u.plan)||"starter",daily_quota_tokens:u.daily_quota_tokens,monthly_quota_tokens:u.monthly_quota_tokens,created_at:u.created_at,key_count:cnt.get(u.id)||0,username:u.username||null,subscription_expires_at:u.subscription_expires_at||null,upstream_key_id:u.upstream_key_id||null,upstream_key_label:u.upstream_key_id?ukMap.get(u.upstream_key_id)||null:null,usage_month_tokens:Number(us.month_tokens||0),usage_month_requests:Number(us.month_requests||0),usage_total_tokens:Number(us.total_tokens||0)}});
    return jsonRes(200,out);
   }
+
   if(norm==="/api/admin/users"&&method==="POST"){
    let b:any;try{b=await readJson(req)}catch(e:any){if(String(e.message)==="body_too_large")return panelErr(413,"body too large");b={}}
-   const email=(b.email||"").trim(),name=(b.name||"").trim(),password=b.password||"",role=b.role==="admin"?"admin":"user";
-   if(!email||!password||!name) return panelErr(400,"missing fields");
-   const ex=await sbGet(`/users?email=eq.${encodeURIComponent(email)}&select=id`);
-   if(ex.length) return panelErr(409,"email exists");
+   const rawEmail=b.email!=null?String(b.email).trim():"";const rawUsername=b.username!=null?String(b.username).trim().toLowerCase():"";const name=(b.name||"").trim(),password=b.password||"",role=b.role==="admin"?"admin":"user";
+   if(!name||!password||(!rawEmail&&!rawUsername)) return panelErr(400,"missing fields");
+   let email:any=null;if(rawEmail){if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) return panelErr(400,"invalid email");const ex=await sbGet(`/users?email=eq.${encodeURIComponent(rawEmail)}&select=id`);if(ex.length) return panelErr(409,"email exists");email=rawEmail}
+   let username:any=null;if(rawUsername){if(!/^[a-z0-9_-]{3,32}$/.test(rawUsername)) return panelErr(400,"invalid username");const ex2=await sbGet(`/users?username=eq.${encodeURIComponent(rawUsername)}&select=id`);if(ex2.length) return panelErr(409,"username exists");username=rawUsername}
+   let subscription_expires_at:any=null;if(b.subscription_expires_at!==undefined&&b.subscription_expires_at!==null){const v=String(b.subscription_expires_at).trim();if(!v) subscription_expires_at=null;else if(isNaN(Date.parse(v))) return panelErr(400,"invalid subscription date");else subscription_expires_at=new Date(v).toISOString()}
+   let upstream_key_id:any=null;if(b.upstream_key_id!==undefined&&b.upstream_key_id!==null&&String(b.upstream_key_id).trim()!==""){const ukId=String(b.upstream_key_id).trim();const uk=await sbGet(`/upstream_keys?id=eq.${encodeURIComponent(ukId)}&select=id`);if(!uk.length) return panelErr(400,"invalid upstream key");upstream_key_id=ukId}
    const h=await hashPassword(password);
    const plan=planOf(b.plan||"starter");
    if(!plan) return panelErr(400,"invalid plan");
    const mq=planQuota(plan);
    const dq:any=0;
-   try{const ins=await sbPost("/users",{email,name,password_hash:h,role,enabled:true,plan,daily_quota_tokens:dq,monthly_quota_tokens:mq||0});return jsonRes(200,ins[0]||{ok:true})}catch(e:any){console.error("admin create user failed:",String(e.message||e));const m2=String(e.message||"");if(m2.includes("duplicate")||m2.includes("23505"))return panelErr(409,"email exists");return panelErr(400,"create failed")}
+   try{const ins=await sbPost("/users",{email,name,password_hash:h,role,enabled:true,plan,daily_quota_tokens:dq,monthly_quota_tokens:mq||0,username,subscription_expires_at,upstream_key_id});return jsonRes(200,ins[0]||{ok:true})}catch(e:any){console.error("admin create user failed:",String(e.message||e));const m2=String(e.message||"");if(m2.includes("duplicate")||m2.includes("23505")){if(m2.includes("users_username_unique")) return panelErr(409,"username exists");return panelErr(409,"email exists")}return panelErr(400,"create failed")}
   }
+
   if(pathname.startsWith("/api/admin/users/")&&method==="PATCH"){
    const id=pathname.split("/")[4];
    let b:any;try{b=await readJson(req)}catch(e:any){if(String(e.message)==="body_too_large")return panelErr(413,"body too large");b={}}
@@ -393,7 +413,10 @@ if(norm==="/api/status"&&req.method==="GET"){
    if(b.role) patch.role=b.role;
    if(b.password) patch.password_hash=await hashPassword(b.password);
    if(b.plan!==undefined){const pl=planOf(b.plan);if(!pl) return panelErr(400,"invalid plan");patch.plan=pl;if(b.monthly_quota_tokens===undefined)patch.monthly_quota_tokens=planQuota(pl)||0;if(b.daily_quota_tokens===undefined)patch.daily_quota_tokens=0}
-   if(Object.keys(patch).length===0) return panelErr(400,"no fields");
+   if(b.username!==undefined){if(b.username===null||String(b.username).trim()==="") patch.username=null;else{const u=String(b.username).trim().toLowerCase();if(!/^[a-z0-9_-]{3,32}$/.test(u)) return panelErr(400,"invalid username");const ex=await sbGet(`/users?username=eq.${encodeURIComponent(u)}&id=neq.${encodeURIComponent(id)}&select=id`);if(ex.length) return panelErr(409,"username exists");patch.username=u}}
+   if(b.email!==undefined){if(b.email===null||String(b.email).trim()==="") patch.email=null;else{const e=String(b.email).trim();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return panelErr(400,"invalid email");const ex=await sbGet(`/users?email=eq.${encodeURIComponent(e)}&id=neq.${encodeURIComponent(id)}&select=id`);if(ex.length) return panelErr(409,"email exists");patch.email=e}}
+   if(b.subscription_expires_at!==undefined){if(b.subscription_expires_at===null||String(b.subscription_expires_at).trim()==="") patch.subscription_expires_at=null;else{const v=String(b.subscription_expires_at).trim();if(isNaN(Date.parse(v))) return panelErr(400,"invalid subscription date");patch.subscription_expires_at=new Date(v).toISOString()}}
+   if(b.upstream_key_id!==undefined){if(b.upstream_key_id===null||String(b.upstream_key_id).trim()==="") patch.upstream_key_id=null;else{const ukId=String(b.upstream_key_id).trim();const uk=await sbGet(`/upstream_keys?id=eq.${encodeURIComponent(ukId)}&select=id`);if(!uk.length) return panelErr(400,"invalid upstream key");patch.upstream_key_id=ukId}}
    await sbPatch(`/users?id=eq.${encodeURIComponent(id)}`,patch);
    return jsonRes(200,{ok:true});
   }
@@ -403,6 +426,10 @@ if(norm==="/api/status"&&req.method==="GET"){
    await sbDelete(`/users?id=eq.${encodeURIComponent(id)}`);
    return jsonRes(200,{ok:true});
   }
+  if(norm==="/api/admin/upstream-keys"&&method==="GET"){const keys=await sbGet(`/upstream_keys?select=id,label,key,enabled,created_at&order=created_at.desc`);const users=await sbGet(`/users?select=upstream_key_id`);const counts={};for(const u of users){if(u.upstream_key_id) counts[u.upstream_key_id]=(counts[u.upstream_key_id]||0)+1}return jsonRes(200,keys.map(k=>({id:k.id,label:k.label,key_masked:k.key.length<=10?k.key.slice(0,2)+"••••":k.key.slice(0,6)+"••••"+k.key.slice(-4),enabled:k.enabled,created_at:k.created_at,assigned_users:counts[k.id]||0})))}
+  if(norm==="/api/admin/upstream-keys"&&method==="POST"){const b=await readJson(req);const label=(b.label||"").trim();const key=(b.key||"").trim();if(!label||label.length>80||!key||key.length<8||key.length>200) return panelErr(400,"invalid upstream key fields");try{const rows=await sbPost(`/upstream_keys`,{label,key});const k=rows[0];return jsonRes(200,{id:k.id,label:k.label,key_masked:k.key.length<=10?k.key.slice(0,2)+"••••":k.key.slice(0,6)+"••••"+k.key.slice(-4),enabled:k.enabled,created_at:k.created_at,assigned_users:0})}catch(e){if(String(e).includes("23505")) return panelErr(409,"upstream key exists");throw e}}
+  if(pathname.startsWith("/api/admin/upstream-keys/")&&method==="PATCH"){const id=pathname.split("/")[4];const b=await readJson(req);const patch={};if(b.label!==undefined){const label=String(b.label).trim();if(!label||label.length>80) return panelErr(400,"invalid upstream key fields");patch.label=label}if(b.enabled!==undefined) patch.enabled=!!b.enabled;if(Object.keys(patch).length===0) return panelErr(400,"no fields");await sbPatch(`/upstream_keys?id=eq.${encodeURIComponent(id)}`,patch);return jsonRes(200,{ok:true})}
+  if(pathname.startsWith("/api/admin/upstream-keys/")&&method==="DELETE"){const id=pathname.split("/")[4];await sbDelete(`/upstream_keys?id=eq.${encodeURIComponent(id)}`);return jsonRes(200,{ok:true})}
   if(norm==="/api/admin/stats"&&method==="GET"){
    const [totals,by]=await Promise.all([sbRpc("admin_totals",{p_offset_min:TZ_OFF_MIN}),sbRpc("admin_usage_by_day",{p_days:14,p_offset_min:TZ_OFF_MIN})]);
    return jsonRes(200,{totals:totals[0]||{users:0,keys:0,active_keys:0,requests_today:0,tokens_today:0,failed_today:0},by_day:by});
@@ -419,8 +446,8 @@ if(norm==="/api/status"&&req.method==="GET"){
   const kRows=await sbGet(`/api_keys?key=eq.${encodeURIComponent(keyText)}&select=id,user_id,enabled,models`);
   const kRow=kRows[0];if(!kRow){logRequest(null,null,"/v1/models",method,null,401,"invalid_api_key",0,0,Date.now()-t0);return openaiErr(401,"Invalid API key.","invalid_request_error","invalid_api_key")}
   if(!kRow.enabled){logRequest(kRow.user_id,kRow.id,"/v1/models",method,null,403,"key_disabled",0,0,Date.now()-t0);return openaiErr(403,"This API key has been disabled.","insufficient_quota","key_disabled")}
-  const uRows=await sbGet(`/users?id=eq.${encodeURIComponent(kRow.user_id)}&select=id,enabled`);
-  const uRow=uRows[0];if(!uRow||!uRow.enabled){logRequest(uRow?uRow.id:null,kRow.id,"/v1/models",method,null,403,"user_disabled",0,0,Date.now()-t0);return openaiErr(403,"User disabled.","insufficient_quota","user_disabled")}
+  const uRows=await sbGet(`/users?id=eq.${encodeURIComponent(kRow.user_id)}&select=id,enabled,subscription_expires_at,upstream_key_id`);
+  const uRow=uRows[0];if(!uRow||!uRow.enabled){logRequest(uRow?uRow.id:null,kRow.id,"/v1/models",method,null,403,"user_disabled",0,0,Date.now()-t0);return openaiErr(403,"User disabled.","insufficient_quota","user_disabled")}if(uRow.subscription_expires_at&&Date.now()>Date.parse(uRow.subscription_expires_at)){logRequest(uRow.id,kRow.id,"/v1/models",method,null,403,"subscription_expired",0,0,Date.now()-t0);return openaiErr(403,"Your subscription has expired. Please renew it.","insufficient_quota","subscription_expired")}
   const aliases=parseAliases();
   const synthetic=Object.keys(aliases).map(id=>({id,object:"model",created:1700000000,owned_by:"codism-panel"}));
   const modelsStr=(kRow.models||"*").trim();
@@ -452,8 +479,8 @@ if(norm==="/api/status"&&req.method==="GET"){
   const kRows=await sbGet(`/api_keys?key=eq.${encodeURIComponent(keyText)}&select=id,user_id,enabled,models`);
   const kRow=kRows[0];if(!kRow){logRequest(null,null,"/v1/chat/completions",method,null,401,"invalid_api_key",0,0,Date.now()-t0);return openaiErr(401,"Invalid API key.","invalid_request_error","invalid_api_key")}
   if(!kRow.enabled){logRequest(kRow.user_id,kRow.id,"/v1/chat/completions",method,null,403,"key_disabled",0,0,Date.now()-t0);return openaiErr(403,"This API key has been disabled.","insufficient_quota","key_disabled")}
-  const uRows=await sbGet(`/users?id=eq.${encodeURIComponent(kRow.user_id)}&select=id,enabled,daily_quota_tokens,monthly_quota_tokens`);
-  const uRow=uRows[0];if(!uRow||!uRow.enabled){logRequest(uRow?uRow.id:null,kRow.id,"/v1/chat/completions",method,null,403,"user_disabled",0,0,Date.now()-t0);return openaiErr(403,"User disabled.","insufficient_quota","user_disabled")}
+  const uRows=await sbGet(`/users?id=eq.${encodeURIComponent(kRow.user_id)}&select=id,enabled,daily_quota_tokens,monthly_quota_tokens,subscription_expires_at,upstream_key_id`);
+  const uRow=uRows[0];if(!uRow||!uRow.enabled){logRequest(uRow?uRow.id:null,kRow.id,"/v1/chat/completions",method,null,403,"user_disabled",0,0,Date.now()-t0);return openaiErr(403,"User disabled.","insufficient_quota","user_disabled")}if(uRow.subscription_expires_at&&Date.now()>Date.parse(uRow.subscription_expires_at)){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,null,403,"subscription_expired",0,0,Date.now()-t0);return openaiErr(403,"Your subscription has expired. Please renew it.","insufficient_quota","subscription_expired")}
   let bodyJson:any=null;if(raw)try{bodyJson=JSON.parse(dec.decode(raw))}catch{}
   const aliases=parseAliases();
   let expandedModel=bodyJson?.model||"";
@@ -482,8 +509,10 @@ if(norm==="/api/status"&&req.method==="GET"){
   if(isStream&&bodyJson){
    bodyJson.stream_options=bodyJson.stream_options||{};bodyJson.stream_options.include_usage=true;raw=enc.encode(JSON.stringify(bodyJson));
   }
+  let upstreamKey=getEnv("UPSTREAM_API_KEY");if(uRow.upstream_key_id){const ks=await sbGet(`/upstream_keys?id=eq.${encodeURIComponent(uRow.upstream_key_id)}&select=key,enabled`);if(ks[0]&&ks[0].enabled) upstreamKey=ks[0].key;}
   const target=upstreamBase()+"/chat/completions";
-  const upHeaders=new Headers();upHeaders.set("authorization",`Bearer ${getEnv("UPSTREAM_API_KEY")}`);upHeaders.set("user-agent",BROWSER_UA);
+  const upHeaders=new Headers();upHeaders.set("authorization",`Bearer ${upstreamKey}`);upHeaders.set("user-agent",BROWSER_UA);
+
   const ct=req.headers.get("content-type");if(ct) upHeaders.set("content-type",ct);else if(raw) upHeaders.set("content-type","application/json");
   const acc=req.headers.get("accept");if(acc) upHeaders.set("accept",acc);
   const controller=new AbortController();const to=setTimeout(()=>controller.abort(),300000);if(req.signal) req.signal.addEventListener("abort",()=>controller.abort(),{once:true});
