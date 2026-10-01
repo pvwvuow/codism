@@ -13,8 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/design.css?v=45125269">
-<script src="assets/i18n.js?v=45125269"></script>
+<link rel="stylesheet" href="assets/design.css?v=50054891">
+<script src="assets/i18n.js?v=50054891"></script>
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <script>window.CODISM_API_BASE="https://api.tvframe.vip";</script>
 
@@ -31,6 +31,7 @@
       <a data-nav href="pricing.html">تعرفه‌ها</a>
       <a data-nav href="docs/">مستندات</a>
       <a data-nav href="changelog.html">تغییرات</a>
+      <a data-nav href="event.html">ایونت<span style="display:inline-block;margin-inline-start:.3rem;padding:.05rem .4rem;border-radius:999px;background:#C2410C;color:#fff;font-size:.65rem;font-weight:700;vertical-align:middle">۱۰B</span></a>
       <a data-nav href="status.html">وضعیت</a>
     </nav>
     <div class="navbar-actions" style="display:flex;align-items:center;gap:.5rem">
@@ -97,6 +98,7 @@
 <button type="button" data-view="admin-stats" data-admin class="hidden" role="tab" aria-selected="false">آمار سراسری</button>
 <button type="button" data-view="admin-upkeys" data-admin class="hidden" role="tab" aria-selected="false">کلیدهای آپ‌استریم</button>
 <button type="button" data-view="admin-combos" data-admin class="hidden" role="tab" aria-selected="false">زنجیره‌های پشتیبان</button>
+<button type="button" data-view="admin-event" data-admin class="hidden" role="tab" aria-selected="false">ایونت</button>
 </div>
 
 <!-- نمای کلی -->
@@ -577,6 +579,58 @@
 </div>
 </div>
 </section>
+
+<!-- ادمین: ایونت -->
+<section class="view hidden" id="view-admin-event" aria-labelledby="title-admin-event">
+<div class="dash-head">
+<div>
+<h1 id="title-admin-event">ایونت توکن رایگان</h1>
+<p class="dash-sub">ایونت جامعه با استخر مشترک — مدیریت شروع، سقف استخر و مدل.</p>
+</div>
+</div>
+<div class="kpi-row" style="grid-template-columns:repeat(auto-fit,minmax(9rem,1fr))">
+<div class="kpi card">
+<div class="kpi-label">وضعیت</div>
+<div class="kpi-value" data-ev-status-text style="font-size:1.1rem">—</div>
+</div>
+<div class="kpi card">
+<div class="kpi-label">مصرف‌شده از استخر</div>
+<div class="kpi-value" data-ev-spent>۰</div>
+</div>
+<div class="kpi card">
+<div class="kpi-label">سقف استخر</div>
+<div class="kpi-value" data-ev-total>۰</div>
+</div>
+</div>
+<div class="panel card" style="max-width:34rem">
+<h3>تنظیمات ایونت</h3>
+<div class="field">
+<label class="label" for="ev-model">شناسه‌ی مدل ایونت (کدی که کاربر در درخواست می‌فرستد)</label>
+<input type="text" id="ev-model" class="input" data-ev-model dir="ltr" placeholder="gpt-6-luna-free">
+</div>
+<div class="field">
+<label class="label" for="ev-upstream">مدل واقعی بالادست (دروازه، درخواست را به این مدل نگاشت می‌کند)</label>
+<input type="text" id="ev-upstream" class="input" data-ev-upstream dir="ltr" placeholder="gpt-5.6-luna">
+</div>
+<div class="field">
+<label class="label" for="ev-pool">سقف استخر (توکن)</label>
+<input type="number" id="ev-pool" class="input" data-ev-pool dir="ltr" min="1" step="1">
+</div>
+<div class="field">
+<label class="label" for="ev-opens">زمان شروع (به وقت محلی مرورگر شما)</label>
+<input type="datetime-local" id="ev-opens" class="input" data-ev-opens dir="ltr">
+</div>
+<div class="field" style="display:flex;align-items:center;gap:.5rem">
+<input type="checkbox" id="ev-enabled" data-ev-enabled style="width:1rem;height:1rem">
+<label class="label" for="ev-enabled" style="margin:0">ایونت فعال باشد</label>
+</div>
+<div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-top:.5rem">
+<button type="button" class="btn btn-primary" data-ev-save>ذخیره‌ی تغییرات</button>
+<span data-ev-msg style="font-size:.85rem;color:#6B6659"></span>
+</div>
+<p class="muted" style="font-size:.78rem;color:#8A8475;margin:.9rem 0 0">مصرف ایونت از سهمیه‌ی کاربران کم نمی‌شود و فقط از استخر مشترک پرداخت می‌شود. تغییر تنظیمات تا ۱۵ ثانیه بعد در همه‌ی سرورها اعمال می‌شود.</p>
+</div>
+</section>
 </div>
 
 <!-- مودال‌ها -->
@@ -854,7 +908,7 @@
   </div>
 </footer>
 
-<script src="assets/app.js?v=45125269"></script>
-<script src="assets/dashboard.js?v=45125269"></script>
+<script src="assets/app.js?v=50054891"></script>
+<script src="assets/dashboard.js?v=50054891"></script>
 </body>
 </html>

@@ -55,6 +55,7 @@ function isKeyRpmLimited(keyId:string,limit:number){const now=Date.now(),arr=(ke
 function parseAliases():Record<string,string>{try{const v=getEnv("MODEL_ALIASES");if(!v)return {};return JSON.parse(v)}catch{return {}}}
 function upstreamBase(){return getEnv("UPSTREAM_BASE_URL","https://codecraftapi.com/v1").replace(/\/+$/,"")}
 function maxBodyBytes(){return (parseInt(getEnv("MAX_BODY_MB","8"),10)||8)*1024*1024}
+const _evCache:any={ts:0,v:null};async function getEventState(){const now=Date.now();if(now-_evCache.ts<15000) return _evCache.v;try{const r:any=await sbRpc("event_pool",{});const row=Array.isArray(r)&&r[0]?r[0]:null;if(!row) throw new Error("empty");const ev={pool_total:Number(row.pool_total),spent:Number(row.spent),model:String(row.model||""),upstream_model:String(row.upstream_model||""),opens_at:row.opens_at,enabled:!!row.enabled};_evCache.ts=now;_evCache.v=ev;return ev}catch{ _evCache.ts=now;_evCache.v=null;return null}}function eventStatusOf(ev:any,nowMs:number){if(!ev||!ev.enabled) return "disabled";const t=ev.opens_at?Date.parse(ev.opens_at):NaN;if(isNaN(t)) return "disabled";if(nowMs<t) return "scheduled";const rem=(Number(ev.pool_total)||0)-(Number(ev.spent)||0);if(rem<=0) return "ended";return "live"}function invalidateEventCache(){_evCache.ts=0;_evCache.v=null}
 const COMBO_PREFIX="combo/";
 const TOKEN_SAVER_SYSTEM="You are a token-efficient assistant. Answer concisely and directly: no preamble, no filler, no restating the question. Prefer the shortest complete correct answer. Keep code minimal but functional.";
 const PRICE_PER_MTOK:Record<string,[number,number]>={"claude-opus":[5,25],"claude-sonnet":[3,15],"claude-haiku":[1,5],"claude":[3,15],"gpt-5":[2.5,10],"gpt":[2.5,10],"gemini":[1.25,5],"glm":[0.6,2],"deepseek":[0.3,1.2],"qwen":[0.8,3],"grok":[3,15],"kimi":[0.6,2.5],"seed":[0.3,1.2],"muse":[0.3,1.2],"gemma":[0.1,0.3]};
@@ -267,6 +268,7 @@ if(norm==="/api/status"&&req.method==="GET"){
   g2.__codismStatusCache={ts:now,payload};
   return jsonRes(200,payload);
 }
+ if(norm==="/api/event"&&method==="GET"){const ev=await getEventState();const nowMs=Date.now();const nowIso=new Date(nowMs).toISOString();if(!ev||eventStatusOf(ev,nowMs)==="disabled") return jsonRes(200,{ok:true,status:"disabled",event:null,model:null,pool_total:null,pool_spent:null,pool_remaining:null,opens_at:null,now:nowIso});const st=eventStatusOf(ev,nowMs);const rem=Math.max(0,(Number(ev.pool_total)||0)-(Number(ev.spent)||0));return jsonRes(200,{ok:true,status:st,event:{model:ev.model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_remaining:rem,opens_at:ev.opens_at},model:ev.model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_remaining:rem,opens_at:ev.opens_at,now:nowIso});}
  // health
  if(norm==="/health"&&method==="GET") return jsonRes(200,{ok:true,service:"codism-panel"});
  if(norm==="/"&&(method==="GET"||method==="HEAD")) return new Response(null,{status:302,headers:withCors(new Headers({location:getEnv("PANEL_UI_URL","https://pvwvuow.github.io/codism/"),"cache-control":"no-store"}))});
@@ -448,6 +450,8 @@ if(norm==="/api/status"&&req.method==="GET"){
  if(pathname.startsWith("/api/admin/")){
   const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
   if(a.role!=="admin") return panelErr(403,"Admin only");
+  if(norm==="/api/admin/event"&&method==="GET"){const ev=await getEventState();if(!ev) return jsonRes(200,{ok:true,event:null,status:"disabled"});const st=eventStatusOf(ev,Date.now());const rem=Math.max(0,(Number(ev.pool_total)||0)-(Number(ev.spent)||0));return jsonRes(200,{ok:true,event:{model:ev.model,upstream_model:ev.upstream_model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_remaining:rem,opens_at:ev.opens_at,enabled:ev.enabled,status:st},status:st,model:ev.model,upstream_model:ev.upstream_model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_remaining:rem,opens_at:ev.opens_at,enabled:ev.enabled});}
+  if(norm==="/api/admin/event"&&method==="PATCH"){let b:any=null;try{b=await req.json()}catch{return panelErr(400,"invalid json")}const patch:any={};if(b.model!==undefined){const v=String(b.model).trim().toLowerCase();if(!/^[a-z0-9][a-z0-9._-]{0,63}$/.test(v)) return panelErr(400,"invalid model");patch.model=v}if(b.upstream_model!==undefined){const v=String(b.upstream_model).trim().toLowerCase();if(!/^[a-z0-9][a-z0-9._-]{0,63}$/.test(v)) return panelErr(400,"invalid upstream_model");patch.upstream_model=v}if(b.pool_total!==undefined){const n=Number(b.pool_total);if(!Number.isFinite(n)||n<1||n>1e15) return panelErr(400,"invalid pool_total");patch.pool_total=Math.round(n)}if(b.opens_at!==undefined){const t=Date.parse(String(b.opens_at));if(isNaN(t)) return panelErr(400,"invalid opens_at");patch.opens_at=new Date(t).toISOString()}if(b.enabled!==undefined){if(typeof b.enabled!=="boolean") return panelErr(400,"invalid enabled");patch.enabled=b.enabled}if(Object.keys(patch).length===0) return panelErr(400,"no fields");patch.updated_at=new Date().toISOString();try{await sbPatch("/event_state?id=eq.1",patch)}catch(e:any){return panelErr(500,"event update failed")}invalidateEventCache();return jsonRes(200,{ok:true});}
   if(norm==="/api/admin/users"&&method==="GET"){
    const users=await sbGet(`/users?select=id,email,name,role,enabled,plan,daily_quota_tokens,monthly_quota_tokens,created_at,username,subscription_expires_at,upstream_key_id&order=created_at.desc`);
    const keys=await sbGet(`/api_keys?select=user_id`);
@@ -606,10 +610,11 @@ if(norm==="/api/status"&&req.method==="GET"){
    clearTimeout(t);
    const ct=up.headers.get("content-type")||"";
    if(up.ok&&ct.includes("application/json")){
-    const data=await up.json();const list=Array.isArray(data.data)?data.data:[];for(const s of synthetic)list.push(s);const filtered=filterList(list);const out={object:"list",data:filtered};const h=withCors(new Headers({"content-type":"application/json"}));for(const [k,v] of up.headers.entries()) if(k.toLowerCase().startsWith("x-ratelimit-")) h.set(k,v);return new Response(JSON.stringify(out),{status:200,headers:h});
+    const data=await up.json();const list=Array.isArray(data.data)?data.data:[];for(const s of synthetic)list.push(s);let filtered=filterList(list);try{const ev=await getEventState();if(ev&&eventStatusOf(ev,Date.now())==="live"&&!filtered.some((m:any)=>m.id===ev.model)) filtered.push({id:ev.model,object:"model",created:1700000000,owned_by:"codism-event"})}catch{}const out={object:"list",data:filtered};const h=withCors(new Headers({"content-type":"application/json"}));for(const [k,v] of up.headers.entries()) if(k.toLowerCase().startsWith("x-ratelimit-")) h.set(k,v);return new Response(JSON.stringify(out),{status:200,headers:h});
    }
   }catch{}
-  return jsonRes(200,{object:"list",data:filterList(synthetic.slice())});
+  let fb=filterList(synthetic.slice());try{const ev=await getEventState();if(ev&&eventStatusOf(ev,Date.now())==="live"&&!fb.some((m:any)=>m.id===ev.model)) fb.push({id:ev.model,object:"model",created:1700000000,owned_by:"codism-event"})}catch{}return jsonRes(200,{object:"list",data:fb});
+
  }
  const isChat = (norm==="/v1/chat/completions"||norm==="/chat/completions");
  if(isChat&&method==="POST"){
@@ -631,21 +636,24 @@ if(norm==="/api/status"&&req.method==="GET"){
   let expandedModel=bodyJson?.model||"";
   if(typeof expandedModel==="string"&&aliases[expandedModel]) expandedModel=aliases[expandedModel];
   else if(typeof expandedModel==="string"&&/^(cc|codism)\//.test(expandedModel)) expandedModel=expandedModel.split("/").slice(1).join("/");
+  // event model detection (shared pool; bypasses per-key model gate + token quotas)
+  const evState=await getEventState();
+  const evReq=!!(evState&&evState.enabled&&expandedModel&&expandedModel.toLowerCase()===String(evState.model));
   // model gate
   const modelsStr=(kRow.models||"*").trim();
-  if(modelsStr!=="*"&&modelsStr!==""){
+  if(!evReq&&modelsStr!=="*"&&modelsStr!==""){
    const set=new Set(modelsStr.split(",").map((s:string)=>s.trim()).filter(Boolean));
    const rawModel=(bodyJson&&typeof bodyJson.model==="string")?bodyJson.model:"";
    if(expandedModel&&!set.has(expandedModel)&&!set.has("*")&&!set.has(rawModel)){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel,404,"model_not_allowed",0,0,Date.now()-t0);return openaiErr(404,`The model '${expandedModel}' does not exist or you do not have access to it.`,"invalid_request_error","model_not_allowed")}
   }
   if(bodyJson&&typeof bodyJson.model==="string"&&expandedModel!==bodyJson.model){bodyJson.model=expandedModel;raw=enc.encode(JSON.stringify(bodyJson))}
-  // quota
-  if((uRow.daily_quota_tokens||0)>0){
+  // quota (event requests draw from the shared pool instead)
+  if(!evReq&&(uRow.daily_quota_tokens||0)>0){
    const [f,t]=todayBounds();const r=await sbRpc("usage_sum",{p_user:uRow.id,p_from:f,p_to:t});
    if(!r||!r.length){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,503,"quota_unavailable",0,0,Date.now()-t0);return openaiErr(503,"quota check unavailable, try again","api_error","quota_unavailable")}
    const s=r[0]||{prompt_tokens:0,completion_tokens:0};const tot=(Number(s.prompt_tokens)||0)+(Number(s.completion_tokens)||0);if(tot>=uRow.daily_quota_tokens){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,429,"daily_quota_exceeded",0,0,Date.now()-t0);return openaiErr(429,"daily token quota exceeded","insufficient_quota","daily_quota_exceeded")}
   }
-  if((uRow.monthly_quota_tokens||0)>0){
+  if(!evReq&&(uRow.monthly_quota_tokens||0)>0){
    const [f,t]=monthBounds();const r=await sbRpc("usage_sum",{p_user:uRow.id,p_from:f,p_to:t});
    if(!r||!r.length){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,503,"quota_unavailable",0,0,Date.now()-t0);return openaiErr(503,"quota check unavailable, try again","api_error","quota_unavailable")}
    const s=r[0]||{prompt_tokens:0,completion_tokens:0};const tot=(Number(s.prompt_tokens)||0)+(Number(s.completion_tokens)||0);if(tot>=uRow.monthly_quota_tokens){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,429,"monthly_quota_exceeded",0,0,Date.now()-t0);return openaiErr(429,"monthly token quota exceeded","insufficient_quota","monthly_quota_exceeded")}
@@ -670,8 +678,16 @@ if(norm==="/api/status"&&req.method==="GET"){
   const chainInfo:any[]=[];
   let serveAbort:AbortController|null=null;
   const debugDetail=()=>{if(!kRow.debug)return null;try{return JSON.stringify({chain:chainInfo,messages:Array.isArray(bodyJson&&bodyJson.messages)?bodyJson.messages.length:0,req_bytes:raw?raw.byteLength:0}).slice(0,1800)}catch{return null}};
-  const chainRes=await loadChain((bodyJson&&typeof bodyJson.model==="string")?bodyJson.model:"",expandedModel,uRow.upstream_key_id||null);
-  if("error" in chainRes){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,404,"model_not_allowed",0,0,Date.now()-t0,debugDetail());return openaiErr(404,`The model '${expandedModel}' does not exist or you do not have access to it.`,"invalid_request_error","model_not_allowed")}
+  let chainRes:{steps:ChainStep[]}|{error:string};
+  if(evReq){
+   const openMs=Date.parse(String(evState.opens_at));
+   if(!Number.isFinite(openMs)||Date.now()<openMs){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,404,"event_not_open",0,0,Date.now()-t0,debugDetail());return openaiErr(404,`The model '${expandedModel}' is part of an event that has not opened yet.`,"invalid_request_error","event_not_open")}
+   if(Number(evState.spent)>=Number(evState.pool_total)){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,429,"event_ended",0,0,Date.now()-t0,debugDetail());return openaiErr(429,"The event pool has been fully spent. Follow the event page for the next event.","insufficient_quota","event_ended")}
+   chainRes={steps:[{upstream_key_id:uRow.upstream_key_id||null,model:String(evState.upstream_model||evState.model)}]};
+  }else{
+   chainRes=await loadChain((bodyJson&&typeof bodyJson.model==="string")?bodyJson.model:"",expandedModel,uRow.upstream_key_id||null);
+   if("error" in chainRes){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,404,"model_not_allowed",0,0,Date.now()-t0,debugDetail());return openaiErr(404,`The model '${expandedModel}' does not exist or you do not have access to it.`,"invalid_request_error","model_not_allowed")}
+  }
   for(let i=0;i<chainRes.steps.length;i++){
    const step=chainRes.steps[i];
    const up=await resolveUpstream(step);if(!up)continue;
@@ -739,7 +755,7 @@ if(norm==="/api/status"&&req.method==="GET"){
       ctrl.close();
       const latency=Date.now()-start;
       if(!foundUsage){promptTokens=Math.ceil(promptChars/4);completionTokens=Math.ceil(completionChars/4)}
-      sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:servedModel,prompt_tokens:promptTokens,completion_tokens:completionTokens,latency_ms:latency,status:upResp.status,saved_tokens:Math.round(savedChars/4)}).catch((e:any)=>console.error("usage_log write failed:",e));
+      sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:(evReq&&expandedModel)?expandedModel:servedModel,prompt_tokens:promptTokens,completion_tokens:completionTokens,latency_ms:latency,status:upResp.status,saved_tokens:Math.round(savedChars/4),is_event:evReq}).catch((e:any)=>console.error("usage_log write failed:",e));
       logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,upResp.status,null,promptTokens,completionTokens,latency,debugDetail());
      }
     },
@@ -750,7 +766,7 @@ if(norm==="/api/status"&&req.method==="GET"){
    const buf=new Uint8Array(await upResp.arrayBuffer());
    let pt=0,ctok=0;try{const j=JSON.parse(dec.decode(buf));if(j.usage){pt=Number(j.usage.prompt_tokens)||0;ctok=Number(j.usage.completion_tokens)||0}}catch{}
    const latency=Date.now()-start;
-   sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:servedModel,prompt_tokens:pt,completion_tokens:ctok,latency_ms:latency,status:upResp.status,saved_tokens:Math.round(savedChars/4)}).catch((e:any)=>console.error("usage_log write failed:",e));
+   sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:(evReq&&expandedModel)?expandedModel:servedModel,prompt_tokens:pt,completion_tokens:ctok,latency_ms:latency,status:upResp.status,saved_tokens:Math.round(savedChars/4),is_event:evReq}).catch((e:any)=>console.error("usage_log write failed:",e));
    logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,upResp.status,null,pt,ctok,latency,debugDetail());
    return new Response(buf,{status:upResp.status,headers:respHeaders});
   }

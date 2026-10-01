@@ -1310,6 +1310,73 @@
     }
   }
 
+  // ---------- admin event ----------
+  function evLocalInputValue(iso) {
+    try {
+      const d = new Date(iso);
+      if (!Number.isFinite(d.getTime())) return "";
+      const p = (n) => (n < 10 ? "0" + n : String(n));
+      return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes());
+    } catch (_) { return ""; }
+  }
+  async function loadAdminEvent() {
+    if (!STATE.me) { try { STATE.me = await api("/api/me"); } catch {} }
+    const isAdmin = STATE.me && STATE.me.user && STATE.me.user.role === "admin";
+    if (!isAdmin) return;
+    const msg = q("[data-ev-msg]");
+    try {
+      const ev = await api("/api/admin/event");
+      const EV_STATUS = { scheduled: TR("به‌زودی شروع می‌شود", "Starts soon"), live: TR("زنده", "Live now"), ended: TR("پایان یافت", "Ended"), disabled: TR("غیرفعال", "Disabled") };
+      setText("[data-ev-status-text]", ev && ev.status ? (EV_STATUS[ev.status] || ev.status) : "—");
+      setText("[data-ev-spent]", faNum((Number(ev && ev.pool_spent) || 0).toLocaleString("en-US")));
+      setText("[data-ev-total]", faNum((Number(ev && ev.pool_total) || 0).toLocaleString("en-US")));
+      if (ev && ev.event) {
+        const m = q("[data-ev-model]"); if (m) m.value = ev.event.model || "";
+        const u = q("[data-ev-upstream]"); if (u) u.value = ev.event.upstream_model || "";
+        const p = q("[data-ev-pool]"); if (p) p.value = String(ev.event.pool_total || "");
+        const o = q("[data-ev-opens]"); if (o) o.value = evLocalInputValue(ev.event.opens_at);
+        const e = q("[data-ev-enabled]"); if (e) e.checked = !!ev.event.enabled;
+      } else if (msg) {
+        msg.textContent = TR("ایونت پیکربندی نشده است", "Event is not configured");
+      }
+    } catch (e) {
+      if (msg) msg.textContent = (e && e.code && HINTS[e.code]) || (e && e.message) || TR("خطا در دریافت وضعیت ایونت", "Failed to load event status");
+    }
+  }
+  async function saveAdminEvent() {
+    const msg = q("[data-ev-msg]");
+    const payload = {};
+    const m = q("[data-ev-model]"); if (m && m.value.trim()) payload.model = m.value.trim();
+    const u = q("[data-ev-upstream]"); if (u && u.value.trim()) payload.upstream_model = u.value.trim();
+    const p = q("[data-ev-pool]");
+    if (p && String(p.value).trim() !== "") {
+      const v = Number(p.value);
+      if (!Number.isFinite(v) || v <= 0 || !Number.isInteger(v)) {
+        if (msg) msg.textContent = TR("سقف استخر باید عدد صحیح مثبت باشد", "Pool limit must be a positive integer");
+        return;
+      }
+      payload.pool_total = v;
+    }
+    const o = q("[data-ev-opens]");
+    if (o && o.value) {
+      const t = new Date(o.value).getTime();
+      if (!Number.isFinite(t)) {
+        if (msg) msg.textContent = TR("زمان شروع نامعتبر است", "Invalid opening time");
+        return;
+      }
+      payload.opens_at = new Date(t).toISOString();
+    }
+    const e = q("[data-ev-enabled]"); if (e) payload.enabled = !!e.checked;
+    if (msg) msg.textContent = TR("در حال ذخیره…", "Saving…");
+    try {
+      await api("/api/admin/event", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+      if (msg) msg.textContent = TR("ذخیره شد", "Saved");
+      loadAdminEvent();
+    } catch (err) {
+      if (msg) msg.textContent = (err && err.message) || TR("خطا در ذخیره", "Save failed");
+    }
+  }
+
   async function loadAdminCombos() {
     if (!STATE.me) { try { STATE.me = await api("/api/me"); } catch {} }
     const isAdmin = STATE.me && STATE.me.user && STATE.me.user.role === "admin";
@@ -1620,6 +1687,11 @@
   VIEW_LOADERS["admin-stats"] = loadAdminStats;
   VIEW_LOADERS["admin-upkeys"] = loadAdminUpkeys;
   VIEW_LOADERS["admin-combos"] = loadAdminCombos;
+  VIEW_LOADERS["admin-event"] = loadAdminEvent;
+  try {
+    const evSave = q("[data-ev-save]");
+    if (evSave) evSave.addEventListener("click", saveAdminEvent);
+  } catch (_) {}
   VIEW_LOADERS.admin = loadAdminUsers;
 
   // Boot
@@ -1650,7 +1722,7 @@
     // honor hash
     const initial = location.hash ? location.hash.replace(/^#/, "") : "overview";
     // ensure valid view
-    const validViews = ["overview", "keys", "usage", "settings", "admin-users", "admin-stats", "admin-upkeys", "admin-combos"];
+    const validViews = ["overview", "keys", "usage", "settings", "admin-users", "admin-stats", "admin-upkeys", "admin-combos", "admin-event"];
     const toShow = validViews.includes(initial) ? initial : "overview";
     switchView(toShow, false);
     // if hash was empty, set it

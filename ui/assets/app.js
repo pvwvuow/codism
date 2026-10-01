@@ -621,10 +621,142 @@
     } catch (_) {}
   }
 
+  // ---------- community event widgets ----------
+  const EV = { state: null, skew: 0, timer: null };
+  function evNum(n) {
+    try {
+      if (window.I18N && window.I18N.lang === "en") return String(n);
+      return faNum(n);
+    } catch (_) { return String(n); }
+  }
+  function evPad(n) {
+    const s = String(Math.max(0, Math.floor(n)));
+    return s.length < 2 ? "0" + s : s;
+  }
+  function evStatusFa(st) {
+    if (st === "scheduled") return "به‌زودی شروع می‌شود";
+    if (st === "live") return "زنده";
+    if (st === "ended") return "پایان یافت";
+    return "غیرفعال";
+  }
+  function evStatusEn(st) {
+    if (st === "scheduled") return "Starts soon";
+    if (st === "live") return "Live now";
+    if (st === "ended") return "Ended";
+    return "Disabled";
+  }
+  function evFmtBig(n) {
+    const v = Number(n) || 0;
+    if (window.I18N && window.I18N.lang === "en") return fmtTok(v);
+    if (v >= 1e9) return evNum((v / 1e9).toFixed(1).replace(/\.0$/, "")) + " میلیارد";
+    if (v >= 1e6) return evNum((v / 1e6).toFixed(1).replace(/\.0$/, "")) + " میلیون";
+    return evNum(v);
+  }
+  function evTick() {
+    const st = EV.state;
+    if (!st || !st.opens_at) return;
+    const nowMs = Date.now() - EV.skew;
+    const openMs = Date.parse(st.opens_at);
+    if (!Number.isFinite(openMs)) return;
+    const diff = openMs - nowMs;
+    const q = (sel) => document.querySelectorAll(sel);
+    const setAll = (sel, v) => { try { q(sel).forEach((el) => { el.textContent = v; }); } catch (_) {} };
+    if (diff > 0) {
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      const en = window.I18N && window.I18N.lang === "en";
+      setAll("[data-event-cd-d]", en ? String(d) : faNum(evPad(d)));
+      setAll("[data-event-cd-h]", en ? evPad(h) : faNum(evPad(h)));
+      setAll("[data-event-cd-m]", en ? evPad(m) : faNum(evPad(m)));
+      setAll("[data-event-cd-s]", en ? evPad(s) : faNum(evPad(s)));
+      setAll("[data-event-cd-label]", en ? "Until the event opens" : "تا شروع ایونت");
+      setAll("[data-event-mini-cd]", (en ? "opens in " : "شروع تا ") + evPad(d) + "d " + evPad(h) + ":" + evPad(m) + ":" + evPad(s));
+      try { q("[data-event-cd-wrap]").forEach((el) => { el.style.display = ""; }); } catch (_) {}
+    } else {
+      setAll("[data-event-cd-label]", st.status === "ended" ? (en2() ? "The event has ended" : "ایونت به پایان رسیده") : (en2() ? "The event is live" : "ایونت زنده است"));
+      const zero = en2() ? "00" : faNum("00");
+      setAll("[data-event-cd-d]", zero); setAll("[data-event-cd-h]", zero);
+      setAll("[data-event-cd-m]", zero); setAll("[data-event-cd-s]", zero);
+      setAll("[data-event-mini-cd]", st.status === "ended" ? (en2() ? "event ended" : "ایونت تمام شد") : (en2() ? "LIVE" : "زنده"));
+    }
+  }
+  function en2() { return window.I18N && window.I18N.lang === "en"; }
+  function evRender() {
+    const st = EV.state;
+    if (!st) return;
+    const q = (sel) => document.querySelectorAll(sel);
+    const setAll = (sel, v) => { try { q(sel).forEach((el) => { el.textContent = v; }); } catch (_) {} };
+    const stFa = evStatusFa(st.status), stEn = evStatusEn(st.status);
+    try {
+      q("[data-event-status]").forEach((el) => {
+        while (el.firstChild) el.removeChild(el.firstChild);
+        const dot = document.createElement("i");
+        dot.className = "dot";
+        el.appendChild(dot);
+        el.appendChild(document.createTextNode(en2() ? stEn : stFa));
+        el.setAttribute("data-event-state", st.status);
+      });
+    } catch (_) {}
+    if (st.model) { setAll("[data-event-model]", st.model); }
+    if (Number.isFinite(Number(st.pool_total))) {
+      setAll("[data-event-total]", evFmtBig(st.pool_total));
+      setAll("[data-event-remaining]", evFmtBig(Math.max(0, Number(st.pool_remaining) || 0)));
+    }
+    if (Number.isFinite(Number(st.pool_spent))) {
+      setAll("[data-event-spent]", evNum(Number(st.pool_spent).toLocaleString("en-US")));
+      const total = Number(st.pool_total) || 0;
+      const pct = total > 0 ? Math.min(100, (Number(st.pool_spent) / total) * 100) : 0;
+      try { q("[data-event-bar]").forEach((el) => { el.style.width = pct.toFixed(2) + "%"; }); } catch (_) {}
+      setAll("[data-event-spent-pct]", evNum(pct.toFixed(1)) + (en2() ? "%" : "٪"));
+    }
+    evTick();
+  }
+  async function evRefresh() {
+    try {
+      const r = await fetch(API_BASE + "/api/event", { headers: { accept: "application/json" } });
+      if (!r || !r.ok) return;
+      const j = await r.json();
+      if (j && j.ok) {
+        EV.state = j;
+        const srvMs = Date.parse(j.now);
+        EV.skew = Number.isFinite(srvMs) ? Date.now() - srvMs : 0;
+        evRender();
+      }
+    } catch (_) {}
+  }
+  function initEventWidgets() {
+    const need = document.querySelector("[data-event-status],[data-event-mini-cd],[data-event-bar],[data-event-cd-wrap]");
+    if (!need) return;
+    evRefresh();
+    setInterval(evRefresh, 30000);
+    EV.timer = setInterval(evTick, 1000);
+    try {
+      document.querySelectorAll("[data-event-copy]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const model = (document.querySelector("[data-event-model]") || {}).textContent || "";
+          try { await navigator.clipboard.writeText(String(model).trim()); } catch (_) {}
+          const ok = document.querySelector("[data-event-copied]");
+          if (ok) { ok.hidden = false; setTimeout(() => { try { ok.hidden = true; } catch (_) {} }, 2000); }
+        });
+      });
+      document.querySelectorAll("[data-event-copy-base]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          try { await navigator.clipboard.writeText(API_BASE + "/v1"); } catch (_) {}
+          const t = btn.textContent;
+          btn.textContent = en2() ? "Copied" : "کپی شد";
+          setTimeout(() => { try { btn.textContent = t; } catch (_) {} }, 2000);
+        });
+      });
+    } catch (_) {}
+  }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", function() { init(); initEventWidgets(); });
   } else {
     init();
+    initEventWidgets();
   }
 
   // 9. Export
