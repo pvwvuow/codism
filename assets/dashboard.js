@@ -514,7 +514,7 @@
               "<td>" + enabledBadge + "</td>" +
               "<td>" + modelsCell + "</td>" +
               '<td dir="ltr">' + dateStr + "</td>" +
-              '<td><button class="btn btn-ghost btn-sm" data-key-settings="' + esc(String(k.id)) + '">' + TR("تنظیمات", "Settings") + '</button> <button class="btn btn-ghost btn-sm" data-del-key="' + esc(String(k.id)) + '">' + TR("حذف", "Delete") + "</button></td>";
+              '<td><button class="btn btn-ghost btn-sm" data-del-key="' + esc(String(k.id)) + '">حذف</button></td>';
             tbody.appendChild(tr);
           });
           // bind copy
@@ -537,25 +537,6 @@
               } catch (e) {
                 showToast(e.message || "خطای غیرمنتظره", false);
               }
-            });
-          });
-          qa("[data-key-settings]", tbody).forEach((b) => {
-            b.addEventListener("click", () => {
-              const id = b.getAttribute("data-key-settings");
-              const k = (STATE.keys || []).find((x) => String(x.id) === String(id));
-              if (!k) return;
-              const modal = q("#keySettingsModal");
-              if (!modal) return;
-              modal.dataset.keyId = String(k.id);
-              const saver = q("[data-ks-saver]");
-              if (saver) saver.value = String(k.token_saver || "off");
-              const dbg = q("[data-ks-debug]");
-              if (dbg) dbg.checked = !!k.debug;
-              const modelsEl = q("[data-ks-models]");
-              if (modelsEl) modelsEl.value = Array.isArray(k.models) ? k.models.join(", ") : (k.models || "");
-              openModal("keySettingsModal");
-
-
             });
           });
         }
@@ -613,20 +594,6 @@
         setText("[data-usage-quota-pct]", "");
       }
 
-      // C-2: estimated cost + saved tokens + reset countdown
-      const est = Number(usage.est_cost_usd) || 0;
-      setText("[data-usage-cost]", "$" + est.toFixed(2));
-      setText("[data-usage-cost-toman]", TR("≈ " + faNum(Math.round(est * 200000)) + " تومان", "≈ " + Math.round(est * 200000).toLocaleString("en-US") + " toman"));
-
-      const savedM = Number(month.saved_tokens) || 0;
-      setText("[data-usage-saved]", fmtTok(savedM));
-      try {
-        const nowT = new Date(Date.now() + 210 * 60000);
-        const endT = new Date(Date.UTC(nowT.getUTCFullYear(), nowT.getUTCMonth() + 1, 1));
-        const hrsLeft = Math.max(0, endT.getTime() - nowT.getTime()) / 3600000;
-        const dLeft = Math.floor(hrsLeft / 24), hLeft = Math.round(hrsLeft % 24);
-        setText("[data-reset-countdown]", TR(faNum(dLeft) + " روز و " + faNum(hLeft) + " ساعت", dLeft + "d " + hLeft + "h"));
-      } catch {}
 
       // chart
       const chartEls = qa("[data-usage-chart], [data-chart-usage], [data-overview-chart], [data-chart]");
@@ -1057,6 +1024,34 @@
       qa("[data-kpi-admin-req]").forEach((el) => (el.textContent = faNum(t.requests_today || 0)));
       qa("[data-kpi-admin-tok]").forEach((el) => (el.textContent = fmtTok(t.tokens_today || 0)));
 
+      // event panel (GPT-6 free pool — mirror synced with apmix.ai)
+      const evPanel = q("[data-event-admin]");
+      if (evPanel) {
+        const ev = stats.event;
+        if (!ev) { evPanel.hidden = true; }
+        else {
+          evPanel.hidden = false;
+          const pool = Number(ev.pool) || 10000000000;
+          const mirrorUsed = ev.mirror_used != null ? Number(ev.mirror_used) : null;
+          const used = mirrorUsed != null ? mirrorUsed : (Number(ev.ours_tokens) || 0);
+          const pct = pool > 0 ? Math.min(100, (used / pool) * 100) : 0;
+          const bar = q("[data-ev-admin-bar]", evPanel);
+          if (bar) bar.style.width = pct.toFixed(2) + "%";
+          const mir = q("[data-ev-admin-mirror]", evPanel);
+          if (mir) mir.innerHTML = TR("مصرف کل استخر: ", "Total pool spent: ") + '<span dir="ltr">' + esc(fmtTok(used)) + " / " + esc(fmtTok(pool)) + '</span>' + (ev.mirror_used != null ? TR(" (آینه apmix)", " (apmix mirror)") : "");
+          const st = q("[data-ev-admin-status]", evPanel);
+          if (st) {
+            const map = { upcoming: TR("به‌زودی", "Upcoming"), live: TR("زنده", "Live"), ended: TR("پایان یافت", "Ended"), completed: TR("پایان یافت", "Ended") };
+            st.textContent = map[ev.status] || String(ev.status || "—");
+            if (ev.status === "live") { st.classList.add("badge-ok"); } else if (ev.status === "ended" || ev.status === "completed") { st.classList.add("badge-bad"); }
+          }
+          const ours = q("[data-ev-admin-ours]", evPanel);
+          if (ours) ours.textContent = fmtTok(Number(ev.ours_tokens) || 0);
+          const oursReq = q("[data-ev-admin-ours-req]", evPanel);
+          if (oursReq) oursReq.textContent = faNum(Number(ev.ours_requests) || 0);
+        }
+      }
+
       const byDay = stats.by_day || [];
       const chart = q("[data-admin-chart]") || q("#admin-chart") || q("[data-admin-stats-chart]");
       if (chart) renderChart(chart, byDay);
@@ -1137,35 +1132,32 @@
       keys.forEach((k) => {
         const tr = document.createElement("tr");
         const enBadge = k.enabled ? '<span class="badge badge-ok">' + TR("فعال", "Active") + '</span>' : '<span class="badge badge-bad">' + TR("غیرفعال", "Disabled") + "</span>";
+        const defBadge = k.is_default ? '<span class="badge badge-ok">' + TR("پیش‌فرض", "Default") + "</span>" : "";
+        const baseTxt = k.base_url ? '<div dir="ltr" style="font-family:var(--font-mono);font-size:.68rem;color:#8A8475;word-break:break-all;margin-top:.2rem">' + esc(k.base_url) + "</div>" : "";
+        const defBtn = k.is_default ? "" : '<button class="btn btn-ghost btn-sm" data-uk-default="' + esc(String(k.id)) + '">' + TR("تنظیم پیش‌فرض", "Make default") + "</button>";
         const toggleBtn = '<button class="btn btn-ghost btn-sm" data-uk-toggle="' + esc(String(k.id)) + '">' + (k.enabled ? TR("غیرفعال", "Disable") : TR("فعال", "Enable")) + "</button>";
-        const testBtn = '<button class="btn btn-ghost btn-sm" data-uk-test="' + esc(String(k.id)) + '">' + TR("تست", "Test") + "</button>";
         const delBtn = '<button class="btn btn-ghost btn-sm" style="color:#DC2626" data-uk-del="' + esc(String(k.id)) + '">' + TR("حذف", "Delete") + "</button>";
         tr.innerHTML =
           "<td>" + esc(k.label || "—") + "</td>" +
           '<td dir="ltr">' + esc(k.key_masked || "—") + "</td>" +
-          '<td dir="ltr" style="font-family:var(--font-mono);font-size:.75rem;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(k.base_url || TR("پیش‌فرض", "Default")) + "</td>" +
           "<td>" + enBadge + "</td>" +
-          "<td>" + faNum(k.assigned_users || 0) + "</td>" +
-          "<td>" + toggleBtn + " " + testBtn + " " + delBtn + "</td>";
+          "<td>" + (defBadge || "—") + "</td>" +
+          "<td>" + faNum(k.assigned_users || 0) + baseTxt + "</td>" +
+          "<td>" + defBtn + " " + toggleBtn + " " + delBtn + "</td>";
         tbody.appendChild(tr);
       });
-      qa("[data-uk-test]", tbody).forEach((btn) => {
+      qa("[data-uk-default]", tbody).forEach((btn) => {
         btn.addEventListener("click", async () => {
-          const id = btn.getAttribute("data-uk-test");
-          btn.disabled = true;
+          const id = btn.getAttribute("data-uk-default");
           try {
-            const r = await api("/api/admin/upstream-keys/" + encodeURIComponent(id) + "/test", { method: "POST", body: JSON.stringify({}) });
-            const ok = r && (r.ok === true || (r.status >= 200 && r.status < 300));
-            if (ok) showToast(TR("سبز: status " + (r.status || "OK") + " — " + faNum(r.latency_ms || 0) + "ms", "OK: status " + (r.status || "OK") + " — " + (r.latency_ms || 0) + "ms"), true);
-            else showToast(TR("ناموفق: status " + ((r && r.status) || 0) + " — " + esc(String((r && r.base) || "")), "Failed: status " + ((r && r.status) || 0) + " — " + esc(String((r && r.base) || ""))), false);
+            await api("/api/admin/upstream-keys/" + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify({ is_default: true }) });
+            showToast(TR("این کلید پیش‌فرض همه کاربران شد", "This key is now the default for all users"), true);
+            loadAdminUpkeys();
           } catch (err) {
-            const msg = String((err && err.message) || "");
-            if (/404/.test(msg)) showToast(TR("این قابلیت در بک‌اند قدیمی در دسترس نیست", "Not available on old backend"), false);
-            else showToast(err.message || TR("خطای غیرمنتظره", "Unexpected error"), false);
-          } finally { btn.disabled = false; }
+            showToast(err.message || TR("خطای غیرمنتظره", "Unexpected error"), false);
+          }
         });
       });
-
       qa("[data-uk-toggle]", tbody).forEach((btn) => {
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-uk-toggle");
@@ -1197,7 +1189,7 @@
     } catch (e) {
       console.error("upkeys", e);
       const tbody = q("[data-uk-body]");
-      if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#DC2626;padding:1rem">' + esc(e.message || "خطای غیرمنتظره") + "</td></tr>";
+      if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#DC2626;padding:1rem">' + esc(e.message || "خطای غیرمنتظره") + "</td></tr>";
     }
   }
 
@@ -1207,27 +1199,24 @@
       btn.addEventListener("click", async () => {
         const labelEl = q("[data-uk-label]");
         const keyEl = q("[data-uk-key]");
-        const baseEl = q("[data-uk-base]");
+        const baseEl = q("[data-uk-baseurl]");
+        const defEl = q("[data-uk-default-check]");
         const errEl = q("[data-uk-err]");
         if (errEl) errEl.textContent = "";
         const label = labelEl ? labelEl.value.trim() : "";
         const key = keyEl ? keyEl.value.trim() : "";
-        const base = baseEl ? baseEl.value.trim() : "";
+        const base_url = baseEl ? baseEl.value.trim() : "";
         if (!label || !key) {
           if (errEl) errEl.textContent = TR("برچسب و کلید را وارد کنید", "Label and key are required");
           return;
         }
-        if (base && !/^https:\/\/.+/i.test(base)) {
-          if (errEl) errEl.textContent = TR("Base URL باید با https:// شروع شود", "Base URL must start with https://");
-          return;
-        }
-
         try {
-          await api("/api/admin/upstream-keys", { method: "POST", body: JSON.stringify({ label, key, base_url: base }) });
+          await api("/api/admin/upstream-keys", { method: "POST", body: JSON.stringify({ label, key, base_url: base_url || undefined, is_default: !!(defEl && defEl.checked) }) });
           showToast(TR("کلید اضافه شد", "Key added"), true);
           if (labelEl) labelEl.value = "";
           if (keyEl) keyEl.value = "";
           if (baseEl) baseEl.value = "";
+          if (defEl) defEl.checked = false;
           loadAdminUpkeys();
         } catch (err) {
           const m = String((err && err.message) || "");
@@ -1237,293 +1226,6 @@
     }
     const openCreate = q('[data-open-modal="createUserModal"]');
     if (openCreate) openCreate.addEventListener("click", () => fillUpstreamSelects());
-  }
-
-  // C-2: key advanced settings modal
-  function setupKeySettings() {
-    const save = q("[data-ks-save]");
-    if (!save || save.dataset.bound) return;
-    save.dataset.bound = "1";
-    save.addEventListener("click", async () => {
-      const modal = q("#keySettingsModal");
-      if (!modal || !modal.dataset.keyId) return;
-      const saver = q("[data-ks-saver]");
-      const dbg = q("[data-ks-debug]");
-      const modelsEl = q("[data-ks-models]");
-      let models;
-      if (modelsEl) {
-        const raw = modelsEl.value.trim();
-        if (!raw) models = [];
-        else models = raw.split(",").map((s) => s.trim()).filter(Boolean);
-      }
-      try {
-        const body = { token_saver: saver ? saver.value : "off", debug: dbg ? dbg.checked : false };
-        if (models !== undefined) body.models = models;
-        await api("/api/keys/" + encodeURIComponent(modal.dataset.keyId), { method: "PATCH", body: JSON.stringify(body) });
-        closeModal(modal);
-        showToast(TR("ذخیره شد", "Saved"), true);
-        loadKeys();
-      } catch (err) {
-        const m = String((err && err.message) || "");
-        if (/409/.test(m)) showToast(TR("نام تکراری یا تداخل", "Conflict — duplicate"), false);
-        else if (/400/.test(m)) showToast(TR("درخواست نامعتبر", "Bad request"), false);
-        else showToast(err.message || TR("خطای غیرمنتظره", "Unexpected error"), false);
-      }
-    });
-  }
-
-
-  // C-2: admin fallback combos
-  function comboStepRow(selHtml, modelVal) {
-    const div = document.createElement("div");
-    div.setAttribute("data-cb-step", "");
-    div.style.cssText = "display:flex;gap:.5rem;margin-bottom:.5rem;align-items:center";
-    div.innerHTML = '<select class="input" data-step-upstream style="max-width:14rem" aria-label="' + esc(TR("کلید آپ‌استریم", "Upstream key")) + '">' + selHtml + '</select>' +
-      '<input class="input" data-step-model dir="ltr" placeholder="model-name" aria-label="' + esc(TR("نام مدل", "Model name")) + '" value="' + esc(modelVal || "") + '">' +
-      '<button type="button" class="btn btn-ghost btn-sm" data-step-del aria-label="' + esc(TR("حذف مرحله", "Remove step")) + '">✕</button>';
-    return div;
-  }
-
-
-  function upkeyOptions() {
-    const list = STATE.upkeys || [];
-    return '<option value="">' + TR("پیش‌فرض (استخر اصلی)", "Default (primary pool)") + "</option>" +
-      list.map((k) => '<option value="' + esc(String(k.id)) + '">' + esc(k.label || k.key_masked) + (k.enabled ? "" : " (" + TR("غیرفعال", "disabled") + ")") + "</option>").join("");
-  }
-
-  function addComboStep(modelVal, upkeyId) {
-    const wrap = q("[data-cb-steps]");
-    if (!wrap) return;
-    const row = comboStepRow(upkeyOptions(), modelVal);
-    wrap.appendChild(row);
-    if (upkeyId) {
-      const sel = row.querySelector("[data-step-upstream]");
-      if (sel) sel.value = String(upkeyId);
-    }
-    const del = row.querySelector("[data-step-del]");
-    if (del) del.addEventListener("click", () => row.remove());
-  }
-
-  async function ensureUpkeys() {
-    if (!STATE.upkeys || !STATE.upkeys.length) {
-      try { STATE.upkeys = await api("/api/admin/upstream-keys"); } catch {}
-    }
-  }
-
-  // ---------- admin event ----------
-  function evLocalInputValue(iso) {
-    try {
-      const d = new Date(iso);
-      if (!Number.isFinite(d.getTime())) return "";
-      const p = (n) => (n < 10 ? "0" + n : String(n));
-      return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes());
-    } catch (_) { return ""; }
-  }
-  async function loadAdminEvent() {
-    if (!STATE.me) { try { STATE.me = await api("/api/me"); } catch {} }
-    const isAdmin = STATE.me && STATE.me.user && STATE.me.user.role === "admin";
-    if (!isAdmin) return;
-    const msg = q("[data-ev-msg]");
-    try {
-      const ev = await api("/api/admin/event");
-      const EV_STATUS = { scheduled: TR("به‌زودی شروع می‌شود", "Starts soon"), live: TR("زنده", "Live now"), ended: TR("پایان یافت", "Ended"), disabled: TR("غیرفعال", "Disabled") };
-      setText("[data-ev-status-text]", ev && ev.status ? (EV_STATUS[ev.status] || ev.status) : "—");
-      setText("[data-ev-spent]", faNum((Number(ev && ev.pool_spent) || 0).toLocaleString("en-US")));
-      setText("[data-ev-total]", faNum((Number(ev && ev.pool_total) || 0).toLocaleString("en-US")));
-      setText("[data-ev-spent-ours]", faNum((Number(ev && ev.pool_spent_ours) || 0).toLocaleString("en-US")));
-      setText("[data-ev-spent-other]", faNum((Number(ev && ev.pool_spent_other) || 0).toLocaleString("en-US")));
-      const apx = ev && ev.apmix && typeof ev.apmix === "object" ? ev.apmix : null;
-      const apFmt = (v) => (Number.isFinite(Number(v)) ? faNum(Number(v).toLocaleString("en-US")) : "—");
-      setText("[data-ev-apmix-used]", apx ? apFmt(apx.used) : "—");
-      setText("[data-ev-apmix-remaining]", apx ? apFmt(apx.remaining) : "—");
-      setText("[data-ev-apmix-part]", apx ? apFmt(apx.participants) : "—");
-      setText("[data-ev-apmix-req]", apx ? apFmt(apx.requests) : "—");
-
-      if (ev && ev.event) {
-        const m = q("[data-ev-model]"); if (m) m.value = ev.event.model || "";
-        const u = q("[data-ev-upstream]"); if (u) u.value = ev.event.upstream_model || "";
-        const p = q("[data-ev-pool]"); if (p) p.value = String(ev.event.pool_total || "");
-        const o = q("[data-ev-opens]"); if (o) o.value = evLocalInputValue(ev.event.opens_at);
-        const e = q("[data-ev-enabled]"); if (e) e.checked = !!ev.event.enabled;
-        const ys = q("[data-ev-apmixsync]"); if (ys) ys.checked = ev.event.apmix_sync !== false;
-      } else if (msg) {
-        msg.textContent = TR("ایونت پیکربندی نشده است", "Event is not configured");
-      }
-    } catch (e) {
-      if (msg) msg.textContent = (e && e.code && HINTS[e.code]) || (e && e.message) || TR("خطا در دریافت وضعیت ایونت", "Failed to load event status");
-    }
-  }
-  async function saveAdminEvent() {
-    const msg = q("[data-ev-msg]");
-    const payload = {};
-    const m = q("[data-ev-model]"); if (m && m.value.trim()) payload.model = m.value.trim();
-    const u = q("[data-ev-upstream]"); if (u && u.value.trim()) payload.upstream_model = u.value.trim();
-    const p = q("[data-ev-pool]");
-    if (p && String(p.value).trim() !== "") {
-      const v = Number(p.value);
-      if (!Number.isFinite(v) || v <= 0 || !Number.isInteger(v)) {
-        if (msg) msg.textContent = TR("سقف استخر باید عدد صحیح مثبت باشد", "Pool limit must be a positive integer");
-        return;
-      }
-      payload.pool_total = v;
-    }
-    const o = q("[data-ev-opens]");
-    if (o && o.value) {
-      const t = new Date(o.value).getTime();
-      if (!Number.isFinite(t)) {
-        if (msg) msg.textContent = TR("زمان شروع نامعتبر است", "Invalid opening time");
-        return;
-      }
-      payload.opens_at = new Date(t).toISOString();
-    }
-    const e = q("[data-ev-enabled]"); if (e) payload.enabled = !!e.checked;
-    const ys = q("[data-ev-apmixsync]"); if (ys) payload.apmix_sync = !!ys.checked;
-    if (msg) msg.textContent = TR("در حال ذخیره…", "Saving…");
-    try {
-      await api("/api/admin/event", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
-      if (msg) msg.textContent = TR("ذخیره شد", "Saved");
-      loadAdminEvent();
-    } catch (err) {
-      if (msg) msg.textContent = (err && err.message) || TR("خطا در ذخیره", "Save failed");
-    }
-  }
-
-  async function loadAdminCombos() {
-    if (!STATE.me) { try { STATE.me = await api("/api/me"); } catch {} }
-    const isAdmin = STATE.me && STATE.me.user && STATE.me.user.role === "admin";
-    if (!isAdmin) return;
-    try {
-      const combos = await api("/api/admin/combos");
-      const tbody = q("[data-combos-body]");
-      if (!tbody) return;
-      tbody.innerHTML = "";
-      if (!Array.isArray(combos) || !combos.length) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:1rem;color:#8A8475">' + TR("هنوز زنجیره‌ای نساخته‌اید", "No combos yet") + "</td></tr>";
-        return;
-      }
-      combos.forEach((c) => {
-        const tr = document.createElement("tr");
-        const stepsTxt = (Array.isArray(c.steps) ? c.steps : []).map((s) => (s && s.model) || "").filter(Boolean).join(" → ") || "—";
-        const defBadge = c.is_default ? '<span class="badge badge-ok">' + TR("زنجیره پیش‌فرض", "Default chain") + "</span>" : '<span style="color:#8A8475">—</span>';
-        const enBadge = c.enabled ? '<span class="badge badge-ok">' + TR("فعال", "Active") + '</span>' : '<span class="badge badge-bad">' + TR("غیرفعال", "Disabled") + "</span>";
-        tr.innerHTML =
-          '<td dir="ltr" style="font-family:var(--font-mono);font-size:.8125rem">' + esc(c.name || "") + "</td>" +
-          '<td dir="ltr" style="font-family:var(--font-mono);font-size:.75rem;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(stepsTxt) + "</td>" +
-          "<td>" + defBadge + "</td>" +
-          "<td>" + enBadge + "</td>" +
-          '<td><button class="btn btn-ghost btn-sm" data-edit-combo="' + esc(String(c.id)) + '">' + TR("ویرایش", "Edit") + '</button> <button class="btn btn-ghost btn-sm" style="color:#DC2626" data-del-combo="' + esc(String(c.id)) + '">' + TR("حذف", "Delete") + "</button></td>";
-        tbody.appendChild(tr);
-      });
-      qa("[data-del-combo]", tbody).forEach((btn) => {
-        btn.addEventListener("click", async () => {
-          const id = btn.getAttribute("data-del-combo");
-          if (!confirm(TR("این زنجیره حذف شود؟", "Delete this combo?"))) return;
-          try {
-            await api("/api/admin/combos/" + encodeURIComponent(id), { method: "DELETE" });
-            showToast(TR("حذف شد", "Deleted"), true);
-            loadAdminCombos();
-          } catch (err) {
-            showToast(err.message || TR("خطای غیرمنتظره", "Unexpected error"), false);
-          }
-        });
-      });
-      qa("[data-edit-combo]", tbody).forEach((btn) => {
-        btn.addEventListener("click", async () => {
-          const id = btn.getAttribute("data-edit-combo");
-          try {
-            const list = (await api("/api/admin/combos")) || [];
-            const c = list.find((x) => String(x.id) === String(id));
-            if (!c) return;
-            await ensureUpkeys();
-            fillComboModal(c);
-            openModal("comboModal");
-          } catch (err) {
-            showToast((err && err.message) || TR("خطای غیرمنتظره", "Unexpected error"), false);
-          }
-        });
-      });
-    } catch (e) {
-      const msg = String((e && e.message) || "");
-      const tbody2 = q("[data-combos-body]");
-      if (tbody2 && /404/.test(msg)) tbody2.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:1rem;color:#8A8475">' + TR("این قابلیت در بک‌اند قدیمی فعال نیست", "Not available on old backend") + "</td></tr>";
-      console.error("combos", e);
-    }
-
-  }
-
-  function fillComboModal(c) {
-    const modal = q("#comboModal");
-    if (!modal) return;
-    modal.dataset.comboId = c && c.id ? String(c.id) : "";
-    const nameEl = q("[data-cb-name]");
-    if (nameEl) nameEl.value = (c && c.name) || "";
-    const defEl = q("[data-cb-default]");
-    if (defEl) defEl.checked = !!(c && c.is_default);
-    const enEl = q("[data-cb-enabled]");
-    if (enEl) enEl.checked = c ? !!c.enabled : true;
-    const wrap = q("[data-cb-steps]");
-    if (wrap) wrap.innerHTML = "";
-    const steps = c && Array.isArray(c.steps) ? c.steps : [];
-    if (steps.length) steps.forEach((s) => addComboStep((s && s.model) || "", (s && s.upstream_key_id) || ""));
-    else addComboStep("", "");
-  }
-
-  async function setupAdminCombos() {
-    const addBtn = q("[data-cb-add]");
-    if (addBtn && !addBtn.dataset.bound) {
-      addBtn.dataset.bound = "1";
-      addBtn.addEventListener("click", () => { addComboStep("", ""); });
-    }
-    const save = q("[data-cb-save]");
-    if (save && !save.dataset.bound) {
-      save.dataset.bound = "1";
-      save.addEventListener("click", async () => {
-        const modal = q("#comboModal");
-        if (!modal) return;
-        const nameEl = q("[data-cb-name]");
-        const name = nameEl ? nameEl.value.trim().toLowerCase() : "";
-        if (!/^[a-z0-9][a-z0-9_-]{0,40}$/.test(name)) {
-          showToast(TR("نام نامعتبر است (انگلیسی، بدون فاصله)", "Invalid name (latin, no spaces)"), false);
-          return;
-        }
-        const steps = [];
-        let bad = false;
-        qa("[data-cb-step]").forEach((row) => {
-          const sel = row.querySelector("[data-step-upstream]");
-          const inp = row.querySelector("[data-step-model]");
-          const model = inp ? inp.value.trim() : "";
-          if (!model) { bad = true; return; }
-          steps.push({ upstream_key_id: sel && sel.value ? sel.value : null, model });
-        });
-        if (bad || !steps.length) {
-          showToast(TR("مدل هر مرحله را وارد کنید", "Enter a model for every step"), false);
-          return;
-        }
-        const defEl = q("[data-cb-default]");
-        const enEl = q("[data-cb-enabled]");
-        const body = { name, steps, is_default: defEl ? defEl.checked : false, enabled: enEl ? enEl.checked : true };
-        try {
-          if (modal.dataset.comboId) await api("/api/admin/combos/" + encodeURIComponent(modal.dataset.comboId), { method: "PATCH", body: JSON.stringify(body) });
-          else await api("/api/admin/combos", { method: "POST", body: JSON.stringify(body) });
-          closeModal(modal);
-          showToast(TR("ذخیره شد", "Saved"), true);
-          loadAdminCombos();
-        } catch (err) {
-          showToast(err.message || TR("خطای غیرمنتظره", "Unexpected error"), false);
-        }
-      });
-    }
-    const openBtn = q('[data-open-modal="comboModal"]');
-    if (openBtn && !openBtn.dataset.bound) {
-      openBtn.dataset.bound = "1";
-      openBtn.addEventListener("click", async (ev) => {
-        if (ev) { ev.preventDefault(); ev.stopImmediatePropagation(); }
-        await ensureUpkeys();
-        fillComboModal(null);
-        openModal("comboModal");
-      });
-    }
-
   }
 
   // Create user form
@@ -1697,12 +1399,6 @@
   VIEW_LOADERS["admin-users"] = loadAdminUsers;
   VIEW_LOADERS["admin-stats"] = loadAdminStats;
   VIEW_LOADERS["admin-upkeys"] = loadAdminUpkeys;
-  VIEW_LOADERS["admin-combos"] = loadAdminCombos;
-  VIEW_LOADERS["admin-event"] = loadAdminEvent;
-  try {
-    const evSave = q("[data-ev-save]");
-    if (evSave) evSave.addEventListener("click", saveAdminEvent);
-  } catch (_) {}
   VIEW_LOADERS.admin = loadAdminUsers;
 
   // Boot
@@ -1714,8 +1410,6 @@
     setupAdminCreateUser();
   setupProfileForm();
   setupAdminUpkeys();
-  setupKeySettings();
-  setupAdminCombos();
 
     setupEditUser();
 
@@ -1733,7 +1427,7 @@
     // honor hash
     const initial = location.hash ? location.hash.replace(/^#/, "") : "overview";
     // ensure valid view
-    const validViews = ["overview", "keys", "usage", "settings", "admin-users", "admin-stats", "admin-upkeys", "admin-combos", "admin-event"];
+    const validViews = ["overview", "keys", "usage", "settings", "admin-users", "admin-stats"];
     const toShow = validViews.includes(initial) ? initial : "overview";
     switchView(toShow, false);
     // if hash was empty, set it

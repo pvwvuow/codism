@@ -13,8 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/design.css?v=50054891">
-<script src="assets/i18n.js?v=50054891"></script>
+<link rel="stylesheet" href="assets/design.css?v=70922263">
+<script src="assets/i18n.js?v=70922263"></script>
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <script>window.CODISM_API_BASE="https://api.tvframe.vip";</script>
 
@@ -31,8 +31,8 @@
       <a data-nav href="pricing.html">تعرفه‌ها</a>
       <a data-nav href="docs/">مستندات</a>
       <a data-nav href="changelog.html">تغییرات</a>
-      <a data-nav href="event.html">ایونت<span style="display:inline-block;margin-inline-start:.3rem;padding:.05rem .4rem;border-radius:999px;background:#C2410C;color:#fff;font-size:.65rem;font-weight:700;vertical-align:middle">۱۰B</span></a>
       <a data-nav href="status.html">وضعیت</a>
+      <a data-nav href="event.html" style="display:inline-flex;align-items:center;gap:.4rem">ایونت <span style="display:inline-block;padding:.05rem .45rem;border-radius:999px;background:#D97757;color:#fff;font-size:.68rem;font-weight:700;line-height:1.5" data-event-navbadge>۱۰B رایگان</span></a>
     </nav>
     <div class="navbar-actions" style="display:flex;align-items:center;gap:.5rem">
       <a class="btn btn-ghost" href="login.html" data-auth-link>ورود</a>
@@ -102,15 +102,30 @@ stream = client.chat.completions.<span class="tok-fn">create</span>(
     </div>
   </section>
 
-  <!-- EVENT STRIP -->
-  <section style="padding:0 0 .75rem">
+  <!-- EVENT: 10B free GPT-6 tokens -->
+  <section class="section event-strip" id="event">
     <div class="container">
-      <a href="event.html" style="display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;padding:1rem 1.25rem;text-decoration:none;border:1px solid #F5D5BE;border-radius:.75rem;background:linear-gradient(90deg,#FDF0E7,#FAF8F4 70%);">
-        <span class="chip" style="background:#C2410C;color:#FFFFFF;font-weight:700;">ایونت</span>
-        <span style="font-weight:700;color:#1A1915;font-size:.95rem;">۱۰ میلیارد توکن رایگان روی <code class="kbd notrans" dir="ltr" style="font-size:.8rem;background:#1A1915;color:#F4F1EA;">gpt-6-luna-free</code></span>
-        <span class="notrans" dir="ltr" style="font-family:var(--font-mono);font-size:.85rem;color:#C2410C;font-weight:600;" data-event-mini-cd></span>
-        <span style="margin-inline-start:auto;color:#C2410C;font-weight:600;font-size:.85rem;">مشاهده‌ی ایونت ←</span>
-      </a>
+      <div class="card event-card rise d2">
+        <div class="event-main">
+          <div class="event-badge"><span class="event-dot" data-event-dot></span> ایونت اجتماعی · <span data-event-status-text>به‌زودی شروع می‌شود</span></div>
+          <h2 class="event-title">۱۰ میلیارد توکن رایگان روی <code class="event-model-code" dir="ltr">gpt-6-luna-free</code></h2>
+          <p class="event-sub">یک استخر مشترک برای همه — با هر پلنی یا حتی بدون پلن. شمارش معکوس که صفر شود مدل باز می‌شود؛ وقتی استخر تمام شد می‌بندد. سهمیه پلن خودتان دست‌نخورده می‌ماند.</p>
+          <div class="event-ctas">
+            <a class="btn btn-primary" href="event.html">جزئیات ایونت ←</a>
+            <a class="btn btn-secondary" href="register.html">ساخت حساب رایگان</a>
+          </div>
+        </div>
+        <div class="event-pool">
+          <div class="event-pool-head"><span>استخر توکن</span><strong dir="ltr">10B</strong></div>
+          <div class="event-countdown" dir="ltr" data-event-countdown>— d : — h : — m : — s</div>
+          <div class="event-bar"><i data-event-bar style="width:0%"></i></div>
+          <div class="event-meta">
+            <span>مصرف‌شده: <strong dir="ltr" data-event-used>0</strong></span>
+            <span>باقی‌مانده: <strong dir="ltr" data-event-remaining>10B</strong></span>
+          </div>
+          <div class="event-src" data-event-src hidden></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -458,7 +473,7 @@ stream = client.chat.completions.<span class="tok-fn">create</span>(
   </div>
 </footer>
 
-<script src="assets/app.js?v=50054891"></script>
+<script src="assets/app.js?v=70922263"></script>
 
 </body>
 </html>

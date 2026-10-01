@@ -13,8 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/design.css?v=50054891">
-<script src="assets/i18n.js?v=50054891"></script>
+<link rel="stylesheet" href="assets/design.css?v=70922263">
+<script src="assets/i18n.js?v=70922263"></script>
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <script>window.CODISM_API_BASE="https://api.tvframe.vip";</script>
 
@@ -31,8 +31,8 @@
       <a data-nav href="pricing.html">تعرفه‌ها</a>
       <a data-nav href="docs/">مستندات</a>
       <a data-nav href="changelog.html">تغییرات</a>
-      <a data-nav href="event.html">ایونت<span style="display:inline-block;margin-inline-start:.3rem;padding:.05rem .4rem;border-radius:999px;background:#C2410C;color:#fff;font-size:.65rem;font-weight:700;vertical-align:middle">۱۰B</span></a>
       <a data-nav href="status.html">وضعیت</a>
+      <a data-nav href="event.html" style="display:inline-flex;align-items:center;gap:.4rem">ایونت <span style="display:inline-block;padding:.05rem .45rem;border-radius:999px;background:#D97757;color:#fff;font-size:.68rem;font-weight:700;line-height:1.5" data-event-navbadge>۱۰B رایگان</span></a>
     </nav>
     <div class="navbar-actions" style="display:flex;align-items:center;gap:.5rem">
       <a class="btn btn-ghost" href="login.html" data-auth-link>ورود</a>
@@ -97,8 +97,6 @@
 <button type="button" data-view="admin-users" data-admin class="hidden" role="tab" aria-selected="false">کاربران</button>
 <button type="button" data-view="admin-stats" data-admin class="hidden" role="tab" aria-selected="false">آمار سراسری</button>
 <button type="button" data-view="admin-upkeys" data-admin class="hidden" role="tab" aria-selected="false">کلیدهای آپ‌استریم</button>
-<button type="button" data-view="admin-combos" data-admin class="hidden" role="tab" aria-selected="false">زنجیره‌های پشتیبان</button>
-<button type="button" data-view="admin-event" data-admin class="hidden" role="tab" aria-selected="false">ایونت</button>
 </div>
 
 <!-- نمای کلی -->
@@ -258,18 +256,7 @@
 <div class="kpi-value" data-usage-quota>—</div>
 <div class="kpi-sub" data-usage-quota-pct></div>
 </div>
-<div class="kpi card">
-<div class="kpi-label">هزینه تخمینی این ماه</div>
-<div class="kpi-value" data-usage-cost>—</div>
-<div class="kpi-sub" data-usage-cost-toman></div>
 </div>
-<div class="kpi card">
-<div class="kpi-label">توکن‌های صرفه‌جویی‌شده</div>
-<div class="kpi-value" data-usage-saved>—</div>
-<div class="kpi-sub">با ذخیره‌کننده توکن</div>
-</div>
-</div>
-<div class="panel card" style="margin-top:1rem"><span class="badge" data-reset-countdown>—</span> <span style="color:#8A8475;font-size:.85rem">تا رست ماهانه (به وقت تهران)</span></div>
 
 <div class="panel card">
 <h3>نمودار ۱۴ روز</h3>
@@ -434,7 +421,7 @@
 <div class="dash-head">
 <div>
 <h1 id="title-admin-upkeys">کلیدهای آپ‌استریم</h1>
-<p class="dash-sub">کلیدهای API سایت codecraft که می‌توانید به هر کاربر اختصاص دهید؛ کاربر بدون کلید اختصاصی از استخر مشترک استفاده می‌کند.</p>
+<p class="dash-sub">کلیدهای API آپ‌استریم که می‌توانید به هر کاربر اختصاص دهید. کلید «پیش‌فرض» همه کاربران بدون کلید اختصاصی را تغذیه می‌کند (مثلاً apmix برای ایونت GPT-6).</p>
 </div>
 </div>
 <div class="panel card" style="margin-bottom:1.5rem">
@@ -449,9 +436,12 @@
 <input type="text" id="uk-key" class="input" data-uk-key dir="ltr" placeholder="cc_...">
 </div>
 <div class="field" style="flex:2;min-width:240px;margin:0">
-<label class="label" for="uk-base">Base URL (اختیاری — پیش‌فرض Codecraft)</label>
-<input type="text" id="uk-base" class="input" data-uk-base dir="ltr" placeholder="https://provider.example.com/v1">
+<label class="label" for="uk-baseurl">Base URL (اختیاری — خالی یعنی codecraft)</label>
+<input type="text" id="uk-baseurl" class="input" data-uk-baseurl dir="ltr" placeholder="https://api.apmix.ai/v1">
 </div>
+<label style="display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:#6B6659;white-space:nowrap;margin-bottom:.5rem">
+<input type="checkbox" data-uk-default-check> پیش‌فرض همه کاربران
+</label>
 <button type="button" class="btn btn-primary" data-uk-add>افزودن</button>
 </div>
 <div class="error-text" data-uk-err style="color:#DC2626;font-size:.875rem;min-height:1.25rem;margin-top:.5rem"></div>
@@ -463,40 +453,13 @@
 <tr>
 <th>برچسب</th>
 <th>کلید</th>
-<th><span dir="ltr">Base URL</span></th>
 <th>وضعیت</th>
+<th>پیش‌فرض</th>
 <th>کاربران</th>
 <th>عملیات</th>
 </tr>
 </thead>
 <tbody data-uk-body></tbody>
-</table>
-</div>
-</div>
-</section>
-
-<!-- ادمین: زنجیره‌های پشتیبان -->
-<section class="view hidden" id="view-admin-combos" aria-labelledby="title-admin-combos">
-<div class="dash-head">
-<div>
-<h1 id="title-admin-combos">زنجیره‌های پشتیبان</h1>
-<p class="dash-sub">مدل «combo/name» مراحل را به‌ترتیب امتحان می‌کند؛ خطا، سقف یا چالش → مرحله بعد. زنجیره پیش‌فرض برای همه کلیدها به‌عنوان فال‌بک خودکار به‌کار می‌رود.</p>
-</div>
-<button type="button" class="btn btn-primary" data-open-modal="comboModal">+ زنجیره جدید</button>
-</div>
-<div class="panel card">
-<div class="table-wrap">
-<table class="table">
-<thead>
-<tr>
-<th>نام</th>
-<th>مراحل</th>
-<th>پیش‌فرض</th>
-<th>وضعیت</th>
-<th>عملیات</th>
-</tr>
-</thead>
-<tbody data-combos-body></tbody>
 </table>
 </div>
 </div>
@@ -534,6 +497,21 @@
 <div class="kpi card">
 <div class="kpi-label">ناموفق امروز</div>
 <div class="kpi-value" data-st-failed>۰</div>
+</div>
+</div>
+<div class="panel card" data-event-admin hidden>
+<h3>ایونت <span dir="ltr">GPT-6</span> — استخر <span dir="ltr">10B</span> توکن رایگان</h3>
+<div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center">
+<div style="flex:1.2;min-width:260px">
+<div class="event-bar"><i data-ev-admin-bar style="width:0%"></i></div>
+<div class="event-meta" style="margin-top:.5rem"><span data-ev-admin-mirror>—</span><span class="badge" data-ev-admin-status>—</span></div>
+<div style="font-size:.72rem;color:#8A8475;margin-top:.35rem">مصرف کل استخر، زنده و همگام با apmix.ai</div>
+</div>
+<div style="flex:1;min-width:220px;border-inline-start:1px solid #E8E2D5;padding-inline-start:1.5rem">
+<div class="kpi-label">مصرف از upstream خود ما</div>
+<div class="kpi-value" dir="ltr" data-ev-admin-ours style="font-size:1.6rem">0</div>
+<div style="font-size:.75rem;color:#8A8475"><span data-ev-admin-ours-req>0</span> درخواست روی <span dir="ltr">gpt-6-luna-free</span></div>
+</div>
 </div>
 </div>
 <div class="panel card">
@@ -579,90 +557,6 @@
 </div>
 </div>
 </section>
-
-<!-- ادمین: ایونت -->
-<section class="view hidden" id="view-admin-event" aria-labelledby="title-admin-event">
-<div class="dash-head">
-<div>
-<h1 id="title-admin-event">ایونت توکن رایگان</h1>
-<p class="dash-sub">ایونت جامعه با استخر مشترک — مدیریت شروع، سقف استخر و مدل.</p>
-</div>
-</div>
-<div class="kpi-row" style="grid-template-columns:repeat(auto-fit,minmax(9rem,1fr))">
-<div class="kpi card">
-<div class="kpi-label">وضعیت</div>
-<div class="kpi-value" data-ev-status-text style="font-size:1.1rem">—</div>
-</div>
-<div class="kpi card">
-<div class="kpi-label">مصرف‌شده از استخر</div>
-<div class="kpi-value" data-ev-spent>۰</div>
-</div>
-<div class="kpi card">
-<div class="kpi-label">سقف استخر</div>
-<div class="kpi-value" data-ev-total>۰</div>
-</div>
-</div>
-<div class="kpi-row" style="grid-template-columns:repeat(auto-fit,minmax(9rem,1fr))">
-<div class="kpi card">
-<div class="kpi-label">مصرف کل ایونت (لایو apmix)</div>
-<div class="kpi-value" data-ev-apmix-used>—</div>
-</div>
-<div class="kpi card">
-<div class="kpi-label">باقی‌مانده استخر (لایو apmix)</div>
-<div class="kpi-value" data-ev-apmix-remaining>—</div>
-</div>
-<div class="kpi card">
-<div class="kpi-label">از upstream خود ما</div>
-<div class="kpi-value" data-ev-spent-ours style="color:#059669">۰</div>
-</div>
-<div class="kpi card">
-<div class="kpi-label">از upstreamهای دیگر</div>
-<div class="kpi-value" data-ev-spent-other>۰</div>
-</div>
-<div class="kpi card">
-<div class="kpi-label">شرکت‌کننده (apmix)</div>
-<div class="kpi-value" data-ev-apmix-part>—</div>
-</div>
-<div class="kpi card">
-<div class="kpi-label">درخواست‌ها (apmix)</div>
-<div class="kpi-value" data-ev-apmix-req>—</div>
-</div>
-</div>
-
-<div class="panel card" style="max-width:34rem">
-<h3>تنظیمات ایونت</h3>
-<div class="field">
-<label class="label" for="ev-model">شناسه‌ی مدل ایونت (کدی که کاربر در درخواست می‌فرستد)</label>
-<input type="text" id="ev-model" class="input" data-ev-model dir="ltr" placeholder="gpt-6-luna-free">
-</div>
-<div class="field">
-<label class="label" for="ev-upstream">مدل واقعی بالادست (دروازه، درخواست را به این مدل نگاشت می‌کند)</label>
-<input type="text" id="ev-upstream" class="input" data-ev-upstream dir="ltr" placeholder="gpt-5.6-luna">
-</div>
-<div class="field">
-<label class="label" for="ev-pool">سقف استخر (توکن)</label>
-<input type="number" id="ev-pool" class="input" data-ev-pool dir="ltr" min="1" step="1">
-</div>
-<div class="field">
-<label class="label" for="ev-opens">زمان شروع (به وقت محلی مرورگر شما)</label>
-<input type="datetime-local" id="ev-opens" class="input" data-ev-opens dir="ltr">
-</div>
-<div class="field" style="display:flex;align-items:center;gap:.5rem">
-<input type="checkbox" id="ev-enabled" data-ev-enabled style="width:1rem;height:1rem">
-<label class="label" for="ev-enabled" style="margin:0">ایونت فعال باشد</label>
-</div>
-<div class="field" style="display:flex;align-items:center;gap:.5rem">
-<input type="checkbox" id="ev-apmixsync" data-ev-apmixsync style="width:1rem;height:1rem" checked>
-<label class="label" for="ev-apmixsync" style="margin:0">همگام‌سازی کامل با apmix.ai (شروع/پایان و آمار زنده)</label>
-</div>
-<div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-top:.5rem">
-<button type="button" class="btn btn-primary" data-ev-save>ذخیره‌ی تغییرات</button>
-<span data-ev-msg style="font-size:.85rem;color:#6B6659"></span>
-</div>
-<p class="muted" style="font-size:.78rem;color:#8A8475;margin:.9rem 0 0">مصرف ایونت از سهمیه‌ی کاربران کم نمی‌شود و فقط از استخر مشترک پرداخت می‌شود. تغییر تنظیمات تا ۱۵ ثانیه بعد در همه‌ی سرورها اعمال می‌شود. «از upstream خود ما» یعنی درخواست‌هایی که با کلید پیش‌فرض دروازه (کلید اصلی) سرو شده‌اند؛ باقی از upstream اختصاصی کاربران. آمار apmix هر ۱۵ ثانیه مستقیم از apmix.ai گرفته می‌شود و پایان ایونت نیز از استخر apmix پیگیری می‌شود.</p>
-
-</div>
-</section>
 </div>
 
 <!-- مودال‌ها -->
@@ -698,51 +592,6 @@
 </div>
 </div>
 
-<div id="keySettingsModal" class="modal-back hidden" aria-hidden="true">
-<div class="modal card" role="dialog" aria-modal="true" aria-labelledby="ks-title">
-<h3 id="ks-title">تنظیمات پیشرفته کلید</h3>
-<p class="dash-sub" style="margin-top:-.5rem">ذخیره‌کننده توکن ورودی/خروجی را بهینه می‌کند؛ حالت دیباگ جزئیات زنجیره را در لاگ می‌نویسد.</p>
-<label class="label" for="ks-saver">ذخیره‌کننده توکن</label>
-<select id="ks-saver" class="input" data-ks-saver>
-<option value="off">خاموش</option>
-<option value="trim">فشرده‌سازی ورودی (trim)</option>
-<option value="turbo">فشرده‌سازی + پاسخ کوتاه (turbo)</option>
-</select>
-<label class="label" for="ks-models" style="margin-top:.75rem">مدل‌های مجاز (اختیاری — خالی = همه؛ با کاما جدا کنید)</label>
-<input id="ks-models" class="input" data-ks-models dir="ltr" placeholder="gpt-4o, claude-3-5-sonnet">
-
-<label style="display:flex;align-items:center;gap:.5rem;margin-top:.75rem;cursor:pointer">
-<input type="checkbox" data-ks-debug>
-<span>حالت دیباگ (ثبت جزئیات زنجیره در لاگ)</span>
-</label>
-<div class="modal-actions">
-<button type="button" class="btn btn-secondary" data-close-modal>انصراف</button>
-<button type="button" class="btn btn-primary" data-ks-save>ذخیره</button>
-</div>
-</div>
-</div>
-<div id="comboModal" class="modal-back hidden" aria-hidden="true">
-<div class="modal card" role="dialog" aria-modal="true" aria-labelledby="cb-title">
-<h3 id="cb-title">زنجیره پشتیبان</h3>
-<label class="label" for="cb-name">نام (انگلیسی، بدون فاصله — استفاده: combo/نام)</label>
-<input id="cb-name" class="input" data-cb-name dir="ltr" placeholder="my-coding-stack">
-<label class="label" style="margin-top:.75rem">مراحل (به ترتیب تلاش)</label>
-<div data-cb-steps></div>
-<button type="button" class="btn btn-ghost btn-sm" data-cb-add>+ افزودن مرحله</button>
-<label style="display:flex;align-items:center;gap:.5rem;margin-top:.75rem;cursor:pointer">
-<input type="checkbox" data-cb-default>
-<span>زنجیره پیش‌فرض (فال‌بک خودکار همه کلیدها)</span>
-</label>
-<label style="display:flex;align-items:center;gap:.5rem;margin-top:.5rem;cursor:pointer">
-<input type="checkbox" data-cb-enabled checked>
-<span>فعال</span>
-</label>
-<div class="modal-actions">
-<button type="button" class="btn btn-secondary" data-close-modal>انصراف</button>
-<button type="button" class="btn btn-primary" data-cb-save>ذخیره</button>
-</div>
-</div>
-</div>
 <div id="createUserModal" class="modal-back hidden" aria-hidden="true">
 <div class="modal card" role="dialog" aria-modal="true" aria-labelledby="cu-title">
 <h3 id="cu-title">کاربر جدید</h3>
@@ -940,7 +789,7 @@
   </div>
 </footer>
 
-<script src="assets/app.js?v=50054891"></script>
-<script src="assets/dashboard.js?v=50054891"></script>
+<script src="assets/app.js?v=70922263"></script>
+<script src="assets/dashboard.js?v=70922263"></script>
 </body>
 </html>
