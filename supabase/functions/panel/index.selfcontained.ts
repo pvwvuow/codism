@@ -110,8 +110,14 @@ async function resolveUpstream(step:ChainStep):Promise<{key:string,base:string,l
   const b=(ks[0].base_url||"").trim().replace(/\/+$/,"");
   return{key:ks[0].key,base:b||upstreamBase(),label:ks[0].label||"upstream"};
  }
+ const d=await getDefaultUpstream();
+ if(d) return{key:d.key,base:d.base||upstreamBase(),label:d.label||"default"};
  return{key:getEnv("UPSTREAM_API_KEY")||getEnv("PANEL_UPSTREAM_KEY")||"",base:upstreamBase(),label:"default"};
 }
+let __defUpCache:{ts:number,row:{key:string,base:string,label:string}|null}|null=null;
+async function getDefaultUpstream(){const n=Date.now();if(__defUpCache&&n-__defUpCache.ts<60000) return __defUpCache.row;let row:{key:string,base:string,label:string}|null=null;try{const rows=await sbGet(`/upstream_keys?is_default=eq.true&enabled=eq.true&select=key,base_url,label&limit=1`);if(rows[0]&&rows[0].key) row={key:rows[0].key,base:String(rows[0].base_url||"").replace(/\/+$/,"") as string,label:rows[0].label||"default"}}catch{}__defUpCache={ts:n,row};return row}
+let __evUpRowCache:{ts:number,row:{id:string,label:string}|null}|null=null;
+async function getEventUpstreamRow(){const n=Date.now();if(__evUpRowCache&&n-__evUpRowCache.ts<60000) return __evUpRowCache.row;let row:{id:string,label:string}|null=null;try{const eid=getEnv("EVENT_UPSTREAM_ID","").trim();let rows:any[]=[];if(eid) rows=await sbGet(`/upstream_keys?id=eq.${encodeURIComponent(eid)}&enabled=eq.true&select=id,label`);if(!rows.length) rows=await sbGet(`/upstream_keys?enabled=eq.true&base_url=ilike.*apmix.ai*&select=id,label&limit=1`);if(rows[0]) row={id:String(rows[0].id),label:String(rows[0].label||"event")};}catch{}__evUpRowCache={ts:n,row};return row}
 const TZ_OFF_MIN=210;
 function todayBounds(){const n=new Date(Date.now()+TZ_OFF_MIN*60000);const s=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate(),0,0,0)-TZ_OFF_MIN*60000);const e=new Date(s.getTime()+86400000);return[s.toISOString(),e.toISOString()]}
 function monthBounds(){const n=new Date(Date.now()+TZ_OFF_MIN*60000);const s=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),1,0,0,0)-TZ_OFF_MIN*60000);const e=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth()+1,1,0,0,0)-TZ_OFF_MIN*60000);return[s.toISOString(),e.toISOString()]}
@@ -246,6 +252,7 @@ if(norm==="/api/models"&&req.method==="GET"){
         }
       }
     }
+    try{const ev=await getEventState();if(ev&&eventStatusOf(ev,Date.now())==="live"&&!data.some((m:ModelInfo)=>m.id===ev.model)) data.push({id:ev.model,provider:"openai",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:1050000})}catch{}
     g.__codismModelsCache={ts:now,data};delete g.__codismModelsPromise;
     return jsonRes(200,{data});
   }catch{
@@ -514,9 +521,9 @@ const st=eventStatusOf(ev,Date.now());const rem=Math.max(0,(Number(ev.pool_total
    await sbDelete(`/users?id=eq.${encodeURIComponent(id)}`);
    return jsonRes(200,{ok:true});
   }
-  if(norm==="/api/admin/upstream-keys"&&method==="GET"){const keys=await sbGet(`/upstream_keys?select=id,label,key,enabled,base_url,created_at&order=created_at.desc`);const users=await sbGet(`/users?select=upstream_key_id`);const counts:Record<string,number>={};for(const u of (users as any[])){if(u.upstream_key_id) counts[u.upstream_key_id]=(counts[u.upstream_key_id]||0)+1}return jsonRes(200,keys.map((k:any)=>({id:k.id,label:k.label,key_masked:k.key.length<=10?k.key.slice(0,2)+"••••":k.key.slice(0,6)+"••••"+k.key.slice(-4),enabled:k.enabled,base_url:k.base_url||null,created_at:k.created_at,assigned_users:counts[k.id]||0})))}
-  if(norm==="/api/admin/upstream-keys"&&method==="POST"){const b=await readJson(req);const label=(b.label||"").trim();const key=(b.key||"").trim();if(!label||label.length>80||!key||key.length<8||key.length>200) return panelErr(400,"invalid upstream key fields");let base_url:any=null;if(b.base_url!==undefined&&b.base_url!==null&&String(b.base_url).trim()!==""){const bu=String(b.base_url).trim();if(!/^https:\/\/[^\s]+$/.test(bu)||bu.length>300) return panelErr(400,"invalid base_url");base_url=bu.replace(/\/+$/,"")}try{const rows=await sbPost(`/upstream_keys`,{label,key,base_url});const k=rows[0];return jsonRes(200,{id:k.id,label:k.label,key_masked:k.key.length<=10?k.key.slice(0,2)+"••••":k.key.slice(0,6)+"••••"+k.key.slice(-4),enabled:k.enabled,base_url:k.base_url||null,created_at:k.created_at,assigned_users:0})}catch(e){if(String(e).includes("23505")) return panelErr(409,"upstream key exists");throw e}}
-  if(pathname.startsWith("/api/admin/upstream-keys/")&&method==="PATCH"){const id=pathname.split("/")[4];const b=await readJson(req);const patch:Record<string,any>={};if(b.label!==undefined){const label=String(b.label).trim();if(!label||label.length>80) return panelErr(400,"invalid upstream key fields");patch.label=label}if(b.enabled!==undefined) patch.enabled=!!b.enabled;if(b.base_url!==undefined){if(b.base_url===null||String(b.base_url).trim()==="") patch.base_url=null;else{const bu=String(b.base_url).trim();if(!/^https:\/\/[^\s]+$/.test(bu)||bu.length>300) return panelErr(400,"invalid base_url");patch.base_url=bu.replace(/\/+$/,"")}}if(Object.keys(patch).length===0) return panelErr(400,"no fields");await sbPatch(`/upstream_keys?id=eq.${encodeURIComponent(id)}`,patch);return jsonRes(200,{ok:true})}
+  if(norm==="/api/admin/upstream-keys"&&method==="GET"){const keys=await sbGet(`/upstream_keys?select=id,label,key,enabled,base_url,is_default,created_at&order=created_at.desc`);const users=await sbGet(`/users?select=upstream_key_id`);const counts:Record<string,number>={};for(const u of (users as any[])){if(u.upstream_key_id) counts[u.upstream_key_id]=(counts[u.upstream_key_id]||0)+1}return jsonRes(200,keys.map((k:any)=>({id:k.id,label:k.label,key_masked:k.key.length<=10?k.key.slice(0,2)+"••••":k.key.slice(0,6)+"••••"+k.key.slice(-4),enabled:k.enabled,base_url:k.base_url||null,is_default:!!k.is_default,created_at:k.created_at,assigned_users:counts[k.id]||0})))}
+  if(norm==="/api/admin/upstream-keys"&&method==="POST"){const b=await readJson(req);const label=(b.label||"").trim();const key=(b.key||"").trim();if(!label||label.length>80||!key||key.length<8||key.length>200) return panelErr(400,"invalid upstream key fields");let base_url:any=null;if(b.base_url!==undefined&&b.base_url!==null&&String(b.base_url).trim()!==""){const bu=String(b.base_url).trim();if(!/^https:\/\/[^\s]+$/.test(bu)||bu.length>300) return panelErr(400,"invalid base_url");base_url=bu.replace(/\/+$/,"")}const isDefault=b.is_default===true;try{const rows=await sbPost(`/upstream_keys`,{label,key,base_url,is_default:isDefault});const k=rows[0];if(isDefault&&k&&k.id) await sbPatch(`/upstream_keys?id=neq.${encodeURIComponent(String(k.id))}&is_default=eq.true`,{is_default:false}).catch(()=>{});return jsonRes(200,{id:k.id,label:k.label,key_masked:k.key.length<=10?k.key.slice(0,2)+"••••":k.key.slice(0,6)+"••••"+k.key.slice(-4),enabled:k.enabled,base_url:k.base_url||null,is_default:!!k.is_default,created_at:k.created_at,assigned_users:0})}catch(e){if(String(e).includes("23505")) return panelErr(409,"upstream key exists");throw e}}
+  if(pathname.startsWith("/api/admin/upstream-keys/")&&method==="PATCH"){const id=pathname.split("/")[4];const b=await readJson(req);const patch:Record<string,any>={};if(b.label!==undefined){const label=String(b.label).trim();if(!label||label.length>80) return panelErr(400,"invalid upstream key fields");patch.label=label}if(b.enabled!==undefined) patch.enabled=!!b.enabled;if(b.is_default!==undefined) patch.is_default=!!b.is_default;if(b.base_url!==undefined){if(b.base_url===null||String(b.base_url).trim()==="") patch.base_url=null;else{const bu=String(b.base_url).trim();if(!/^https:\/\/[^\s]+$/.test(bu)||bu.length>300) return panelErr(400,"invalid base_url");patch.base_url=bu.replace(/\/+$/,"")}}if(Object.keys(patch).length===0) return panelErr(400,"no fields");if(patch.is_default===true) await sbPatch(`/upstream_keys?id=neq.${encodeURIComponent(id)}&is_default=eq.true`,{is_default:false}).catch(()=>{});await sbPatch(`/upstream_keys?id=eq.${encodeURIComponent(id)}`,patch);return jsonRes(200,{ok:true})}
   if(pathname.startsWith("/api/admin/upstream-keys/")&&method==="DELETE"){const id=pathname.split("/")[4];await sbDelete(`/upstream_keys?id=eq.${encodeURIComponent(id)}`);return jsonRes(200,{ok:true})}
   async function validateSteps(v:any):Promise<Array<{upstream_key_id:string|null,model:string}>|null>{
    if(!Array.isArray(v)||v.length<1||v.length>8) return null;
@@ -694,7 +701,9 @@ const st=eventStatusOf(ev,Date.now());const rem=Math.max(0,(Number(ev.pool_total
    if(evSt==="ended"){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,429,"event_ended",0,0,Date.now()-t0,debugDetail());return openaiErr(429,"The event pool has been fully spent. Follow the event page for the next event.","insufficient_quota","event_ended")}
    if(evSt!=="live"){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,404,"event_not_open",0,0,Date.now()-t0,debugDetail());return openaiErr(404,`The model '${expandedModel}' is part of an event that has not opened yet.`,"invalid_request_error","event_not_open")}
 
-   chainRes={steps:[{upstream_key_id:uRow.upstream_key_id||null,model:String(evState.upstream_model||evState.model)}]};
+   const evUp=await getEventUpstreamRow();
+   if(evUp) chainRes={steps:[{upstream_key_id:evUp.id,model:String(evState.model)}]};
+   else chainRes={steps:[{upstream_key_id:uRow.upstream_key_id||null,model:String(evState.upstream_model||evState.model)}]};
   }else{
    chainRes=await loadChain((bodyJson&&typeof bodyJson.model==="string")?bodyJson.model:"",expandedModel,uRow.upstream_key_id||null);
    if("error" in chainRes){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,404,"model_not_allowed",0,0,Date.now()-t0,debugDetail());return openaiErr(404,`The model '${expandedModel}' does not exist or you do not have access to it.`,"invalid_request_error","model_not_allowed")}
@@ -735,7 +744,7 @@ const st=eventStatusOf(ev,Date.now());const rem=Math.max(0,(Number(ev.pool_total
   const savedTokens=Math.round(savedChars/4);
   if(savedTokens>0) respHeaders.set("x-codism-saved-tokens",String(savedTokens));
   if(upCt) respHeaders.set("content-type",upCt);else respHeaders.set("content-type","application/json");
-  const isSSE=upCt.includes("text/event-stream")||isStream;
+  const isSSE=upResp.ok&&(upCt.includes("text/event-stream")||isStream);
   if(isSSE){
    respHeaders.set("cache-control","no-store");respHeaders.set("x-accel-buffering","no");
    let promptTokens=0,completionTokens=0,foundUsage=false;

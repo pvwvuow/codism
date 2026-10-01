@@ -1130,13 +1130,15 @@
       if (!tbody) return;
       tbody.innerHTML = "";
       if (!keys.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:1rem;color:#8A8475">' + TR("کلیدی ثبت نشده است", "No upstream keys yet") + "</td></tr>";
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:1rem;color:#8A8475">' + TR("کلیدی ثبت نشده است", "No upstream keys yet") + "</td></tr>";
         fillUpstreamSelects();
         return;
       }
       keys.forEach((k) => {
         const tr = document.createElement("tr");
         const enBadge = k.enabled ? '<span class="badge badge-ok">' + TR("فعال", "Active") + '</span>' : '<span class="badge badge-bad">' + TR("غیرفعال", "Disabled") + "</span>";
+        const defBadge = k.is_default ? '<span class="badge badge-ok">' + TR("پیش‌فرض", "Default") + "</span>" : "";
+        const defBtn = k.is_default ? "" : '<button class="btn btn-ghost btn-sm" data-uk-default="' + esc(String(k.id)) + '">' + TR("تنظیم پیش‌فرض", "Make default") + "</button>";
         const toggleBtn = '<button class="btn btn-ghost btn-sm" data-uk-toggle="' + esc(String(k.id)) + '">' + (k.enabled ? TR("غیرفعال", "Disable") : TR("فعال", "Enable")) + "</button>";
         const testBtn = '<button class="btn btn-ghost btn-sm" data-uk-test="' + esc(String(k.id)) + '">' + TR("تست", "Test") + "</button>";
         const delBtn = '<button class="btn btn-ghost btn-sm" style="color:#DC2626" data-uk-del="' + esc(String(k.id)) + '">' + TR("حذف", "Delete") + "</button>";
@@ -1145,9 +1147,22 @@
           '<td dir="ltr">' + esc(k.key_masked || "—") + "</td>" +
           '<td dir="ltr" style="font-family:var(--font-mono);font-size:.75rem;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(k.base_url || TR("پیش‌فرض", "Default")) + "</td>" +
           "<td>" + enBadge + "</td>" +
+          "<td>" + (defBadge || "—") + "</td>" +
           "<td>" + faNum(k.assigned_users || 0) + "</td>" +
-          "<td>" + toggleBtn + " " + testBtn + " " + delBtn + "</td>";
+          "<td>" + defBtn + " " + toggleBtn + " " + testBtn + " " + delBtn + "</td>";
         tbody.appendChild(tr);
+      });
+      qa("[data-uk-default]", tbody).forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-uk-default");
+          try {
+            await api("/api/admin/upstream-keys/" + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify({ is_default: true }) });
+            showToast(TR("این کلید پیش‌فرض همه کاربران شد", "This key is now the default for all users"), true);
+            loadAdminUpkeys();
+          } catch (err) {
+            showToast(err.message || TR("خطای غیرمنتظره", "Unexpected error"), false);
+          }
+        });
       });
       qa("[data-uk-test]", tbody).forEach((btn) => {
         btn.addEventListener("click", async () => {
@@ -1197,7 +1212,7 @@
     } catch (e) {
       console.error("upkeys", e);
       const tbody = q("[data-uk-body]");
-      if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#DC2626;padding:1rem">' + esc(e.message || "خطای غیرمنتظره") + "</td></tr>";
+      if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#DC2626;padding:1rem">' + esc(e.message || "خطای غیرمنتظره") + "</td></tr>";
     }
   }
 
@@ -1208,6 +1223,7 @@
         const labelEl = q("[data-uk-label]");
         const keyEl = q("[data-uk-key]");
         const baseEl = q("[data-uk-base]");
+        const defEl = q("[data-uk-default-check]");
         const errEl = q("[data-uk-err]");
         if (errEl) errEl.textContent = "";
         const label = labelEl ? labelEl.value.trim() : "";
@@ -1223,11 +1239,12 @@
         }
 
         try {
-          await api("/api/admin/upstream-keys", { method: "POST", body: JSON.stringify({ label, key, base_url: base }) });
+          await api("/api/admin/upstream-keys", { method: "POST", body: JSON.stringify({ label, key, base_url: base, is_default: !!(defEl && defEl.checked) }) });
           showToast(TR("کلید اضافه شد", "Key added"), true);
           if (labelEl) labelEl.value = "";
           if (keyEl) keyEl.value = "";
           if (baseEl) baseEl.value = "";
+          if (defEl) defEl.checked = false;
           loadAdminUpkeys();
         } catch (err) {
           const m = String((err && err.message) || "");
