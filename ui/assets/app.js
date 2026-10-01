@@ -700,17 +700,33 @@
       });
     } catch (_) {}
     if (st.model) { setAll("[data-event-model]", st.model); }
-    if (Number.isFinite(Number(st.pool_total))) {
-      setAll("[data-event-total]", evFmtBig(st.pool_total));
-      setAll("[data-event-remaining]", evFmtBig(Math.max(0, Number(st.pool_remaining) || 0)));
+    const ap = (st.apmix && typeof st.apmix === "object") ? st.apmix : null;
+    const totalN = ap && Number(ap.pool) > 0 ? Number(ap.pool) : (Number.isFinite(Number(st.pool_total)) ? Number(st.pool_total) : NaN);
+    const spentN = ap ? (Number(ap.used) || 0) : (Number.isFinite(Number(st.pool_spent)) ? Number(st.pool_spent) : NaN);
+    const remN = ap ? Math.max(0, Number(ap.remaining) || 0) : (Number.isFinite(Number(st.pool_remaining)) ? Math.max(0, Number(st.pool_remaining) || 0) : NaN);
+    if (Number.isFinite(totalN)) {
+      setAll("[data-event-total]", evFmtBig(totalN));
+      if (Number.isFinite(remN)) setAll("[data-event-remaining]", evFmtBig(remN));
     }
-    if (Number.isFinite(Number(st.pool_spent))) {
-      setAll("[data-event-spent]", evNum(Number(st.pool_spent).toLocaleString("en-US")));
-      const total = Number(st.pool_total) || 0;
-      const pct = total > 0 ? Math.min(100, (Number(st.pool_spent) / total) * 100) : 0;
+    if (Number.isFinite(spentN)) {
+      setAll("[data-event-spent]", evNum(spentN.toLocaleString("en-US")));
+      const pct = totalN > 0 ? Math.min(100, (spentN / totalN) * 100) : 0;
       try { q("[data-event-bar]").forEach((el) => { el.style.width = pct.toFixed(2) + "%"; }); } catch (_) {}
       setAll("[data-event-spent-pct]", evNum(pct.toFixed(1)) + (en2() ? "%" : "٪"));
     }
+    try {
+      q("[data-event-sync-note]").forEach((el) => {
+        if (!ap) { el.hidden = true; return; }
+        el.hidden = false;
+        while (el.firstChild) el.removeChild(el.firstChild);
+        const a = document.createElement("a");
+        a.href = "https://apmix.ai/event"; a.target = "_blank"; a.rel = "noopener noreferrer";
+        a.style.color = "#059669"; a.style.textDecoration = "none"; a.style.fontWeight = "600";
+        a.textContent = en2() ? "Live stats synced with apmix.ai ↗" : "آمار زنده، دقیقاً همگام با apmix.ai ↗";
+        el.appendChild(a);
+      });
+    } catch (_) {}
+
     evTick();
   }
   async function evRefresh() {

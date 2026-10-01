@@ -55,7 +55,12 @@ function isKeyRpmLimited(keyId:string,limit:number){const now=Date.now(),arr=(ke
 function parseAliases():Record<string,string>{try{const v=getEnv("MODEL_ALIASES");if(!v)return {};return JSON.parse(v)}catch{return {}}}
 function upstreamBase(){return getEnv("UPSTREAM_BASE_URL","https://codecraftapi.com/v1").replace(/\/+$/,"")}
 function maxBodyBytes(){return (parseInt(getEnv("MAX_BODY_MB","8"),10)||8)*1024*1024}
-const _evCache:any={ts:0,v:null};async function getEventState(){const now=Date.now();if(now-_evCache.ts<15000) return _evCache.v;try{const r:any=await sbRpc("event_pool",{});const row=Array.isArray(r)&&r[0]?r[0]:null;if(!row) throw new Error("empty");const ev={pool_total:Number(row.pool_total),spent:Number(row.spent),model:String(row.model||""),upstream_model:String(row.upstream_model||""),opens_at:row.opens_at,enabled:!!row.enabled};_evCache.ts=now;_evCache.v=ev;return ev}catch{ _evCache.ts=now;_evCache.v=null;return null}}function eventStatusOf(ev:any,nowMs:number){if(!ev||!ev.enabled) return "disabled";const t=ev.opens_at?Date.parse(ev.opens_at):NaN;if(isNaN(t)) return "disabled";if(nowMs<t) return "scheduled";const rem=(Number(ev.pool_total)||0)-(Number(ev.spent)||0);if(rem<=0) return "ended";return "live"}function invalidateEventCache(){_evCache.ts=0;_evCache.v=null}
+const _apmixCache:any={ts:0,v:null,flight:null as any};async function getApmixStats(){try{const ac=new AbortController();const to=setTimeout(()=>ac.abort(),3500);const r=await fetch("https://apmix.ai/api/event",{headers:{accept:"application/json","user-agent":BROWSER_UA},signal:ac.signal});clearTimeout(to);if(!r.ok) throw new Error("apmix_status");const j:any=await r.json();const v={status:String(j.status||""),model_id:String(j.modelId||""),pool:Number(j.pool)||0,used:Number(j.used)||0,remaining:Number(j.remaining)||0,starts_at:j.startsAt?String(j.startsAt):null,participants:Number(j.participants)||0,requests:Number(j.requests)||0,fetched_at:new Date().toISOString()};_apmixCache.ts=Date.now();_apmixCache.v=v;return v}catch{_apmixCache.ts=Date.now();_apmixCache.v=null;return null}}
+function apmixNow():any{const now=Date.now();if(now-_apmixCache.ts<15000) return _apmixCache.v;if(!_apmixCache.flight){_apmixCache.flight=getApmixStats().catch(()=>null).finally(()=>{_apmixCache.flight=null})}return _apmixCache.v}
+let _ourUpRow:{id:string|null,ts:number}|null=null;async function ourUpstreamRowId():Promise<string|null>{const now=Date.now();if(_ourUpRow&&_ourUpRow.id&&(now-_ourUpRow.ts<600000)) return _ourUpRow.id;if(_ourUpRow&&!_ourUpRow.id&&(now-_ourUpRow.ts<60000)) return _ourUpRow.id;try{const k=getEnv("UPSTREAM_API_KEY")||"";if(!k){_ourUpRow={id:null,ts:now};return null}const rows=await sbGet(`/upstream_keys?select=id,key`);let id:string|null=null;for(const r of (rows as any[]||[])){if(r&&r.key===k){id=String(r.id);break}}_ourUpRow={id,ts:now};return id}catch{_ourUpRow={id:null,ts:now};return null}}
+const _evCache:any={ts:0,v:null};async function getEventState(){const now=Date.now();if(now-_evCache.ts<15000){const v=_evCache.v;if(v&&v.apmix_sync!==false) return {...v,apmix:apmixNow()};return v}try{const ours=await ourUpstreamRowId();const r:any=await sbRpc("event_pool",{p_ours:ours});const row=Array.isArray(r)&&r[0]?r[0]:null;if(!row) throw new Error("empty");const ev={pool_total:Number(row.pool_total),spent:Number(row.spent),spent_ours:Number(row.spent_ours||0),spent_other:Number(row.spent_other||0),model:String(row.model||""),upstream_model:String(row.upstream_model||""),opens_at:row.opens_at,enabled:!!row.enabled,apmix_sync:row.apmix_sync!==false,apmix:(row.apmix_sync===false)?null:apmixNow()};_evCache.ts=now;_evCache.v=ev;return ev}catch{ _evCache.ts=Date.now()-12000;_evCache.v=null;return null}}
+function eventStatusOf(ev:any,nowMs:number){if(!ev||!ev.enabled) return "disabled";const ap=ev.apmix||null;if(ap){const apRem=Number(ap.remaining);if(ap.status==="ended"||(Number.isFinite(apRem)&&apRem<=0)) return "ended";const rem=(Number(ev.pool_total)||0)-(Number(ev.spent)||0);if(rem<=0) return "ended";if(ap.status==="live") return "live";return "scheduled"}const t=ev.opens_at?Date.parse(ev.opens_at):NaN;if(isNaN(t)) return "disabled";if(nowMs<t) return "scheduled";const rem=(Number(ev.pool_total)||0)-(Number(ev.spent)||0);if(rem<=0) return "ended";return "live"}
+function invalidateEventCache(){_evCache.ts=0;_evCache.v=null;_apmixCache.ts=0;_apmixCache.flight=null}
 const COMBO_PREFIX="combo/";
 const TOKEN_SAVER_SYSTEM="You are a token-efficient assistant. Answer concisely and directly: no preamble, no filler, no restating the question. Prefer the shortest complete correct answer. Keep code minimal but functional.";
 const PRICE_PER_MTOK:Record<string,[number,number]>={"claude-opus":[5,25],"claude-sonnet":[3,15],"claude-haiku":[1,5],"claude":[3,15],"gpt-5":[2.5,10],"gpt":[2.5,10],"gemini":[1.25,5],"glm":[0.6,2],"deepseek":[0.3,1.2],"qwen":[0.8,3],"grok":[3,15],"kimi":[0.6,2.5],"seed":[0.3,1.2],"muse":[0.3,1.2],"gemma":[0.1,0.3]};
@@ -268,7 +273,9 @@ if(norm==="/api/status"&&req.method==="GET"){
   g2.__codismStatusCache={ts:now,payload};
   return jsonRes(200,payload);
 }
- if(norm==="/api/event"&&method==="GET"){const ev=await getEventState();const nowMs=Date.now();const nowIso=new Date(nowMs).toISOString();if(!ev||eventStatusOf(ev,nowMs)==="disabled") return jsonRes(200,{ok:true,status:"disabled",event:null,model:null,pool_total:null,pool_spent:null,pool_remaining:null,opens_at:null,now:nowIso});const st=eventStatusOf(ev,nowMs);const rem=Math.max(0,(Number(ev.pool_total)||0)-(Number(ev.spent)||0));return jsonRes(200,{ok:true,status:st,event:{model:ev.model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_remaining:rem,opens_at:ev.opens_at},model:ev.model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_remaining:rem,opens_at:ev.opens_at,now:nowIso});}
+ if(norm==="/api/event"&&method==="GET"){const ev=await getEventState();const nowMs=Date.now();const nowIso=new Date(nowMs).toISOString();if(!ev||eventStatusOf(ev,nowMs)==="disabled") return jsonRes(200,{ok:true,status:"disabled",event:null,model:null,pool_total:null,pool_spent:null,pool_remaining:null,opens_at:null,apmix:null,now:nowIso});
+const st=eventStatusOf(ev,nowMs);const rem=Math.max(0,(Number(ev.pool_total)||0)-(Number(ev.spent)||0));return jsonRes(200,{ok:true,status:st,event:{model:ev.model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_remaining:rem,opens_at:ev.opens_at,apmix:ev.apmix||null},model:ev.model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_remaining:rem,opens_at:ev.opens_at,apmix:ev.apmix||null,now:nowIso});
+}
  // health
  if(norm==="/health"&&method==="GET") return jsonRes(200,{ok:true,service:"codism-panel"});
  if(norm==="/"&&(method==="GET"||method==="HEAD")) return new Response(null,{status:302,headers:withCors(new Headers({location:getEnv("PANEL_UI_URL","https://pvwvuow.github.io/codism/"),"cache-control":"no-store"}))});
@@ -450,8 +457,10 @@ if(norm==="/api/status"&&req.method==="GET"){
  if(pathname.startsWith("/api/admin/")){
   const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
   if(a.role!=="admin") return panelErr(403,"Admin only");
-  if(norm==="/api/admin/event"&&method==="GET"){const ev=await getEventState();if(!ev) return jsonRes(200,{ok:true,event:null,status:"disabled"});const st=eventStatusOf(ev,Date.now());const rem=Math.max(0,(Number(ev.pool_total)||0)-(Number(ev.spent)||0));return jsonRes(200,{ok:true,event:{model:ev.model,upstream_model:ev.upstream_model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_remaining:rem,opens_at:ev.opens_at,enabled:ev.enabled,status:st},status:st,model:ev.model,upstream_model:ev.upstream_model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_remaining:rem,opens_at:ev.opens_at,enabled:ev.enabled});}
-  if(norm==="/api/admin/event"&&method==="PATCH"){let b:any=null;try{b=await req.json()}catch{return panelErr(400,"invalid json")}const patch:any={};if(b.model!==undefined){const v=String(b.model).trim().toLowerCase();if(!/^[a-z0-9][a-z0-9._-]{0,63}$/.test(v)) return panelErr(400,"invalid model");patch.model=v}if(b.upstream_model!==undefined){const v=String(b.upstream_model).trim().toLowerCase();if(!/^[a-z0-9][a-z0-9._-]{0,63}$/.test(v)) return panelErr(400,"invalid upstream_model");patch.upstream_model=v}if(b.pool_total!==undefined){const n=Number(b.pool_total);if(!Number.isFinite(n)||n<1||n>1e15) return panelErr(400,"invalid pool_total");patch.pool_total=Math.round(n)}if(b.opens_at!==undefined){const t=Date.parse(String(b.opens_at));if(isNaN(t)) return panelErr(400,"invalid opens_at");patch.opens_at=new Date(t).toISOString()}if(b.enabled!==undefined){if(typeof b.enabled!=="boolean") return panelErr(400,"invalid enabled");patch.enabled=b.enabled}if(Object.keys(patch).length===0) return panelErr(400,"no fields");patch.updated_at=new Date().toISOString();try{await sbPatch("/event_state?id=eq.1",patch)}catch(e:any){return panelErr(500,"event update failed")}invalidateEventCache();return jsonRes(200,{ok:true});}
+  if(norm==="/api/admin/event"&&method==="GET"){const ev=await getEventState();if(!ev) return jsonRes(200,{ok:true,event:null,status:"disabled",pool_spent_ours:0,pool_spent_other:0,apmix:null});
+const st=eventStatusOf(ev,Date.now());const rem=Math.max(0,(Number(ev.pool_total)||0)-(Number(ev.spent)||0));return jsonRes(200,{ok:true,event:{model:ev.model,upstream_model:ev.upstream_model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_spent_ours:ev.spent_ours||0,pool_spent_other:ev.spent_other||0,pool_remaining:rem,opens_at:ev.opens_at,enabled:ev.enabled,status:st,apmix_sync:ev.apmix_sync!==false,apmix:ev.apmix||null},status:st,model:ev.model,upstream_model:ev.upstream_model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_spent_ours:ev.spent_ours||0,pool_spent_other:ev.spent_other||0,pool_remaining:rem,opens_at:ev.opens_at,enabled:ev.enabled,apmix_sync:ev.apmix_sync!==false,apmix:ev.apmix||null});
+}
+  if(norm==="/api/admin/event"&&method==="PATCH"){let b:any=null;try{b=await req.json()}catch{return panelErr(400,"invalid json")}const patch:any={};if(b.model!==undefined){const v=String(b.model).trim().toLowerCase();if(!/^[a-z0-9][a-z0-9._-]{0,63}$/.test(v)) return panelErr(400,"invalid model");patch.model=v}if(b.upstream_model!==undefined){const v=String(b.upstream_model).trim().toLowerCase();if(!/^[a-z0-9][a-z0-9._-]{0,63}$/.test(v)) return panelErr(400,"invalid upstream_model");patch.upstream_model=v}if(b.pool_total!==undefined){const n=Number(b.pool_total);if(!Number.isFinite(n)||n<1||n>1e15) return panelErr(400,"invalid pool_total");patch.pool_total=Math.round(n)}if(b.opens_at!==undefined){const t=Date.parse(String(b.opens_at));if(isNaN(t)) return panelErr(400,"invalid opens_at");patch.opens_at=new Date(t).toISOString()}if(b.enabled!==undefined){if(typeof b.enabled!=="boolean") return panelErr(400,"invalid enabled");patch.enabled=b.enabled}if(b.apmix_sync!==undefined){if(typeof b.apmix_sync!=="boolean") return panelErr(400,"invalid apmix_sync");patch.apmix_sync=b.apmix_sync}if(Object.keys(patch).length===0) return panelErr(400,"no fields");patch.updated_at=new Date().toISOString();try{await sbPatch("/event_state?id=eq.1",patch)}catch(e:any){return panelErr(500,"event update failed")}invalidateEventCache();return jsonRes(200,{ok:true});}
   if(norm==="/api/admin/users"&&method==="GET"){
    const users=await sbGet(`/users?select=id,email,name,role,enabled,plan,daily_quota_tokens,monthly_quota_tokens,created_at,username,subscription_expires_at,upstream_key_id&order=created_at.desc`);
    const keys=await sbGet(`/api_keys?select=user_id`);
@@ -675,14 +684,16 @@ if(norm==="/api/status"&&req.method==="GET"){
   }
   const start=Date.now();
   let upResp:Response|null=null;let upCt="";
-  const chainInfo:any[]=[];
+  const chainInfo:any[]=[];let servedUpKeyId:string|null=null;
+
   let serveAbort:AbortController|null=null;
   const debugDetail=()=>{if(!kRow.debug)return null;try{return JSON.stringify({chain:chainInfo,messages:Array.isArray(bodyJson&&bodyJson.messages)?bodyJson.messages.length:0,req_bytes:raw?raw.byteLength:0}).slice(0,1800)}catch{return null}};
   let chainRes:{steps:ChainStep[]}|{error:string};
   if(evReq){
-   const openMs=Date.parse(String(evState.opens_at));
-   if(!Number.isFinite(openMs)||Date.now()<openMs){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,404,"event_not_open",0,0,Date.now()-t0,debugDetail());return openaiErr(404,`The model '${expandedModel}' is part of an event that has not opened yet.`,"invalid_request_error","event_not_open")}
-   if(Number(evState.spent)>=Number(evState.pool_total)){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,429,"event_ended",0,0,Date.now()-t0,debugDetail());return openaiErr(429,"The event pool has been fully spent. Follow the event page for the next event.","insufficient_quota","event_ended")}
+   const evSt=eventStatusOf(evState,Date.now());
+   if(evSt==="ended"){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,429,"event_ended",0,0,Date.now()-t0,debugDetail());return openaiErr(429,"The event pool has been fully spent. Follow the event page for the next event.","insufficient_quota","event_ended")}
+   if(evSt!=="live"){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,404,"event_not_open",0,0,Date.now()-t0,debugDetail());return openaiErr(404,`The model '${expandedModel}' is part of an event that has not opened yet.`,"invalid_request_error","event_not_open")}
+
    chainRes={steps:[{upstream_key_id:uRow.upstream_key_id||null,model:String(evState.upstream_model||evState.model)}]};
   }else{
    chainRes=await loadChain((bodyJson&&typeof bodyJson.model==="string")?bodyJson.model:"",expandedModel,uRow.upstream_key_id||null);
@@ -709,7 +720,9 @@ if(norm==="/api/status"&&req.method==="GET"){
     upResp=resp;
     if(!upResp){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,wasAbort?504:502,wasAbort?"upstream_timeout":"upstream_error",0,0,Date.now()-t0,debugDetail());return openaiErr(wasAbort?504:502,wasAbort?"Upstream request timed out.":"AI upstream temporarily unavailable.",wasAbort?"timeout":"upstream_error",wasAbort?"upstream_timeout":"upstream_error")}
     upCt=upResp.headers.get("content-type")||"";
+    servedUpKeyId=step.upstream_key_id||null;
     break;
+
    }
    try{if(resp)await resp.arrayBuffer()}catch{}
   }
@@ -755,7 +768,8 @@ if(norm==="/api/status"&&req.method==="GET"){
       ctrl.close();
       const latency=Date.now()-start;
       if(!foundUsage){promptTokens=Math.ceil(promptChars/4);completionTokens=Math.ceil(completionChars/4)}
-      sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:(evReq&&expandedModel)?expandedModel:servedModel,prompt_tokens:promptTokens,completion_tokens:completionTokens,latency_ms:latency,status:upResp.status,saved_tokens:Math.round(savedChars/4),is_event:evReq}).catch((e:any)=>console.error("usage_log write failed:",e));
+      sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:(evReq&&expandedModel)?expandedModel:servedModel,prompt_tokens:promptTokens,completion_tokens:completionTokens,latency_ms:latency,status:upResp.status,saved_tokens:Math.round(savedChars/4),is_event:evReq,upstream_key_id:servedUpKeyId})
+.catch((e:any)=>console.error("usage_log write failed:",e));
       logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,upResp.status,null,promptTokens,completionTokens,latency,debugDetail());
      }
     },
@@ -766,7 +780,8 @@ if(norm==="/api/status"&&req.method==="GET"){
    const buf=new Uint8Array(await upResp.arrayBuffer());
    let pt=0,ctok=0;try{const j=JSON.parse(dec.decode(buf));if(j.usage){pt=Number(j.usage.prompt_tokens)||0;ctok=Number(j.usage.completion_tokens)||0}}catch{}
    const latency=Date.now()-start;
-   sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:(evReq&&expandedModel)?expandedModel:servedModel,prompt_tokens:pt,completion_tokens:ctok,latency_ms:latency,status:upResp.status,saved_tokens:Math.round(savedChars/4),is_event:evReq}).catch((e:any)=>console.error("usage_log write failed:",e));
+   sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:(evReq&&expandedModel)?expandedModel:servedModel,prompt_tokens:pt,completion_tokens:ctok,latency_ms:latency,status:upResp.status,saved_tokens:Math.round(savedChars/4),is_event:evReq,upstream_key_id:servedUpKeyId})
+.catch((e:any)=>console.error("usage_log write failed:",e));
    logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,upResp.status,null,pt,ctok,latency,debugDetail());
    return new Response(buf,{status:upResp.status,headers:respHeaders});
   }

@@ -1330,12 +1330,22 @@
       setText("[data-ev-status-text]", ev && ev.status ? (EV_STATUS[ev.status] || ev.status) : "—");
       setText("[data-ev-spent]", faNum((Number(ev && ev.pool_spent) || 0).toLocaleString("en-US")));
       setText("[data-ev-total]", faNum((Number(ev && ev.pool_total) || 0).toLocaleString("en-US")));
+      setText("[data-ev-spent-ours]", faNum((Number(ev && ev.pool_spent_ours) || 0).toLocaleString("en-US")));
+      setText("[data-ev-spent-other]", faNum((Number(ev && ev.pool_spent_other) || 0).toLocaleString("en-US")));
+      const apx = ev && ev.apmix && typeof ev.apmix === "object" ? ev.apmix : null;
+      const apFmt = (v) => (Number.isFinite(Number(v)) ? faNum(Number(v).toLocaleString("en-US")) : "—");
+      setText("[data-ev-apmix-used]", apx ? apFmt(apx.used) : "—");
+      setText("[data-ev-apmix-remaining]", apx ? apFmt(apx.remaining) : "—");
+      setText("[data-ev-apmix-part]", apx ? apFmt(apx.participants) : "—");
+      setText("[data-ev-apmix-req]", apx ? apFmt(apx.requests) : "—");
+
       if (ev && ev.event) {
         const m = q("[data-ev-model]"); if (m) m.value = ev.event.model || "";
         const u = q("[data-ev-upstream]"); if (u) u.value = ev.event.upstream_model || "";
         const p = q("[data-ev-pool]"); if (p) p.value = String(ev.event.pool_total || "");
         const o = q("[data-ev-opens]"); if (o) o.value = evLocalInputValue(ev.event.opens_at);
         const e = q("[data-ev-enabled]"); if (e) e.checked = !!ev.event.enabled;
+        const ys = q("[data-ev-apmixsync]"); if (ys) ys.checked = ev.event.apmix_sync !== false;
       } else if (msg) {
         msg.textContent = TR("ایونت پیکربندی نشده است", "Event is not configured");
       }
@@ -1367,6 +1377,7 @@
       payload.opens_at = new Date(t).toISOString();
     }
     const e = q("[data-ev-enabled]"); if (e) payload.enabled = !!e.checked;
+    const ys = q("[data-ev-apmixsync]"); if (ys) payload.apmix_sync = !!ys.checked;
     if (msg) msg.textContent = TR("در حال ذخیره…", "Saving…");
     try {
       await api("/api/admin/event", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
