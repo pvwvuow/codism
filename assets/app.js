@@ -73,110 +73,7 @@
     return "مدل چت چندمنظوره با پشتیبانی کامل از استریم.";
   }
 
-  // ---------- Event widget (10B free GPT-6; stats mirrored live from apmix.ai) ----------
-  const EVENT_QA = (sel) => Array.from(document.querySelectorAll(sel));
-  const EVENT_STATUS_FA = { upcoming: "به‌زودی شروع می‌شود", live: "زنده است", ended: "پایان یافت", completed: "پایان یافت" };
-  const EVENT_STATUS_EN = { upcoming: "Starts soon", live: "Live now", ended: "Ended", completed: "Ended" };
-  let __eventTimer = null;
-  function eventFmtTok(n) {
-    const v = Number(n) || 0;
-    if (v >= 1e9) return (Math.round((v / 1e9) * 100) / 100) + "B";
-    if (v >= 1e6) return (Math.round((v / 1e6) * 100) / 100) + "M";
-    if (v >= 1e3) return (Math.round((v / 1e3) * 100) / 100) + "K";
-    return String(v);
-  }
-  function eventCountdownStr(target, now) {
-    let ms = target - now;
-    if (!(ms > 0)) ms = 0;
-    const d = Math.floor(ms / 86400000);
-    const h = Math.floor((ms % 86400000) / 3600000);
-    const m = Math.floor((ms % 3600000) / 60000);
-    const s = Math.floor((ms % 60000) / 1000);
-    const p2 = (x) => String(x).padStart(2, "0");
-    return p2(d) + "d : " + p2(h) + "h : " + p2(m) + "m : " + p2(s) + "s";
-  }
-  function renderEvent(ev) {
-    const q = (sel) => document.querySelector(sel);
-    const qa = EVENT_QA;
-    const pool = (ev && ev.pool) || 10000000000;
-    const startsAt = ev && ev.starts_at ? Date.parse(ev.starts_at) : NaN;
-    const mirror = ev && ev.mirror;
-    const used = mirror ? (Number(mirror.used) || 0) : ((ev && ev.ours && Number(ev.ours.tokens)) || 0);
-    const remaining = mirror ? (Number(mirror.remaining) || 0) : Math.max(0, pool - used);
-    const status = (ev && ev.status) || "upcoming";
-    const pct = pool > 0 ? Math.min(100, (used / pool) * 100) : 0;
-    const live = status === "live";
-    const ended = status === "ended" || status === "completed" || (mirror && Number(mirror.remaining) === 0);
-    const statusText = TR(EVENT_STATUS_FA[status] || status, EVENT_STATUS_EN[status] || status);
-    qa("[data-event-status-text]").forEach((el) => (el.textContent = statusText));
-    qa("[data-event-dot]").forEach((el) => { try { el.setAttribute("data-live", live ? "true" : "false"); if (ended) el.setAttribute("data-ended", "true"); } catch (_) {} });
-    const usedTxt = eventFmtTok(used);
-    const remTxt = ended ? "0" : eventFmtTok(remaining);
-    qa("[data-event-used]").forEach((el) => (el.textContent = usedTxt));
-    qa("[data-event-remaining]").forEach((el) => (el.textContent = remTxt));
-    qa("[data-event-bar]").forEach((el) => (el.style.width = pct.toFixed(2) + "%"));
-    qa("[data-event-pool]").forEach((el) => (el.textContent = eventFmtTok(pool)));
-    const pctWrap = q("[data-event-pct-wrap]");
-    if (pctWrap) { if (used > 0) { pctWrap.hidden = false; const el = q("[data-event-pct]"); if (el) el.textContent = pct.toFixed(1) + "%"; } }
-    const src = q("[data-event-src]");
-    if (src) {
-      if (mirror) { src.hidden = false; src.textContent = TR("آمار مصرف زنده — همگام با apmix.ai", "Live usage — synced with apmix.ai"); }
-      else if (ev) { src.hidden = false; src.textContent = TR("آمار مصرف زنده", "Live usage"); }
-    }
-    // nav badge status
-    qa("[data-event-navbadge]").forEach((el) => { if (ended) el.textContent = TR("پایان یافت", "Ended"); else if (live) el.textContent = TR("زنده است", "Live"); });
-    // countdown tick (local so it stays smooth between polls)
-    const tick = () => {
-      const els = qa("[data-event-countdown]");
-      if (!els.length) return;
-      let base = Date.now();
-      if (mirror && mirror.now) { const skew = Date.parse(mirror.now) - Date.now(); if (Math.abs(skew) < 600000) base += skew; }
-      const target = isNaN(startsAt) ? base : startsAt;
-      const str = eventCountdownStr(target, base);
-      els.forEach((el) => (el.textContent = str));
-      const lbl = q("[data-event-countdown-label]");
-      if (lbl) lbl.textContent = live ? TR("استخر در حال مصرف است", "Pool is being spent") : (ended ? TR("ایونت پایان یافت", "Event ended") : TR("تا شروع ایونت", "Until the event starts"));
-    };
-    tick();
-    if (!__eventTimer) __eventTimer = setInterval(tick, 1000);
-  }
-  async function fetchEvent() {
-    try {
-      const r = await fetch(API_BASE + "/api/event", { headers: { "accept": "application/json" } });
-      if (!r.ok) return;
-      const j = await r.json();
-      if (j && j.enabled === false) return;
-      renderEvent(j);
-    } catch (_) {}
-  }
-  function initEventWidget() {
-    const qa = EVENT_QA;
-    const hooks = document.querySelector("[data-event-countdown],[data-event-used],[data-event-bar],[data-event-status-text]");
-    if (!hooks) return;
-    fetchEvent();
-    if (!__eventTimer) setInterval(fetchEvent, 20000);
-    // copy buttons
-    qa("[data-copy-model], [data-copy-model-btn]").forEach((el) => {
-      el.addEventListener("click", async () => {
-        const v = el.getAttribute("data-copy-model") || "gpt-6-luna-free";
-        try { await navigator.clipboard.writeText(v); } catch (_) {}
-        el.classList.add("event-copy-flash");
-        setTimeout(() => el.classList.remove("event-copy-flash"), 900);
-      });
-    });
-    qa("[data-copy-endpoint], [data-copy-endpoint-btn]").forEach((el) => {
-      el.addEventListener("click", async () => {
-        const v = (API_BASE || "https://api.tvframe.vip") + "/v1";
-        try { await navigator.clipboard.writeText(v); } catch (_) {}
-        el.classList.add("event-copy-flash");
-        setTimeout(() => el.classList.remove("event-copy-flash"), 900);
-      });
-    });
-  }
-
   function init() {
-    // 0. EVENT widget (10B free GPT-6 — live mirror of apmix.ai)
-    try { initEventWidget(); } catch (_) {}
     // 1. NAVBAR
     try {
       const toggle = document.querySelector(".nav-toggle");
@@ -724,10 +621,158 @@
     } catch (_) {}
   }
 
+  // ---------- community event widgets ----------
+  const EV = { state: null, skew: 0, timer: null };
+  function evNum(n) {
+    try {
+      if (window.I18N && window.I18N.lang === "en") return String(n);
+      return faNum(n);
+    } catch (_) { return String(n); }
+  }
+  function evPad(n) {
+    const s = String(Math.max(0, Math.floor(n)));
+    return s.length < 2 ? "0" + s : s;
+  }
+  function evStatusFa(st) {
+    if (st === "scheduled") return "به‌زودی شروع می‌شود";
+    if (st === "live") return "زنده";
+    if (st === "ended") return "پایان یافت";
+    return "غیرفعال";
+  }
+  function evStatusEn(st) {
+    if (st === "scheduled") return "Starts soon";
+    if (st === "live") return "Live now";
+    if (st === "ended") return "Ended";
+    return "Disabled";
+  }
+  function evFmtBig(n) {
+    const v = Number(n) || 0;
+    if (window.I18N && window.I18N.lang === "en") return fmtTok(v);
+    if (v >= 1e9) return evNum((v / 1e9).toFixed(1).replace(/\.0$/, "")) + " میلیارد";
+    if (v >= 1e6) return evNum((v / 1e6).toFixed(1).replace(/\.0$/, "")) + " میلیون";
+    return evNum(v);
+  }
+  function evTick() {
+    const st = EV.state;
+    if (!st || !st.opens_at) return;
+    const nowMs = Date.now() - EV.skew;
+    const openMs = Date.parse(st.opens_at);
+    if (!Number.isFinite(openMs)) return;
+    const diff = openMs - nowMs;
+    const q = (sel) => document.querySelectorAll(sel);
+    const setAll = (sel, v) => { try { q(sel).forEach((el) => { el.textContent = v; }); } catch (_) {} };
+    if (diff > 0) {
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      const en = window.I18N && window.I18N.lang === "en";
+      setAll("[data-event-cd-d]", en ? String(d) : faNum(evPad(d)));
+      setAll("[data-event-cd-h]", en ? evPad(h) : faNum(evPad(h)));
+      setAll("[data-event-cd-m]", en ? evPad(m) : faNum(evPad(m)));
+      setAll("[data-event-cd-s]", en ? evPad(s) : faNum(evPad(s)));
+      setAll("[data-event-cd-label]", en ? "Until the event opens" : "تا شروع ایونت");
+      setAll("[data-event-mini-cd]", (en ? "opens in " : "شروع تا ") + evPad(d) + "d " + evPad(h) + ":" + evPad(m) + ":" + evPad(s));
+      try { q("[data-event-cd-wrap]").forEach((el) => { el.style.display = ""; }); } catch (_) {}
+    } else {
+      setAll("[data-event-cd-label]", st.status === "ended" ? (en2() ? "The event has ended" : "ایونت به پایان رسیده") : (en2() ? "The event is live" : "ایونت زنده است"));
+      const zero = en2() ? "00" : faNum("00");
+      setAll("[data-event-cd-d]", zero); setAll("[data-event-cd-h]", zero);
+      setAll("[data-event-cd-m]", zero); setAll("[data-event-cd-s]", zero);
+      setAll("[data-event-mini-cd]", st.status === "ended" ? (en2() ? "event ended" : "ایونت تمام شد") : (en2() ? "LIVE" : "زنده"));
+    }
+  }
+  function en2() { return window.I18N && window.I18N.lang === "en"; }
+  function evRender() {
+    const st = EV.state;
+    if (!st) return;
+    const q = (sel) => document.querySelectorAll(sel);
+    const setAll = (sel, v) => { try { q(sel).forEach((el) => { el.textContent = v; }); } catch (_) {} };
+    const stFa = evStatusFa(st.status), stEn = evStatusEn(st.status);
+    try {
+      q("[data-event-status]").forEach((el) => {
+        while (el.firstChild) el.removeChild(el.firstChild);
+        const dot = document.createElement("i");
+        dot.className = "dot";
+        el.appendChild(dot);
+        el.appendChild(document.createTextNode(en2() ? stEn : stFa));
+        el.setAttribute("data-event-state", st.status);
+      });
+    } catch (_) {}
+    if (st.model) { setAll("[data-event-model]", st.model); }
+    const ap = (st.apmix && typeof st.apmix === "object") ? st.apmix : null;
+    const totalN = ap && Number(ap.pool) > 0 ? Number(ap.pool) : (Number.isFinite(Number(st.pool_total)) ? Number(st.pool_total) : NaN);
+    const spentN = ap ? (Number(ap.used) || 0) : (Number.isFinite(Number(st.pool_spent)) ? Number(st.pool_spent) : NaN);
+    const remN = ap ? Math.max(0, Number(ap.remaining) || 0) : (Number.isFinite(Number(st.pool_remaining)) ? Math.max(0, Number(st.pool_remaining) || 0) : NaN);
+    if (Number.isFinite(totalN)) {
+      setAll("[data-event-total]", evFmtBig(totalN));
+      if (Number.isFinite(remN)) setAll("[data-event-remaining]", evFmtBig(remN));
+    }
+    if (Number.isFinite(spentN)) {
+      setAll("[data-event-spent]", evNum(spentN.toLocaleString("en-US")));
+      const pct = totalN > 0 ? Math.min(100, (spentN / totalN) * 100) : 0;
+      try { q("[data-event-bar]").forEach((el) => { el.style.width = pct.toFixed(2) + "%"; }); } catch (_) {}
+      setAll("[data-event-spent-pct]", evNum(pct.toFixed(1)) + (en2() ? "%" : "٪"));
+    }
+    try {
+      q("[data-event-sync-note]").forEach((el) => {
+        if (!ap) { el.hidden = true; return; }
+        el.hidden = false;
+        while (el.firstChild) el.removeChild(el.firstChild);
+        const a = document.createElement("a");
+        a.href = "https://apmix.ai/event"; a.target = "_blank"; a.rel = "noopener noreferrer";
+        a.style.color = "#059669"; a.style.textDecoration = "none"; a.style.fontWeight = "600";
+        a.textContent = en2() ? "Live stats synced with apmix.ai ↗" : "آمار زنده، دقیقاً همگام با apmix.ai ↗";
+        el.appendChild(a);
+      });
+    } catch (_) {}
+
+    evTick();
+  }
+  async function evRefresh() {
+    try {
+      const r = await fetch(API_BASE + "/api/event", { headers: { accept: "application/json" } });
+      if (!r || !r.ok) return;
+      const j = await r.json();
+      if (j && j.ok) {
+        EV.state = j;
+        const srvMs = Date.parse(j.now);
+        EV.skew = Number.isFinite(srvMs) ? Date.now() - srvMs : 0;
+        evRender();
+      }
+    } catch (_) {}
+  }
+  function initEventWidgets() {
+    const need = document.querySelector("[data-event-status],[data-event-mini-cd],[data-event-bar],[data-event-cd-wrap]");
+    if (!need) return;
+    evRefresh();
+    setInterval(evRefresh, 30000);
+    EV.timer = setInterval(evTick, 1000);
+    try {
+      document.querySelectorAll("[data-event-copy]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const model = (document.querySelector("[data-event-model]") || {}).textContent || "";
+          try { await navigator.clipboard.writeText(String(model).trim()); } catch (_) {}
+          const ok = document.querySelector("[data-event-copied]");
+          if (ok) { ok.hidden = false; setTimeout(() => { try { ok.hidden = true; } catch (_) {} }, 2000); }
+        });
+      });
+      document.querySelectorAll("[data-event-copy-base]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          try { await navigator.clipboard.writeText(API_BASE + "/v1"); } catch (_) {}
+          const t = btn.textContent;
+          btn.textContent = en2() ? "Copied" : "کپی شد";
+          setTimeout(() => { try { btn.textContent = t; } catch (_) {} }, 2000);
+        });
+      });
+    } catch (_) {}
+  }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", function() { init(); initEventWidgets(); });
   } else {
     init();
+    initEventWidgets();
   }
 
   // 9. Export
