@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ابزارهای کدنویسی — Codism</title>
+<meta name="description" content="راه‌اندازی Kilo، Cline، Cursor، opencode، Claude Code.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<script>try{if(self!==top)top.location=self.location}catch(e){}</script>
+<meta name="theme-color" content="#D97757">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/design.css?v=50054891">
+<script src="../assets/i18n.js?v=50054891"></script>
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+<script>window.CODISM_API_BASE="https://api.tvframe.vip";</script>
+
+</head>
+<body>
+<header class="navbar">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;height:4rem">
+    <a href="../index.html" style="display:flex;align-items:center;gap:.5rem;text-decoration:none">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#D97757"/><text x="14" y="16" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="13" font-weight="500">{}</text></svg>
+      <span style="font-family:var(--font-serif);font-weight:700;font-size:1.25rem;color:#1A1915">Codism</span>
+    </a>
+    <nav class="nav-links">
+      <a data-nav href="../models.html">مدل‌ها</a>
+      <a data-nav href="../pricing.html">تعرفه‌ها</a>
+      <a data-nav href="./">مستندات</a>
+      <a data-nav href="../changelog.html">تغییرات</a>
+      <a data-nav href="event.html">ایونت<span style="display:inline-block;margin-inline-start:.3rem;padding:.05rem .4rem;border-radius:999px;background:#C2410C;color:#fff;font-size:.65rem;font-weight:700;vertical-align:middle">۱۰B</span></a>
+      <a data-nav href="../status.html">وضعیت</a>
+    </nav>
+    <div class="navbar-actions" style="display:flex;align-items:center;gap:.5rem">
+      <a class="btn btn-ghost" href="../login.html" data-auth-link>ورود</a>
+      <a class="btn btn-primary" href="../register.html" data-auth-cta>شروع کن</a>
+      <button class="nav-toggle" aria-label="منو"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+
+<div class="container" style="display:flex;gap:2rem;align-items:flex-start;padding:2rem 1rem">
+<aside style="width:250px;flex-shrink:0;position:sticky;top:5rem">
+<nav aria-label="فهرست مستندات">
+<div style="margin-bottom:1.5rem">
+<div style="font-size:.75rem;font-weight:700;color:#6B6659;margin-bottom:.5rem">شروع</div>
+<ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.25rem">
+<li><a href="getting-started.html" style="display:block;padding:.4rem .75rem;border-radius:6px;color:#3D3A33;text-decoration:none;font-size:.875rem">شروع سریع</a></li>
+<li><a href="authentication.html" style="display:block;padding:.4rem .75rem;border-radius:6px;color:#3D3A33;text-decoration:none;font-size:.875rem">احراز هویت</a></li>
+</ul>
+</div>
+<div style="margin-bottom:1.5rem">
+<div style="font-size:.75rem;font-weight:700;color:#6B6659;margin-bottom:.5rem">مرجع API</div>
+<ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.25rem">
+<li><a href="chat-completions.html" style="display:block;padding:.4rem .75rem;border-radius:6px;color:#3D3A33;text-decoration:none;font-size:.875rem">Chat Completions</a></li>
+<li><a href="streaming.html" style="display:block;padding:.4rem .75rem;border-radius:6px;color:#3D3A33;text-decoration:none;font-size:.875rem">استریم</a></li>
+<li><a href="models.html" style="display:block;padding:.4rem .75rem;border-radius:6px;color:#3D3A33;text-decoration:none;font-size:.875rem">مدل‌ها</a></li>
+</ul>
+</div>
+<div style="margin-bottom:1.5rem">
+<div style="font-size:.75rem;font-weight:700;color:#6B6659;margin-bottom:.5rem">ابزارها و قابلیت‌ها</div>
+<ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.25rem">
+<li><a href="coding-agents.html" style="display:block;padding:.4rem .75rem;border-radius:6px;background:#FBF0EB;color:#B0512F;text-decoration:none;font-size:.875rem;font-weight:700;border:1px solid #F5DDD2">ابزارهای کدنویسی</a></li>
+</ul>
+</div>
+</nav>
+</aside>
+
+<main style="flex:1;min-width:0;max-width:720px">
+<nav aria-label="breadcrumb" style="font-size:.8125rem;color:#8A8475;margin-bottom:1rem;display:flex;align-items:center;gap:.375rem;flex-wrap:wrap">
+<a href="../index.html" style="color:#8A8475;text-decoration:none">خانه</a>
+<span style="color:#CFCCC3">/</span>
+<a href="getting-started.html" style="color:#8A8475;text-decoration:none">مستندات</a>
+<span style="color:#CFCCC3">/</span>
+<span style="color:#3D3A33;font-weight:600">ابزارهای کدنویسی</span>
+</nav>
+
+<h1 style="font-size:2rem;font-weight:800;color:#1A1915;margin:0 0 .5rem;line-height:1.3">ابزارهای کدنویسی</h1>
+<p style="font-size:1rem;color:#6B6659;line-height:1.8;margin:0 0 1.5rem">راه‌اندازی Kilo Code، Cline، Cursor، opencode، Claude Code و Continue با Codism.</p>
+
+<p style="font-size:.875rem;color:#545046;line-height:1.8;margin:0 0 1rem">همه ابزارها یک تنظیمات مشترک دارند — API Provider را روی OpenAI Compatible بگذارید و دو مقدار زیر را بدهید:</p>
+<div class="table-wrap" style="margin-bottom:2rem">
+<table class="table" style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #E8E2D5;border-radius:12px;overflow:hidden">
+<thead>
+<tr>
+<th style="padding:.75rem 1rem;text-align:right;font-size:.75rem;font-weight:600;color:#6B6659;background:#FAF8F4;border-bottom:1px solid #E8E2D5">تنظیمات</th>
+<th style="padding:.75rem 1rem;text-align:right;font-size:.75rem;font-weight:600;color:#6B6659;background:#FAF8F4;border-bottom:1px solid #E8E2D5">مقدار</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA;color:#3D3A33;font-size:.875rem;font-weight:600">Base URL</td>
+<td style="padding:.75rem 1rem;border-bottom:1px solid #F4F1EA"><code class="kbd" dir="ltr">https://api.tvframe.vip/v1</code></td>
+</tr>
+<tr>
+<td style="padding:.75rem 1rem;color:#3D3A33;font-size:.875rem;font-weight:600">API Key</td>
+<td style="padding:.75rem 1rem"><code class="kbd" dir="ltr">codism_…</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<section id="kilo-code" style="margin-bottom:2rem">
+<h2 style="font-size:1.25rem;font-weight:700;color:#1A1915;margin:0 0 .75rem">Kilo Code</h2>
+<ol style="margin:0;padding-inline-start:1.25rem;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#545046;line-height:1.8">
+<li>در تنظیمات Kilo Code بخش API را باز کنید.</li>
+<li><strong style="color:#1A1915">Provider</strong> را روی <code class="kbd" dir="ltr">OpenAI Compatible</code> بگذارید.</li>
+<li><strong style="color:#1A1915">Base URL</strong> را <code class="kbd" dir="ltr">https://api.tvframe.vip/v1</code> وارد کنید.</li>
+<li><strong style="color:#1A1915">API Key</strong> خود (<code class="kbd" dir="ltr">codism_…</code>) را وارد کنید و <strong style="color:#1A1915">Model</strong> را <code class="kbd" dir="ltr">gpt-4o</code> بگذارید.</li>
+</ol>
+</section>
+
+<section id="cline" style="margin-bottom:2rem">
+<h2 style="font-size:1.25rem;font-weight:700;color:#1A1915;margin:0 0 .75rem">Cline</h2>
+<ol style="margin:0;padding-inline-start:1.25rem;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#545046;line-height:1.8">
+<li>در VSCode افزونه Cline را باز کنید و وارد تنظیمات شوید.</li>
+<li>گزینه <code class="kbd" dir="ltr">OpenAI Compatible</code> را انتخاب کنید.</li>
+<li>همان سه مقدار (Base URL، API Key و Model) را وارد کنید.</li>
+<li>گزینه <code class="kbd" dir="ltr">Use custom base URL</code> را فعال کنید.</li>
+</ol>
+</section>
+
+<section id="cursor" style="margin-bottom:2rem">
+<h2 style="font-size:1.25rem;font-weight:700;color:#1A1915;margin:0 0 .75rem">Cursor</h2>
+<ol style="margin:0;padding-inline-start:1.25rem;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#545046;line-height:1.8">
+<li>در Cursor به <code class="kbd" dir="ltr">Settings → Models</code> بروید.</li>
+<li><strong style="color:#1A1915">OpenAI API Key</strong> را با کلید <code class="kbd" dir="ltr">codism_…</code> پر کنید.</li>
+<li><strong style="color:#1A1915">Override Base URL</strong> را روی <code class="kbd" dir="ltr">https://api.tvframe.vip/v1</code> بگذارید.</li>
+<li>روی <strong style="color:#1A1915">Verify</strong> بزنید تا اتصال بررسی شود.</li>
+</ol>
+</section>
+
+<section id="opencode" style="margin-bottom:2rem">
+<h2 style="font-size:1.25rem;font-weight:700;color:#1A1915;margin:0 0 .75rem">opencode</h2>
+<p style="font-size:.875rem;color:#545046;line-height:1.8;margin:0 0 .75rem">در فایل پیکربندی provider را OpenAI-compatible تعریف کنید (<code class="kbd" dir="ltr">npm i @openai/openai</code> نگذارید؛ فقط config):</p>
+<div class="terminal">
+<div style="display:flex;align-items:center;gap:.5rem;padding:.625rem 1rem;border-bottom:1px solid #2A2A28">
+<span style="width:12px;height:12px;border-radius:50%;background:#FF5F57;display:inline-block"></span>
+<span style="width:12px;height:12px;border-radius:50%;background:#FEBC2E;display:inline-block"></span>
+<span style="width:12px;height:12px;border-radius:50%;background:#28C840;display:inline-block"></span>
+<span style="margin-inline-start:.75rem;font-family:var(--font-mono);font-size:.75rem;color:#A8A294">~/.config/opencode/config.json</span>
+</div>
+<pre dir="ltr" style="margin:0;padding:1rem 1.25rem;overflow-x:auto;text-align:left"><code style="font-family:var(--font-mono);font-size:.8rem;color:#E8E2D5;line-height:1.7"># ~/.config/opencode/config.json
+{
+  "provider": {
+    "codism": {
+      "apiKey": "codism_your_key_here",
+      "baseURL": "https://api.tvframe.vip/v1"
+    }
+  }
+}</code></pre>
+</div>
+</section>
+
+<section id="claude-code" style="margin-bottom:2rem">
+<h2 style="font-size:1.25rem;font-weight:700;color:#1A1915;margin:0 0 .75rem">Claude Code</h2>
+<p style="font-size:.875rem;color:#545046;line-height:1.8;margin:0 0 .75rem">از متغیرهای محیطی استفاده کنید:</p>
+<div class="terminal" style="margin-bottom:.75rem">
+<div style="display:flex;align-items:center;gap:.5rem;padding:.625rem 1rem;border-bottom:1px solid #2A2A28">
+<span style="width:12px;height:12px;border-radius:50%;background:#FF5F57;display:inline-block"></span>
+<span style="width:12px;height:12px;border-radius:50%;background:#FEBC2E;display:inline-block"></span>
+<span style="width:12px;height:12px;border-radius:50%;background:#28C840;display:inline-block"></span>
+<span style="margin-inline-start:.75rem;font-family:var(--font-mono);font-size:.75rem;color:#A8A294">terminal</span>
+</div>
+<pre dir="ltr" style="margin:0;padding:1rem 1.25rem;overflow-x:auto;text-align:left"><code style="font-family:var(--font-mono);font-size:.8rem;color:#E8E2D5;line-height:1.7">export ANTHROPIC_BASE_URL="https://api.tvframe.vip/v1"
+export ANTHROPIC_AUTH_TOKEN="codism_your_key_here"
+claude</code></pre>
+</div>
+<p style="font-size:.875rem;color:#545046;line-height:1.8;margin:0">مدل‌ها را می‌توانید با <code class="kbd" dir="ltr">claude model</code> انتخاب کنید؛ شناسه‌های در دسترس را از <code class="kbd" dir="ltr">/v1/models</code> ببینید.</p>
+</section>
+
+<section id="continue" style="margin-bottom:2rem">
+<h2 style="font-size:1.25rem;font-weight:700;color:#1A1915;margin:0 0 .75rem">Continue</h2>
+<ol style="margin:0;padding-inline-start:1.25rem;display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:#545046;line-height:1.8">
+<li>فایل <code class="kbd" dir="ltr">config.yaml</code> افزونه Continue را باز کنید.</li>
+<li>مدل را با <code class="kbd" dir="ltr">provider: openai</code> تعریف کنید.</li>
+<li><code class="kbd" dir="ltr">apiBase</code> را برابر <code class="kbd" dir="ltr">https://api.tvframe.vip/v1</code> بگذارید و کلید <code class="kbd" dir="ltr">codism_…</code> را وارد کنید.</li>
+</ol>
+</section>
+
+<div id="other" class="alert alert-info" style="background:#EFF6FF;border:1px solid #BFDBFE;border-inline-start:4px solid #2563EB;border-radius:8px;padding:.875rem 1rem;display:flex;gap:.75rem;align-items:flex-start">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" style="flex-shrink:0;margin-top:2px" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+<p style="font-size:.875rem;color:#1E40AF;line-height:1.8;margin:0">اگر ابزارتان در فهرست نیست: هر کلاینتی که با OpenAI سازگار است با همین دو مقدار (Base URL + Key) کار می‌کند. گیر کردید؟ از داشبورد برایمان بنویسید.</p>
+</div>
+
+<div class="docs-next" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-top:2.5rem;padding:1rem 1.25rem;background:#fff;border:1px solid #E8E2D5;border-radius:12px">
+<div>
+<div style="font-size:.75rem;color:#8A8475;margin-bottom:.25rem">بعدی</div>
+<a href="getting-started.html" style="color:#1A1915;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:.5rem">شروع سریع <span dir="ltr">←</span></a>
+</div>
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97757" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+</div>
+
+<div class="card" style="margin-top:1.25rem;padding:1rem 1.25rem;display:flex;gap:.75rem;align-items:flex-start">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" style="flex-shrink:0;margin-top:2px" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+<div>
+<div style="font-weight:700;color:#1A1915;font-size:.875rem;margin-bottom:.25rem">نیاز به کمک دارید؟</div>
+<p style="font-size:.875rem;color:#6B6659;margin:0;line-height:1.7">تنظیمات را انجام دادید و وصل نشد؟ لاگ ابزار را بررسی کنید و از داشبورد پیام بدهید.</p>
+</div>
+</div>
+</main>
+
+<aside style="width:200px;flex-shrink:0;position:sticky;top:5rem;display:block">
+<nav aria-label="در این صفحه" style="border-inline-start:1px solid #E8E2D5;padding-inline-start:1rem">
+<div style="font-size:.75rem;font-weight:700;color:#1A1915;margin-bottom:.75rem">در این صفحه</div>
+<ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+<li><a href="#kilo-code" style="font-size:.8125rem;color:#6B6659;text-decoration:none">Kilo Code</a></li>
+<li><a href="#cline" style="font-size:.8125rem;color:#6B6659;text-decoration:none">Cline</a></li>
+<li><a href="#cursor" style="font-size:.8125rem;color:#6B6659;text-decoration:none">Cursor</a></li>
+<li><a href="#opencode" style="font-size:.8125rem;color:#6B6659;text-decoration:none">opencode</a></li>
+<li><a href="#claude-code" style="font-size:.8125rem;color:#6B6659;text-decoration:none">Claude Code</a></li>
+<li><a href="#continue" style="font-size:.8125rem;color:#6B6659;text-decoration:none">Continue</a></li>
+<li><a href="#other" style="font-size:.8125rem;color:#6B6659;text-decoration:none">ابزار دیگر دارید؟</a></li>
+</ul>
+</nav>
+</aside>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h4>محصول</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="../models.html">مدل‌ها</a></li>
+          <li><a href="../pricing.html">تعرفه‌ها</a></li>
+          <li><a href="../changelog.html">تغییرات</a></li>
+          <li><a href="../status.html">وضعیت سرویس</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>منابع</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="./">مستندات</a></li>
+          <li><a href="./getting-started.html">شروع سریع</a></li>
+          <li><a href="./coding-agents.html">راهنمای ابزارهای کدنویسی</a></li>
+          <li><a href="./chat-completions.html">مرجع API</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>قانونی</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="../terms.html">شرایط استفاده</a></li>
+          <li><a href="../privacy.html">حریم خصوصی</a></li>
+          <li><a href="../refund.html">سیاست بازپرداخت</a></li>
+        </ul>
+      </div>
+      <div>
+        <a href="../index.html" style="display:flex;align-items:center;gap:.5rem;text-decoration:none;margin-bottom:.75rem">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#D97757"/><text x="14" y="16" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="13" font-weight="500">{}</text></svg>
+          <span style="font-family:var(--font-serif);font-weight:700;font-size:1.25rem;color:#1A1915">Codism</span>
+        </a>
+        <p style="font-size:.875rem;color:#6B6659;line-height:1.7;margin:0">مدل‌های هوش مصنوعی از یک API ساده — سازگار با OpenAI، آماده برای ابزارهای کدنویسی.</p>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 Codism — تمامی حقوق محفوظ است.</div>
+  </div>
+</footer>
+
+<script src="../assets/app.js?v=50054891"></script>
+
+</body>
+</html>
