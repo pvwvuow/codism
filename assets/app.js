@@ -700,7 +700,8 @@
       });
     } catch (_) {}
     if (st.model) { setAll("[data-event-model]", st.model); }
-    const ap = (st.apmix && typeof st.apmix === "object") ? st.apmix : null;
+    const ap = (st.mirror && typeof st.mirror === "object") ? st.mirror : null;
+
     const totalN = ap && Number(ap.pool) > 0 ? Number(ap.pool) : (Number.isFinite(Number(st.pool_total)) ? Number(st.pool_total) : NaN);
     const spentN = ap ? (Number(ap.used) || 0) : (Number.isFinite(Number(st.pool_spent)) ? Number(st.pool_spent) : NaN);
     const remN = ap ? Math.max(0, Number(ap.remaining) || 0) : (Number.isFinite(Number(st.pool_remaining)) ? Math.max(0, Number(st.pool_remaining) || 0) : NaN);
@@ -719,11 +720,11 @@
         if (!ap) { el.hidden = true; return; }
         el.hidden = false;
         while (el.firstChild) el.removeChild(el.firstChild);
-        const a = document.createElement("a");
-        a.href = "https://apmix.ai/event"; a.target = "_blank"; a.rel = "noopener noreferrer";
-        a.style.color = "#059669"; a.style.textDecoration = "none"; a.style.fontWeight = "600";
-        a.textContent = en2() ? "Live stats synced with apmix.ai ↗" : "آمار زنده، دقیقاً همگام با apmix.ai ↗";
-        el.appendChild(a);
+        const s = document.createElement("span");
+        s.style.color = "#059669"; s.style.fontWeight = "600";
+        s.textContent = en2() ? "Live stats" : "آمار زنده";
+        el.appendChild(s);
+
       });
     } catch (_) {}
 
