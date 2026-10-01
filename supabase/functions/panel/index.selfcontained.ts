@@ -33,11 +33,11 @@ async function sbPost(path:string,body:any,prefer="return=representation"){const
 async function sbPatch(path:string,body:any){const r=await sbFetch(path,{method:"PATCH",headers:{"Prefer":"return=representation"},body:JSON.stringify(body)});if(!r.ok)throw new Error(await r.text());try{return await r.json()}catch{return []}}
 async function sbDelete(path:string){const r=await sbFetch(path,{method:"DELETE"});return r.ok}
 async function sbRpc(name:string,args:any){const r=await sbFetch(`/rpc/${name}`,{method:"POST",body:JSON.stringify(args)});if(!r.ok)return [];try{const j=await r.json();return Array.isArray(j)?j:[]}catch{return []}}
-function logRequest(userId:string|null,keyId:string|null,route:string,method:string,model:string|null,status:number,errorCode:string|null,pt:number,ct:number,latency:number){sbPost("/request_log",{user_id:userId,key_id:keyId,route,method,model,status,error_code:errorCode,prompt_tokens:pt,completion_tokens:ct,latency_ms:latency}).catch((e:any)=>console.error("request_log write failed:",e))}
+function logRequest(userId:string|null,keyId:string|null,route:string,method:string,model:string|null,status:number,errorCode:string|null,pt:number,ct:number,latency:number,detail:string|null=null){sbPost("/request_log",{user_id:userId,key_id:keyId,route,method,model,status,error_code:errorCode,prompt_tokens:pt,completion_tokens:ct,latency_ms:latency,detail}).catch((e:any)=>console.error("request_log write failed:",e))}
 let adminEnsured=false;
 async function ensureAdmin(){if(adminEnsured)return;adminEnsured=true;const email=getEnv("ADMIN_EMAIL"),pw=getEnv("ADMIN_PASSWORD");if(!email||!pw)return;try{const rows=await sbGet(`/users?email=eq.${encodeURIComponent(email)}&select=id`);if(rows.length>0)return;const h=await hashPassword(pw);await sbPost("/users",{email,name:"Admin",password_hash:h,role:"admin",enabled:true,daily_quota_tokens:0,monthly_quota_tokens:0})}catch{}}
-function corsHeaders(){return{"access-control-allow-origin":"*","access-control-expose-headers":"x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-reset, x-ratelimit-limit-tokens, x-ratelimit-remaining-tokens"}}
-function withCors(h:Headers){if(!h.has("access-control-allow-origin"))h.set("access-control-allow-origin","*");if(!h.has("access-control-expose-headers"))h.set("access-control-expose-headers","x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-reset, x-ratelimit-limit-tokens, x-ratelimit-remaining-tokens");return h}
+function corsHeaders(){return{"access-control-allow-origin":"*","access-control-expose-headers":"x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-reset, x-ratelimit-limit-tokens, x-ratelimit-remaining-tokens, x-codism-saved-tokens"}}
+function withCors(h:Headers){if(!h.has("access-control-allow-origin"))h.set("access-control-allow-origin","*");if(!h.has("access-control-expose-headers"))h.set("access-control-expose-headers","x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-reset, x-ratelimit-limit-tokens, x-ratelimit-remaining-tokens, x-codism-saved-tokens");return h}
 function jsonRes(status:number,obj:any,extra?:Record<string,string>){const h=withCors(new Headers({"content-type":"application/json",...(extra||{})}));return new Response(JSON.stringify(obj),{status,headers:h})}
 function openaiErr(status:number,msg:string,type="invalid_request_error",code="invalid_request_error"){return jsonRes(status,{error:{message:msg,type,code}})}
 function panelErr(status:number,msg:string){return jsonRes(status,{error:msg})}
@@ -55,6 +55,57 @@ function isKeyRpmLimited(keyId:string,limit:number){const now=Date.now(),arr=(ke
 function parseAliases():Record<string,string>{try{const v=getEnv("MODEL_ALIASES");if(!v)return {};return JSON.parse(v)}catch{return {}}}
 function upstreamBase(){return getEnv("UPSTREAM_BASE_URL","https://codecraftapi.com/v1").replace(/\/+$/,"")}
 function maxBodyBytes(){return (parseInt(getEnv("MAX_BODY_MB","8"),10)||8)*1024*1024}
+const COMBO_PREFIX="combo/";
+const TOKEN_SAVER_SYSTEM="You are a token-efficient assistant. Answer concisely and directly: no preamble, no filler, no restating the question. Prefer the shortest complete correct answer. Keep code minimal but functional.";
+const PRICE_PER_MTOK:Record<string,[number,number]>={"claude-opus":[5,25],"claude-sonnet":[3,15],"claude-haiku":[1,5],"claude":[3,15],"gpt-5":[2.5,10],"gpt":[2.5,10],"gemini":[1.25,5],"glm":[0.6,2],"deepseek":[0.3,1.2],"qwen":[0.8,3],"grok":[3,15],"kimi":[0.6,2.5],"seed":[0.3,1.2],"muse":[0.3,1.2],"gemma":[0.1,0.3]};
+function estCost(model:string,pt:number,ct:number):number{const m=String(model||"").toLowerCase();let p:[number,number]=[1,3];for(const k of Object.keys(PRICE_PER_MTOK)){if(m.includes(k)){p=PRICE_PER_MTOK[k];break}}return ((pt*p[0])+(ct*p[1]))/1e6}
+type ChainStep={upstream_key_id:string|null,model:string};
+function trimBigText(s:string):string{let t=s.replace(/[ \t]+$/gm,"").replace(/\n{3,}/g,"\n\n");if(t.length>24000)t=t.slice(0,24000)+`\n…[truncated ${t.length-24000} chars]`;return t}
+function applyTokenSaver(body:any,level:string):{body:any,savedChars:number}{
+ let b:any;try{b=JSON.parse(JSON.stringify(body))}catch{return {body,savedChars:0}}
+ let saved=0;
+ if(Array.isArray(b.messages)){
+  for(const m of b.messages){
+   if(!m)continue;
+   if(typeof m.content==="string"&&m.content){const before=m.content.length;m.content=trimBigText(m.content);saved+=before-m.content.length}
+   else if(Array.isArray(m.content)){for(const part of m.content){if(part&&typeof part.text==="string"&&part.text){const before=part.text.length;part.text=trimBigText(part.text);saved+=before-part.text.length}}}
+  }
+ }
+ if(level==="turbo"&&Array.isArray(b.messages)){
+  const idx=b.messages.findIndex((m:any)=>m&&m.role==="system");
+  if(idx>=0){if(typeof b.messages[idx].content==="string"&&!String(b.messages[idx].content).includes("token-efficient"))b.messages[idx].content=TOKEN_SAVER_SYSTEM+"\n\n"+b.messages[idx].content}
+  else b.messages.unshift({role:"system",content:TOKEN_SAVER_SYSTEM});
+ }
+ return {body:b,savedChars:Math.max(0,saved)}
+}
+async function loadChain(rawModel:string,expandedModel:string,userUpKeyId:string|null):Promise<{steps:ChainStep[]}|{error:string}>{
+ if(typeof rawModel==="string"&&rawModel.startsWith(COMBO_PREFIX)){
+  const cname=rawModel.slice(COMBO_PREFIX.length).trim().toLowerCase();
+  if(!cname)return{error:"model_not_allowed"};
+  const rows=await sbGet(`/combos?name=eq.${encodeURIComponent(cname)}&enabled=eq.true&select=name,steps`);
+  if(!rows[0])return{error:"model_not_allowed"};
+  let steps:ChainStep[]=[];
+  try{steps=(rows[0].steps||[]).filter((s:any)=>s&&typeof s.model==="string"&&s.model.trim()).map((s:any)=>({upstream_key_id:s.upstream_key_id?String(s.upstream_key_id):null,model:String(s.model).trim()}))}catch{}
+  if(!steps.length)return{error:"model_not_allowed"};
+  return{steps};
+ }
+ const steps:ChainStep[]=[{upstream_key_id:userUpKeyId,model:expandedModel}];
+ try{
+  const dc=await sbGet(`/combos?is_default=eq.true&enabled=eq.true&select=steps&limit=1`);
+  const ds=Array.isArray(dc)&&dc[0]&&Array.isArray(dc[0].steps)?dc[0].steps:[];
+  for(const s of ds){if(!s||typeof s.model!=="string"||!s.model.trim())continue;const st:ChainStep={upstream_key_id:s.upstream_key_id?String(s.upstream_key_id):null,model:String(s.model).trim()};if(!steps.some(x=>x.model===st.model&&(x.upstream_key_id||null)===(st.upstream_key_id||null)))steps.push(st)}
+ }catch{}
+ return{steps};
+}
+async function resolveUpstream(step:ChainStep):Promise<{key:string,base:string,label:string}|null>{
+ if(step.upstream_key_id){
+  const ks=await sbGet(`/upstream_keys?id=eq.${encodeURIComponent(step.upstream_key_id)}&select=key,enabled,base_url,label`);
+  if(!ks[0]||!ks[0].enabled)return null;
+  const b=(ks[0].base_url||"").trim().replace(/\/+$/,"");
+  return{key:ks[0].key,base:b||upstreamBase(),label:ks[0].label||"upstream"};
+ }
+ return{key:getEnv("UPSTREAM_API_KEY")||getEnv("PANEL_UPSTREAM_KEY")||"",base:upstreamBase(),label:"default"};
+}
 const TZ_OFF_MIN=210;
 function todayBounds(){const n=new Date(Date.now()+TZ_OFF_MIN*60000);const s=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate(),0,0,0)-TZ_OFF_MIN*60000);const e=new Date(s.getTime()+86400000);return[s.toISOString(),e.toISOString()]}
 function monthBounds(){const n=new Date(Date.now()+TZ_OFF_MIN*60000);const s=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),1,0,0,0)-TZ_OFF_MIN*60000);const e=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth()+1,1,0,0,0)-TZ_OFF_MIN*60000);return[s.toISOString(),e.toISOString()]}
@@ -77,9 +128,9 @@ Deno.serve(async (req:Request)=>{
   const h=new Headers();
   h.set("access-control-allow-origin","*");
   h.set("access-control-allow-methods","GET, POST, OPTIONS, PATCH, DELETE");
-  h.set("access-control-allow-headers","authorization, content-type, x-api-key, x-requested-with");
+  h.set("access-control-allow-headers","authorization, content-type, x-api-key, x-requested-with, x-codism-token-saver");
   h.set("access-control-max-age","86400");
-  h.set("access-control-expose-headers","x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-reset, x-ratelimit-limit-tokens, x-ratelimit-remaining-tokens");
+  h.set("access-control-expose-headers","x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-reset, x-ratelimit-limit-tokens, x-ratelimit-remaining-tokens, x-codism-saved-tokens");
   return new Response(null,{status:204,headers:h});
  }
  const norm=stripTrailing(pathname);
@@ -309,7 +360,7 @@ if(norm==="/api/status"&&req.method==="GET"){
  // /api/keys
  if(norm==="/api/keys"&&method==="GET"){
   const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
-  const rows=await sbGet(`/api_keys?user_id=eq.${encodeURIComponent(a.sub)}&select=id,label,key,enabled,models,created_at&order=created_at.desc`);
+  const rows=await sbGet(`/api_keys?user_id=eq.${encodeURIComponent(a.sub)}&select=id,label,key,enabled,models,token_saver,debug,created_at&order=created_at.desc`);
   return jsonRes(200,rows);
  }
  if(norm==="/api/keys"&&method==="POST"){
@@ -330,12 +381,13 @@ if(norm==="/api/status"&&req.method==="GET"){
   } else if(b.models!==undefined&&b.models!==null){
    return panelErr(400,"invalid models");
   }
+  let tokenSaver="off";if(b.token_saver!==undefined&&b.token_saver!==null){tokenSaver=String(b.token_saver).trim().toLowerCase();if(!["off","trim","turbo"].includes(tokenSaver)) return panelErr(400,"invalid token_saver")}
   const active=await sbGet(`/api_keys?user_id=eq.${encodeURIComponent(a.sub)}&enabled=eq.true&select=id`);
   if(active.length>=10) return panelErr(429,"max 10 active keys");
   const rand=hexEncode(crypto.getRandomValues(new Uint8Array(16)));
   const key="codism_"+rand;
   if(!label) label="کلید "+rand.slice(0,4);
-  const ins=await sbPost("/api_keys",{user_id:a.sub,key,label,enabled:true,models});
+  const ins=await sbPost("/api_keys",{user_id:a.sub,key,label,enabled:true,models,token_saver:tokenSaver});
   return jsonRes(200,ins[0]||{key});
  }
  if(pathname.startsWith("/api/keys/")&&method==="DELETE"){
@@ -347,6 +399,23 @@ if(norm==="/api/status"&&req.method==="GET"){
   await sbDelete(`/api_keys?id=eq.${encodeURIComponent(id)}`);
   return jsonRes(200,{ok:true});
  }
+ if(pathname.startsWith("/api/keys/")&&method==="PATCH"){
+  const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
+  const id=pathname.split("/")[3];
+  let b:any;try{b=await readJson(req)}catch(e:any){if(String(e.message)==="body_too_large")return panelErr(413,"body too large");b={}}
+  const rows=await sbGet(`/api_keys?id=eq.${encodeURIComponent(id)}&select=id,user_id`);
+  if(!rows[0]) return panelErr(404,"not found");
+  if(rows[0].user_id!==a.sub) return panelErr(403,"forbidden");
+  const patch:any={};
+  if(b.label!==undefined){const label=String(b.label).trim();if(!label||label.length>80) return panelErr(400,"invalid label");patch.label=label}
+  if(b.token_saver!==undefined){const ts=String(b.token_saver||"off").trim().toLowerCase();if(!["off","trim","turbo"].includes(ts)) return panelErr(400,"invalid token_saver");patch.token_saver=ts}
+  if(b.debug!==undefined) patch.debug=!!b.debug;
+  if(b.models!==undefined){if(b.models===null||(Array.isArray(b.models)&&b.models.length===0)) patch.models=null;else if(Array.isArray(b.models)){const n:string[]=[];for(const m of b.models){const s=String(m).trim();if(!s||s.length>120) return panelErr(400,"invalid models");n.push(s)}patch.models=n.join(",")}else return panelErr(400,"invalid models")}
+  if(Object.keys(patch).length===0) return panelErr(400,"no fields");
+
+  await sbPatch(`/api_keys?id=eq.${encodeURIComponent(id)}`,patch);
+  return jsonRes(200,{ok:true});
+ }
  // /api/usage
  if(norm==="/api/usage"&&method==="GET"){
   const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
@@ -354,7 +423,8 @@ if(norm==="/api/status"&&req.method==="GET"){
   const [tFrom,tTo]=todayBounds(),[mFrom,mTo]=monthBounds();
   const [by,td,mo,bm]=await Promise.all([sbRpc("usage_by_day",{p_user:a.sub,p_days:days,p_offset_min:TZ_OFF_MIN}),sbRpc("usage_sum",{p_user:a.sub,p_from:tFrom,p_to:tTo}),sbRpc("usage_sum",{p_user:a.sub,p_from:mFrom,p_to:mTo}),sbRpc("usage_by_model",{p_user:a.sub,p_days:days,p_offset_min:TZ_OFF_MIN})]);
   const recent=await sbGet(`/request_log?user_id=eq.${encodeURIComponent(a.sub)}&select=ts,route,model,status,error_code,prompt_tokens,completion_tokens,latency_ms&order=ts.desc&limit=25`);
-  return jsonRes(200,{by_day:by,by_model:bm,today:td[0]||{prompt_tokens:0,completion_tokens:0,requests:0},month:mo[0]||{prompt_tokens:0,completion_tokens:0,requests:0},recent});
+  let estCostUsd=0;for(const r of (Array.isArray(bm)?bm:[])) estCostUsd+=estCost(String(r.model||""),Number(r.prompt_tokens)||0,Number(r.completion_tokens)||0);
+  return jsonRes(200,{by_day:by,by_model:bm,today:td[0]||{prompt_tokens:0,completion_tokens:0,requests:0},month:mo[0]||{prompt_tokens:0,completion_tokens:0,requests:0,saved_tokens:0},recent,est_cost_usd:Math.round(estCostUsd*10000)/10000});
  }
  if(norm==="/api/usage/export"&&method==="GET"){
   const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
@@ -431,12 +501,57 @@ if(norm==="/api/status"&&req.method==="GET"){
    await sbDelete(`/users?id=eq.${encodeURIComponent(id)}`);
    return jsonRes(200,{ok:true});
   }
-  if(norm==="/api/admin/upstream-keys"&&method==="GET"){const keys=await sbGet(`/upstream_keys?select=id,label,key,enabled,created_at&order=created_at.desc`);const users=await sbGet(`/users?select=upstream_key_id`);const counts={};for(const u of users){if(u.upstream_key_id) counts[u.upstream_key_id]=(counts[u.upstream_key_id]||0)+1}return jsonRes(200,keys.map(k=>({id:k.id,label:k.label,key_masked:k.key.length<=10?k.key.slice(0,2)+"••••":k.key.slice(0,6)+"••••"+k.key.slice(-4),enabled:k.enabled,created_at:k.created_at,assigned_users:counts[k.id]||0})))}
-  if(norm==="/api/admin/upstream-keys"&&method==="POST"){const b=await readJson(req);const label=(b.label||"").trim();const key=(b.key||"").trim();if(!label||label.length>80||!key||key.length<8||key.length>200) return panelErr(400,"invalid upstream key fields");try{const rows=await sbPost(`/upstream_keys`,{label,key});const k=rows[0];return jsonRes(200,{id:k.id,label:k.label,key_masked:k.key.length<=10?k.key.slice(0,2)+"••••":k.key.slice(0,6)+"••••"+k.key.slice(-4),enabled:k.enabled,created_at:k.created_at,assigned_users:0})}catch(e){if(String(e).includes("23505")) return panelErr(409,"upstream key exists");throw e}}
-  if(pathname.startsWith("/api/admin/upstream-keys/")&&method==="PATCH"){const id=pathname.split("/")[4];const b=await readJson(req);const patch={};if(b.label!==undefined){const label=String(b.label).trim();if(!label||label.length>80) return panelErr(400,"invalid upstream key fields");patch.label=label}if(b.enabled!==undefined) patch.enabled=!!b.enabled;if(Object.keys(patch).length===0) return panelErr(400,"no fields");await sbPatch(`/upstream_keys?id=eq.${encodeURIComponent(id)}`,patch);return jsonRes(200,{ok:true})}
+  if(norm==="/api/admin/upstream-keys"&&method==="GET"){const keys=await sbGet(`/upstream_keys?select=id,label,key,enabled,base_url,created_at&order=created_at.desc`);const users=await sbGet(`/users?select=upstream_key_id`);const counts:Record<string,number>={};for(const u of (users as any[])){if(u.upstream_key_id) counts[u.upstream_key_id]=(counts[u.upstream_key_id]||0)+1}return jsonRes(200,keys.map((k:any)=>({id:k.id,label:k.label,key_masked:k.key.length<=10?k.key.slice(0,2)+"••••":k.key.slice(0,6)+"••••"+k.key.slice(-4),enabled:k.enabled,base_url:k.base_url||null,created_at:k.created_at,assigned_users:counts[k.id]||0})))}
+  if(norm==="/api/admin/upstream-keys"&&method==="POST"){const b=await readJson(req);const label=(b.label||"").trim();const key=(b.key||"").trim();if(!label||label.length>80||!key||key.length<8||key.length>200) return panelErr(400,"invalid upstream key fields");let base_url:any=null;if(b.base_url!==undefined&&b.base_url!==null&&String(b.base_url).trim()!==""){const bu=String(b.base_url).trim();if(!/^https:\/\/[^\s]+$/.test(bu)||bu.length>300) return panelErr(400,"invalid base_url");base_url=bu.replace(/\/+$/,"")}try{const rows=await sbPost(`/upstream_keys`,{label,key,base_url});const k=rows[0];return jsonRes(200,{id:k.id,label:k.label,key_masked:k.key.length<=10?k.key.slice(0,2)+"••••":k.key.slice(0,6)+"••••"+k.key.slice(-4),enabled:k.enabled,base_url:k.base_url||null,created_at:k.created_at,assigned_users:0})}catch(e){if(String(e).includes("23505")) return panelErr(409,"upstream key exists");throw e}}
+  if(pathname.startsWith("/api/admin/upstream-keys/")&&method==="PATCH"){const id=pathname.split("/")[4];const b=await readJson(req);const patch:Record<string,any>={};if(b.label!==undefined){const label=String(b.label).trim();if(!label||label.length>80) return panelErr(400,"invalid upstream key fields");patch.label=label}if(b.enabled!==undefined) patch.enabled=!!b.enabled;if(b.base_url!==undefined){if(b.base_url===null||String(b.base_url).trim()==="") patch.base_url=null;else{const bu=String(b.base_url).trim();if(!/^https:\/\/[^\s]+$/.test(bu)||bu.length>300) return panelErr(400,"invalid base_url");patch.base_url=bu.replace(/\/+$/,"")}}if(Object.keys(patch).length===0) return panelErr(400,"no fields");await sbPatch(`/upstream_keys?id=eq.${encodeURIComponent(id)}`,patch);return jsonRes(200,{ok:true})}
   if(pathname.startsWith("/api/admin/upstream-keys/")&&method==="DELETE"){const id=pathname.split("/")[4];await sbDelete(`/upstream_keys?id=eq.${encodeURIComponent(id)}`);return jsonRes(200,{ok:true})}
+  async function validateSteps(v:any):Promise<Array<{upstream_key_id:string|null,model:string}>|null>{
+   if(!Array.isArray(v)||v.length<1||v.length>8) return null;
+   const out:Array<{upstream_key_id:string|null,model:string}>=[];
+   for(const s of v){
+    if(!s||typeof s!=="object") return null;
+    const model=String(s.model||"").trim();
+    if(!model||model.length>160) return null;
+    let ukid:string|null=null;
+    if(s.upstream_key_id!==undefined&&s.upstream_key_id!==null&&String(s.upstream_key_id).trim()!==""){
+     const u=String(s.upstream_key_id).trim();
+     const ks=await sbGet(`/upstream_keys?id=eq.${encodeURIComponent(u)}&select=id`);
+     if(!ks.length) return null;
+     ukid=u;
+    }
+    out.push({upstream_key_id:ukid,model});
+   }
+   return out;
+  }
+  if(pathname.startsWith("/api/admin/upstream-keys/")&&pathname.endsWith("/test")&&method==="POST"){const id=pathname.split("/")[4];const ks=await sbGet(`/upstream_keys?id=eq.${encodeURIComponent(id)}&select=key,base_url,enabled,label`);if(!ks[0]) return panelErr(404,"not found");const b0=(ks[0].base_url||"").trim().replace(/\/+$/,"")||upstreamBase();const t0=Date.now();let ok=false;let status=0;const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),5000);try{const r=await fetch(`${b0}/models`,{headers:{...(ks[0].key?{"Authorization":`Bearer ${ks[0].key}`}:{}),"User-Agent":BROWSER_UA},signal:ctrl.signal});ok=r.ok;status=r.status}catch{ok=false}finally{clearTimeout(to)}return jsonRes(200,{ok,status,latency_ms:Date.now()-t0,base:b0})}
+  if(norm==="/api/admin/combos"&&method==="GET"){const rows=await sbGet(`/combos?select=id,name,steps,is_default,enabled,created_at&order=created_at.desc`);return jsonRes(200,rows)}
+  if(norm==="/api/admin/combos"&&method==="POST"){
+   let b:any;try{b=await readJson(req)}catch(e:any){if(String(e.message)==="body_too_large")return panelErr(413,"body too large");b={}}
+   const name=String(b.name||"").trim().toLowerCase();
+   if(!/^[a-z0-9][a-z0-9_-]{0,40}$/.test(name)) return panelErr(400,"invalid combo name (lowercase alnum, dash, underscore, max 41)");
+   const steps=await validateSteps(b.steps);if(steps===null) return panelErr(400,"invalid combo steps");
+   const ex=await sbGet(`/combos?name=eq.${encodeURIComponent(name)}&select=id`);if(ex.length) return panelErr(409,"combo name exists");
+   if(b.is_default) await sbPatch(`/combos?is_default=eq.true`,{is_default:false});
+   const ins=await sbPost("/combos",{name,steps,is_default:!!b.is_default,enabled:b.enabled===undefined?true:!!b.enabled});
+   return jsonRes(200,ins[0]||{ok:true});
+  }
+  if(pathname.startsWith("/api/admin/combos/")&&method==="PATCH"){
+   const id=pathname.split("/")[4];
+   let b:any;try{b=await readJson(req)}catch(e:any){if(String(e.message)==="body_too_large")return panelErr(413,"body too large");b={}}
+   const patch:any={};
+   if(b.name!==undefined){const name=String(b.name).trim().toLowerCase();if(!/^[a-z0-9][a-z0-9_-]{0,40}$/.test(name)) return panelErr(400,"invalid combo name");const ex=await sbGet(`/combos?name=eq.${encodeURIComponent(name)}&id=neq.${encodeURIComponent(id)}&select=id`);if(ex.length) return panelErr(409,"combo name exists");patch.name=name}
+   if(b.steps!==undefined){const steps=await validateSteps(b.steps);if(steps===null) return panelErr(400,"invalid combo steps");patch.steps=steps}
+   if(b.enabled!==undefined) patch.enabled=!!b.enabled;
+   if(b.is_default!==undefined){patch.is_default=!!b.is_default;if(patch.is_default) await sbPatch(`/combos?is_default=eq.true&id=neq.${encodeURIComponent(id)}`,{is_default:false})}
+   if(Object.keys(patch).length===0) return panelErr(400,"no fields");
+   await sbPatch(`/combos?id=eq.${encodeURIComponent(id)}`,patch);
+   return jsonRes(200,{ok:true});
+  }
+  if(pathname.startsWith("/api/admin/combos/")&&method==="DELETE"){const id=pathname.split("/")[4];await sbDelete(`/combos?id=eq.${encodeURIComponent(id)}`);return jsonRes(200,{ok:true})}
   if(norm==="/api/admin/stats"&&method==="GET"){
    const [totals,by]=await Promise.all([sbRpc("admin_totals",{p_offset_min:TZ_OFF_MIN}),sbRpc("admin_usage_by_day",{p_days:14,p_offset_min:TZ_OFF_MIN})]);
+   let est_cost_usd=0;
+   try{const bm30=await sbRpc("admin_usage_by_model",{p_days:30,p_offset_min:TZ_OFF_MIN});for(const r of (Array.isArray(bm30)?bm30:[])) est_cost_usd+=estCost(String(r.model||""),Number(r.prompt_tokens)||0,Number(r.completion_tokens)||0)}catch{}
    let recent:any[]=[];let top_users:any[]=[];
    try{
     const rec:any[]=await sbGet("/request_log?select=ts,route,model,status,error_code,prompt_tokens,completion_tokens,user_id&order=ts.desc&limit=20");
@@ -453,7 +568,7 @@ if(norm==="/api/status"&&req.method==="GET"){
     recent=(Array.isArray(rec)?rec:[]).map((r:any)=>({ts:r.ts,route:r.route,model:r.model,status:r.status,error_code:r.error_code,prompt_tokens:r.prompt_tokens,completion_tokens:r.completion_tokens,user_id:r.user_id,user_display:(()=>{const u=uMap.get(r.user_id);return u?(u.email||u.username||u.name||null):null})()}));
     top_users=topArr.map((t:any)=>({user_id:t.user_id,user_display:(()=>{const u=uMap.get(t.user_id);return u?(u.email||u.username||u.name||null):null})(),requests:t.requests,tokens:t.tokens}));
    }catch{}
-   return jsonRes(200,{totals:totals[0]||{users:0,keys:0,active_keys:0,requests_today:0,tokens_today:0,failed_today:0},by_day:by,recent,top_users});
+   return jsonRes(200,{totals:totals[0]||{users:0,keys:0,active_keys:0,requests_today:0,tokens_today:0,failed_today:0},by_day:by,recent,top_users,est_cost_usd:Math.round(est_cost_usd*10000)/10000});
   }
   return panelErr(404,"not found");
  }
@@ -471,6 +586,14 @@ if(norm==="/api/status"&&req.method==="GET"){
   const uRow=uRows[0];if(!uRow||!uRow.enabled){logRequest(uRow?uRow.id:null,kRow.id,"/v1/models",method,null,403,"user_disabled",0,0,Date.now()-t0);return openaiErr(403,"User disabled.","insufficient_quota","user_disabled")}if(uRow.subscription_expires_at&&Date.now()>Date.parse(uRow.subscription_expires_at)){logRequest(uRow.id,kRow.id,"/v1/models",method,null,403,"subscription_expired",0,0,Date.now()-t0);return openaiErr(403,"Your subscription has expired. Please renew it.","insufficient_quota","subscription_expired")}
   const aliases=parseAliases();
   const synthetic=Object.keys(aliases).map(id=>({id,object:"model",created:1700000000,owned_by:"codism-panel"}));
+  try{
+   const g3=(globalThis as any);const now3=Date.now();
+   if(!g3.__codismCombosCache||now3-g3.__codismCombosCache.ts>5*60*1000){
+    const crows=await sbGet(`/combos?enabled=eq.true&select=name&order=name`);
+    g3.__codismCombosCache={ts:now3,names:(Array.isArray(crows)?crows:[]).map((c:any)=>String(c.name||"").toLowerCase()).filter(Boolean)};
+   }
+   for(const cn of (g3.__codismCombosCache.names||[])) synthetic.push({id:COMBO_PREFIX+cn,object:"model",created:1700000000,owned_by:"codism-combo"});
+  }catch{}
   const modelsStr=(kRow.models||"*").trim();
   const filterList=(arr:any[])=>{
    if(modelsStr==="*"||modelsStr==="") return arr;
@@ -497,7 +620,7 @@ if(norm==="/api/status"&&req.method==="GET"){
   if(raw&&raw.byteLength>maxB){logRequest(null,null,"/v1/chat/completions",method,null,413,"body_too_large",0,0,Date.now()-t0);return openaiErr(413,"Request body too large.","invalid_request_error","body_too_large")}
   const auth=req.headers.get("authorization")||req.headers.get("Authorization")||"";let keyText="";if(auth.toLowerCase().startsWith("bearer ")) keyText=auth.slice(7).trim();else keyText=(req.headers.get("x-api-key")||"").trim();
   if(!keyText){logRequest(null,null,"/v1/chat/completions",method,null,401,"missing_api_key",0,0,Date.now()-t0);return openaiErr(401,"Missing API key.","invalid_request_error","missing_api_key")}
-  const kRows=await sbGet(`/api_keys?key=eq.${encodeURIComponent(keyText)}&select=id,user_id,enabled,models`);
+  const kRows=await sbGet(`/api_keys?key=eq.${encodeURIComponent(keyText)}&select=id,user_id,enabled,models,token_saver,debug`);
   const kRow=kRows[0];if(!kRow){logRequest(null,null,"/v1/chat/completions",method,null,401,"invalid_api_key",0,0,Date.now()-t0);return openaiErr(401,"Invalid API key.","invalid_request_error","invalid_api_key")}
   if(!kRow.enabled){logRequest(kRow.user_id,kRow.id,"/v1/chat/completions",method,null,403,"key_disabled",0,0,Date.now()-t0);return openaiErr(403,"This API key has been disabled.","insufficient_quota","key_disabled")}
   const uRows=await sbGet(`/users?id=eq.${encodeURIComponent(kRow.user_id)}&select=id,enabled,plan,daily_quota_tokens,monthly_quota_tokens,subscription_expires_at,upstream_key_id`);
@@ -507,6 +630,7 @@ if(norm==="/api/status"&&req.method==="GET"){
   const aliases=parseAliases();
   let expandedModel=bodyJson?.model||"";
   if(typeof expandedModel==="string"&&aliases[expandedModel]) expandedModel=aliases[expandedModel];
+  else if(typeof expandedModel==="string"&&/^(cc|codism)\//.test(expandedModel)) expandedModel=expandedModel.split("/").slice(1).join("/");
   // model gate
   const modelsStr=(kRow.models||"*").trim();
   if(modelsStr!=="*"&&modelsStr!==""){
@@ -531,28 +655,56 @@ if(norm==="/api/status"&&req.method==="GET"){
   if(isStream&&bodyJson){
    bodyJson.stream_options=bodyJson.stream_options||{};bodyJson.stream_options.include_usage=true;raw=enc.encode(JSON.stringify(bodyJson));
   }
-  let upstreamKey=getEnv("UPSTREAM_API_KEY");if(uRow.upstream_key_id){const ks=await sbGet(`/upstream_keys?id=eq.${encodeURIComponent(uRow.upstream_key_id)}&select=key,enabled`);if(ks[0]&&ks[0].enabled) upstreamKey=ks[0].key;}
-  const target=upstreamBase()+"/chat/completions";
-  const upHeaders=new Headers();upHeaders.set("authorization",`Bearer ${upstreamKey}`);upHeaders.set("user-agent",BROWSER_UA);
-
-  const ct=req.headers.get("content-type");if(ct) upHeaders.set("content-type",ct);else if(raw) upHeaders.set("content-type","application/json");
-  const acc=req.headers.get("accept");if(acc) upHeaders.set("accept",acc);
-  const controller=new AbortController();const to=setTimeout(()=>controller.abort(),300000);if(req.signal) req.signal.addEventListener("abort",()=>controller.abort(),{once:true});
-  const start=Date.now();
-  let upResp:Response;
-  try{
-   upResp=await fetch(target,{method:"POST",headers:upHeaders,body:(raw as BodyInit)||undefined,signal:controller.signal});
-  }catch(e:any){
-   clearTimeout(to);
-   const isAbort=e&&e.name==="AbortError";
-   logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,isAbort?504:502,isAbort?"upstream_timeout":"upstream_error",0,0,Date.now()-t0);
-   return openaiErr(isAbort?504:502,isAbort?"Upstream request timed out.":"AI upstream temporarily unavailable.",isAbort?"timeout":"upstream_error",isAbort?"upstream_timeout":"upstream_error");
+  let savedChars=0;
+  if(bodyJson){
+   const tsv=(req.headers.get("x-codism-token-saver")||"").trim().toLowerCase();
+   const level=tsv==="off"?"off":String((kRow as any).token_saver||"off").toLowerCase();
+   if((level==="trim"||level==="turbo")&&Array.isArray(bodyJson.messages)){
+    const tsr=applyTokenSaver(bodyJson,level);
+    bodyJson=tsr.body;savedChars=tsr.savedChars;
+    raw=enc.encode(JSON.stringify(bodyJson));
+   }
   }
-  clearTimeout(to);
-  const upCt=upResp.headers.get("content-type")||"";
-  if(upResp.status===403&&upCt.includes("text/html")){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,502,"upstream_challenge",0,0,Date.now()-t0);return openaiErr(502,"AI upstream temporarily unavailable (challenge).","upstream_challenge","upstream_challenge")}
-  const respHeaders=new Headers();respHeaders.set("access-control-allow-origin","*");respHeaders.set("access-control-expose-headers","x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-reset, x-ratelimit-limit-tokens, x-ratelimit-remaining-tokens");
+  const start=Date.now();
+  let upResp:Response|null=null;let upCt="";
+  const chainInfo:any[]=[];
+  let serveAbort:AbortController|null=null;
+  const debugDetail=()=>{if(!kRow.debug)return null;try{return JSON.stringify({chain:chainInfo,messages:Array.isArray(bodyJson&&bodyJson.messages)?bodyJson.messages.length:0,req_bytes:raw?raw.byteLength:0}).slice(0,1800)}catch{return null}};
+  const chainRes=await loadChain((bodyJson&&typeof bodyJson.model==="string")?bodyJson.model:"",expandedModel,uRow.upstream_key_id||null);
+  if("error" in chainRes){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,404,"model_not_allowed",0,0,Date.now()-t0,debugDetail());return openaiErr(404,`The model '${expandedModel}' does not exist or you do not have access to it.`,"invalid_request_error","model_not_allowed")}
+  for(let i=0;i<chainRes.steps.length;i++){
+   const step=chainRes.steps[i];
+   const up=await resolveUpstream(step);if(!up)continue;
+   if(bodyJson&&typeof bodyJson==="object"&&step.model){bodyJson.model=step.model;raw=enc.encode(JSON.stringify(bodyJson));}
+   const upHeaders=new Headers();upHeaders.set("authorization",`Bearer ${up.key}`);upHeaders.set("user-agent",BROWSER_UA);
+   const ct=req.headers.get("content-type");if(ct) upHeaders.set("content-type",ct);else if(raw) upHeaders.set("content-type","application/json");
+   const acc=req.headers.get("accept");if(acc) upHeaders.set("accept",acc);
+   const controller=new AbortController();serveAbort=controller;const to=setTimeout(()=>controller.abort(),300000);const onAbort=()=>controller.abort();if(req.signal) req.signal.addEventListener("abort",onAbort,{once:true});
+   let resp:Response|null=null;let wasAbort=false;
+   try{resp=await fetch(up.base+"/chat/completions",{method:"POST",headers:upHeaders,body:(raw as BodyInit)||undefined,signal:controller.signal})}catch(e:any){if(e&&e.name==="AbortError")wasAbort=true;resp=null}
+   clearTimeout(to);if(req.signal) req.signal.removeEventListener("abort",onAbort);
+
+   const ms=Date.now()-start;const st=resp?resp.status:0;
+   chainInfo.push({model:step.model,upstream:up.label,status:st,ms});
+   const respCt=resp?(resp.headers.get("content-type")||""):"";
+   const challenge=!!resp&&resp.status===403&&respCt.includes("text/html");
+   const retryable=!resp||challenge||st===401||st===404||st===408||st===429||st>=500;
+   if((resp&&!retryable)||i===chainRes.steps.length-1){
+    upResp=resp;
+    if(!upResp){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,wasAbort?504:502,wasAbort?"upstream_timeout":"upstream_error",0,0,Date.now()-t0,debugDetail());return openaiErr(wasAbort?504:502,wasAbort?"Upstream request timed out.":"AI upstream temporarily unavailable.",wasAbort?"timeout":"upstream_error",wasAbort?"upstream_timeout":"upstream_error")}
+    upCt=upResp.headers.get("content-type")||"";
+    break;
+   }
+   try{if(resp)await resp.arrayBuffer()}catch{}
+  }
+  if(!upResp){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,502,"upstream_error",0,0,Date.now()-t0,debugDetail());return openaiErr(502,"AI upstream temporarily unavailable.","upstream_error","upstream_error")}
+  const servedModel=chainInfo.length?String(chainInfo[chainInfo.length-1].model||""):(expandedModel||"");
+  if(upResp.status===403&&upCt.includes("text/html")){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,502,"upstream_challenge",0,0,Date.now()-t0,debugDetail());return openaiErr(502,"AI upstream temporarily unavailable (challenge).","upstream_challenge","upstream_challenge")}
+  const respHeaders=new Headers();respHeaders.set("access-control-allow-origin","*");respHeaders.set("access-control-expose-headers","x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-reset, x-ratelimit-limit-tokens, x-ratelimit-remaining-tokens, x-codism-saved-tokens");
+
   for(const [k,v] of upResp.headers.entries()) if(k.toLowerCase().startsWith("x-ratelimit-")) respHeaders.set(k,v);
+  const savedTokens=Math.round(savedChars/4);
+  if(savedTokens>0) respHeaders.set("x-codism-saved-tokens",String(savedTokens));
   if(upCt) respHeaders.set("content-type",upCt);else respHeaders.set("content-type","application/json");
   const isSSE=upCt.includes("text/event-stream")||isStream;
   if(isSSE){
@@ -587,19 +739,19 @@ if(norm==="/api/status"&&req.method==="GET"){
       ctrl.close();
       const latency=Date.now()-start;
       if(!foundUsage){promptTokens=Math.ceil(promptChars/4);completionTokens=Math.ceil(completionChars/4)}
-      sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:expandedModel||"",prompt_tokens:promptTokens,completion_tokens:completionTokens,latency_ms:latency,status:upResp.status}).catch((e:any)=>console.error("usage_log write failed:",e));
-      logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,upResp.status,null,promptTokens,completionTokens,latency);
+      sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:servedModel,prompt_tokens:promptTokens,completion_tokens:completionTokens,latency_ms:latency,status:upResp.status,saved_tokens:Math.round(savedChars/4)}).catch((e:any)=>console.error("usage_log write failed:",e));
+      logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,upResp.status,null,promptTokens,completionTokens,latency,debugDetail());
      }
     },
-    cancel(){try{controller.abort()}catch{}}
+    cancel(){try{serveAbort?.abort()}catch{}}
    });
    return new Response(stream,{status:upResp.status,headers:respHeaders});
   }else{
    const buf=new Uint8Array(await upResp.arrayBuffer());
    let pt=0,ctok=0;try{const j=JSON.parse(dec.decode(buf));if(j.usage){pt=Number(j.usage.prompt_tokens)||0;ctok=Number(j.usage.completion_tokens)||0}}catch{}
    const latency=Date.now()-start;
-   sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:expandedModel||"",prompt_tokens:pt,completion_tokens:ctok,latency_ms:latency,status:upResp.status}).catch((e:any)=>console.error("usage_log write failed:",e));
-   logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,upResp.status,null,pt,ctok,latency);
+   sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:servedModel,prompt_tokens:pt,completion_tokens:ctok,latency_ms:latency,status:upResp.status,saved_tokens:Math.round(savedChars/4)}).catch((e:any)=>console.error("usage_log write failed:",e));
+   logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,upResp.status,null,pt,ctok,latency,debugDetail());
    return new Response(buf,{status:upResp.status,headers:respHeaders});
   }
  }

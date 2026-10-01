@@ -7,12 +7,14 @@
 <meta name="description" content="API سازگار با OpenAI روی ۳۰+ مدل — فعال‌سازی آنی.">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<script>try{if(self!==top)top.location=self.location}catch(e){}</script>
 <meta name="theme-color" content="#D97757">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/design.css?v=63358376">
-<script src="assets/i18n.js?v=63358376"></script>
+<link rel="stylesheet" href="assets/design.css?v=45125269">
+<script src="assets/i18n.js?v=45125269"></script>
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <script>window.CODISM_API_BASE="https://api.tvframe.vip";</script>
 
@@ -69,6 +71,7 @@
           <div class="hint" style="font-size:.75rem;color:#8A8475;margin-top:.375rem;">حداقل ۸ کاراکتر</div>
         </div>
 
+        <div id="cfTurnstile"></div>
         <div class="error-text" data-err hidden style="display:none;background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;border-radius:8px;padding:.625rem .875rem;font-size:.875rem;margin-bottom:1rem;"></div>
 
         <button class="btn btn-primary w-full" type="submit" style="width:100%;">ساخت حساب</button>
@@ -102,6 +105,14 @@
         if(c){ c.hidden=false; c.style.display="block"; }
         form.style.display="none";
         return;
+      }
+      if(d && d.turnstile_site_key){
+        var ts=document.createElement("script");
+        ts.src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+        ts.async=true;
+        ts.defer=true;
+        document.head.appendChild(ts);
+        ts.onload=function(){try{turnstile.render("#cfTurnstile",{sitekey:d.turnstile_site_key,language:"fa"})}catch(e){}};
       }
       if(gateBtn) gateBtn.disabled=false;
     }catch(e){
@@ -150,6 +161,7 @@
     try{
       var payload={name:name,email:email,password:password};
       if(phone) payload.phone=phone;
+      try{var _t=turnstile.getResponse();if(_t)payload.turnstile_token=_t;}catch(e){}
       var res=await fetch(API_BASE+"/api/auth/register",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
@@ -170,9 +182,10 @@
       } else if(res.status===409){
         showErr("این ایمیل قبلاً ثبت شده است.");
       } else if(res.status===400){
-        var m400=(data && data.error && data.error.message) || data.message;
-        showErr(m400 || "اطلاعات را کامل و درست وارد کنید.");
+        if(data && (data.error==="turnstile_failed"||data.code==="turnstile_failed")){showErr("لطفاً تأیید کنید که ربات نیستید.");}else{var m400=(data && data.error && data.error.message) || data.message;showErr(m400 || "اطلاعات را کامل و درست وارد کنید.");}
       } else {
+
+
         var msg=(data && data.error && data.error.message) || data.message || "خطا در ثبت‌نام";
         showErr(msg);
       }
@@ -227,7 +240,7 @@
   </div>
 </footer>
 
-<script src="assets/app.js?v=63358376"></script>
+<script src="assets/app.js?v=45125269"></script>
 
 </body>
 </html>

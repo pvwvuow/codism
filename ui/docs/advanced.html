@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>قابلیت‌های پیشرفته — Codism</title>
+<meta name="description" content="زنجیره پشتیبان، ذخیره‌کننده توکن، حالت دیباگ و پیشوند مدل‌ها.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<script>try{if(self!==top)top.location=self.location}catch(e){}</script>
+<meta name="theme-color" content="#D97757">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/design.css?v=45125269">
+<script src="../assets/i18n.js?v=45125269"></script>
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+<script>window.CODISM_API_BASE="https://api.tvframe.vip";</script>
+
+</head>
+<body>
+<header class="navbar">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;height:4rem">
+    <a href="../index.html" style="display:flex;align-items:center;gap:.5rem;text-decoration:none">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#D97757"/><text x="14" y="16" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="13" font-weight="500">{}</text></svg>
+      <span style="font-family:var(--font-serif);font-weight:700;font-size:1.25rem;color:#1A1915">Codism</span>
+    </a>
+    <nav class="nav-links">
+      <a data-nav href="../models.html">مدل‌ها</a>
+      <a data-nav href="../pricing.html">تعرفه‌ها</a>
+      <a data-nav href="./">مستندات</a>
+      <a data-nav href="../changelog.html">تغییرات</a>
+      <a data-nav href="../status.html">وضعیت</a>
+    </nav>
+    <div class="navbar-actions" style="display:flex;align-items:center;gap:.5rem">
+      <a class="btn btn-ghost" href="../login.html" data-auth-link>ورود</a>
+      <a class="btn btn-primary" href="../register.html" data-auth-cta>شروع کن</a>
+      <button class="nav-toggle" aria-label="منو"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="container" style="padding-top:1.5rem;padding-bottom:3rem">
+    <div class="docs-grid" style="display:grid;grid-template-columns:240px 1fr 200px;gap:2rem;align-items:start">
+      <aside class="docs-side" style="position:sticky;top:5rem">
+        <div class="docs-group" style="margin-bottom:1.5rem">
+          <div class="docs-group-title" style="font-size:.75rem;font-weight:700;color:#6B6659;margin-bottom:.5rem">شروع</div>
+          <a href="getting-started.html" class="docs-link" style="display:block;padding:.4rem .75rem;border-radius:6px;color:#3D3A33;text-decoration:none;font-size:.875rem">شروع سریع</a>
+          <a href="authentication.html" class="docs-link" style="display:block;padding:.4rem .75rem;border-radius:6px;color:#3D3A33;text-decoration:none;font-size:.875rem">احراز هویت</a>
+        </div>
+        <div class="docs-group" style="margin-bottom:1.5rem">
+          <div class="docs-group-title" style="font-size:.75rem;font-weight:700;color:#6B6659;margin-bottom:.5rem">مرجع API</div>
+          <a href="chat-completions.html" class="docs-link" style="display:block;padding:.4rem .75rem;border-radius:6px;color:#3D3A33;text-decoration:none;font-size:.875rem">Chat Completions</a>
+          <a href="streaming.html" class="docs-link" style="display:block;padding:.4rem .75rem;border-radius:6px;color:#3D3A33;text-decoration:none;font-size:.875rem">استریم</a>
+          <a href="models.html" class="docs-link" style="display:block;padding:.4rem .75rem;border-radius:6px;color:#3D3A33;text-decoration:none;font-size:.875rem">مدل‌ها</a>
+        </div>
+        <div class="docs-group" style="margin-bottom:1.5rem">
+          <div class="docs-group-title" style="font-size:.75rem;font-weight:700;color:#6B6659;margin-bottom:.5rem">ابزارها و قابلیت‌ها</div>
+          <a href="coding-agents.html" class="docs-link" style="display:block;padding:.4rem .75rem;border-radius:6px;color:#3D3A33;text-decoration:none;font-size:.875rem">ابزارهای کدنویسی</a>
+          <a href="advanced.html" class="docs-link active" aria-current="page" style="display:block;padding:.4rem .75rem;border-radius:6px;background:#FBF0EB;color:#B0512F;text-decoration:none;font-size:.875rem;font-weight:600">قابلیت‌های پیشرفته</a>
+        </div>
+      </aside>
+
+      <div class="docs-body" style="min-width:0">
+        <nav class="docs-breadcrumb" style="font-size:.8125rem;color:#6B6659;margin-bottom:1rem;display:flex;gap:.4rem;align-items:center">
+          <a href="../index.html" style="color:#6B6659;text-decoration:none">خانه</a>
+          <span style="color:#CFCCC3">/</span>
+          <a href="index.html" style="color:#6B6659;text-decoration:none">مستندات</a>
+          <span style="color:#CFCCC3">/</span>
+          <span style="color:#1A1915;font-weight:600">قابلیت‌های پیشرفته</span>
+        </nav>
+
+        <h1 style="font-family:var(--font-sans);font-size:2rem;font-weight:800;color:#1A1915;margin:0 0 .5rem">قابلیت‌های پیشرفته</h1>
+        <p class="lede" style="color:#545046;font-size:1rem;line-height:1.8;margin:0 0 2rem">Codism هم شروعِ آسان دارد (کلید بساز، درخواست بزن) و هم ابزارهای سطح پیشرفته — همه همزمان و روی یک اندپوینت.</p>
+
+        <section id="combos" style="margin-bottom:2rem">
+          <h2 style="font-size:1.375rem;font-weight:800;color:#1A1915;margin:0 0 .75rem">زنجیره پشتیبان (Fallback Combos)</h2>
+          <p style="color:#3D3A33;line-height:1.9;margin:0 0 .75rem">یک «زنجیره» فهرستی مرتب از مراحل است. وقتی مدلی به شکل <code dir="ltr" style="font-family:var(--font-mono);font-size:.85em">combo/name</code> درخواست شود، مراحل به‌ترتیب امتحان می‌شوند: خطای شبکه، پر شدن سقف، چالش، 429 یا خطای سرورِ یک مرحله یعنی فوراً سراغ مرحله بعدی می‌رویم. اگر همه مراحل شکست بخورند، آخرین خطا عیناً به شما برگردانده می‌شود.</p>
+          <p style="color:#3D3A33;line-height:1.9;margin:0 0 .75rem">مدیر پنل زنجیره‌ها را در داشبورد (تب «زنجیره‌های پشتیبان») می‌سازد و هر مرحله می‌تواند آپ‌استریم و مدل مخصوص خودش را داشته باشد — مثلاً یک کلید اصلی، یک کلید ذخیره و بعد یک ارائه‌دهنده ارزان‌تر. اگر یک «زنجیره پیش‌فرض» تعریف شده باشد، درخواست‌های معمولی هم بعد از شکست آپ‌استریم اصلی به‌صورت خودکار از آن پیروی می‌کنند؛ بدون اینکه لازم باشد چیزی در کلاینت عوض کنید.</p>
+          <pre style="background:#1A1915;color:#F4F1EA;border-radius:10px;padding:1rem;overflow:auto;direction:ltr;text-align:left;font-family:var(--font-mono);font-size:.8125rem;line-height:1.7">curl https://api.tvframe.vip/v1/chat/completions \
+  -H "Authorization: Bearer codism_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "combo/my-coding-stack",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'</pre>
+        </section>
+
+        <section id="prefix" style="margin-bottom:2rem">
+          <h2 style="font-size:1.375rem;font-weight:800;color:#1A1915;margin:0 0 .75rem">پیشوند مدل</h2>
+          <p style="color:#3D3A33;line-height:1.9;margin:0">برای واضح‌تر شدن منبع پاسخ، می‌توانید مدل‌ها را با پیشوند بفرستید: <code dir="ltr" style="font-family:var(--font-mono);font-size:.85em">cc/claude-opus-5.5</code> دقیقاً مانند <code dir="ltr" style="font-family:var(--font-mono);font-size:.85em">claude-opus-5.5</code> پردازش می‌شود (پیشوندهای <code dir="ltr" style="font-family:var(--font-mono);font-size:.85em">cc/</code> و <code dir="ltr" style="font-family:var(--font-mono);font-size:.85em">codism/</code> برداشته می‌شوند). ابزارهایی که نام مدل را دستکاری می‌کنند با این روش بدون مشکل کار می‌کنند.</p>
+        </section>
+
+        <section id="saver" style="margin-bottom:2rem">
+          <h2 style="font-size:1.375rem;font-weight:800;color:#1A1915;margin:0 0 .75rem">ذخیره‌کننده توکن (Token Saver)</h2>
+          <p style="color:#3D3A33;line-height:1.9;margin:0 0 .75rem">هر کلید می‌تواند سطح ذخیره‌کننده توکن داشته باشد (داشبورد ← کلیدهای API ← تنظیمات):</p>
+          <p style="color:#3D3A33;line-height:1.9;margin:0 0 .75rem"><b>trim</b> — فشرده‌سازی هوشمند ورودی: فاصله‌های اضافی و خطوط خالی تکراری حذف و محتوای خیلی بزرگ برش می‌خورد. مناسب خروجی ابزارها و دیف‌های طولانی.</p>
+          <p style="color:#3D3A33;line-height:1.9;margin:0 0 .75rem"><b>turbo</b> — به‌علاوه‌ی trim، یک راهنمای سیستم برای پاسخ کوتاه‌تر و بی‌حاشیه اضافه می‌شود تا توکن خروجی هم کم شود.</p>
+          <p style="color:#3D3A33;line-height:1.9;margin:0 0 .75rem">برای یک درخواست خاص می‌توانید آن را خاموش کنید؛ تخمین توکن‌های صرفه‌جویی‌شده در هدر پاسخ و در صفحه «مصرف» دیده می‌شود:</p>
+          <pre style="background:#1A1915;color:#F4F1EA;border-radius:10px;padding:1rem;overflow:auto;direction:ltr;text-align:left;font-family:var(--font-mono);font-size:.8125rem;line-height:1.7">x-codism-token-saver: off          # bypass for this request only
+# response header:
+x-codism-saved-tokens: 1823</pre>
+        </section>
+
+        <section id="debug" style="margin-bottom:2rem">
+          <h2 style="font-size:1.375rem;font-weight:800;color:#1A1915;margin:0 0 .75rem">حالت دیباگ</h2>
+          <p style="color:#3D3A33;line-height:1.9;margin:0">با فعال کردن دیباگ روی یک کلید، جزئیات زنجیره (مدل، آپ‌استریم، وضعیت و تأخیر هر مرحله) در لاگ درخواست‌ها ثبت می‌شود تا عیب‌یابی «چرا پاسخ از مدل دیگری آمد؟» چند ثانیه طول بکشد. متن پیام‌های شما هرگز ذخیره نمی‌شود.</p>
+        </section>
+
+        <section id="cost" style="margin-bottom:2rem">
+          <h2 style="font-size:1.375rem;font-weight:800;color:#1A1915;margin:0 0 .75rem">هزینه تخمینی</h2>
+          <p style="color:#3D3A33;line-height:1.9;margin:0">صفحه مصرف، هزینه تخمینی ماه را بر اساس جدول قیمت مرجع مدل‌ها نشان می‌دهد. این عدد فقط برای مقایسه و مدیریت مصرف است — قبض واقعی شما همان اشتراک پنل است.</p>
+        </section>
+
+        <div class="docs-next card" style="padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.5rem">
+          <div>
+            <div style="font-size:.75rem;font-weight:600;color:#6B6659;margin-bottom:.15rem">بعدی</div>
+            <div style="font-weight:700;color:#1A1915">ابزارهای کدنویسی</div>
+          </div>
+          <a href="coding-agents.html" class="btn btn-outline" style="text-decoration:none">ابزارهای کدنویسی ←</a>
+        </div>
+
+        <div class="docs-help card" style="padding:1.25rem;background:#FBF0EB;border-color:#F5DDD2">
+          <div style="font-weight:700;color:#1A1915;margin-bottom:.25rem">کمک لازم داری؟</div>
+          <p style="font-size:.875rem;color:#6B6659;line-height:1.8;margin:0 0 .75rem">از داشبورد تیکت بزن یا با پشتیبانی در تماس باش.</p>
+          <a href="../index.html" class="btn btn-outline" style="text-decoration:none;background:#fff">دریافت کمک</a>
+        </div>
+      </div>
+
+      <nav class="docs-toc" style="position:sticky;top:5rem;font-size:.875rem">
+        <div style="font-weight:700;color:#1A1915;margin-bottom:.75rem">در این صفحه</div>
+        <ol style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.35rem">
+          <li><a href="#combos" style="color:#6B6659;text-decoration:none;display:block;padding:.2rem 0">۱. زنجیره پشتیبان</a></li>
+          <li><a href="#prefix" style="color:#6B6659;text-decoration:none;display:block;padding:.2rem 0">۲. پیشوند مدل</a></li>
+          <li><a href="#saver" style="color:#6B6659;text-decoration:none;display:block;padding:.2rem 0">۳. ذخیره‌کننده توکن</a></li>
+          <li><a href="#debug" style="color:#6B6659;text-decoration:none;display:block;padding:.2rem 0">۴. حالت دیباگ</a></li>
+          <li><a href="#cost" style="color:#6B6659;text-decoration:none;display:block;padding:.2rem 0">۵. هزینه تخمینی</a></li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h4>محصول</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="../models.html">مدل‌ها</a></li>
+          <li><a href="../pricing.html">تعرفه‌ها</a></li>
+          <li><a href="../changelog.html">تغییرات</a></li>
+          <li><a href="../status.html">وضعیت سرویس</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>منابع</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="./">مستندات</a></li>
+          <li><a href="./getting-started.html">شروع سریع</a></li>
+          <li><a href="./coding-agents.html">راهنمای ابزارهای کدنویسی</a></li>
+          <li><a href="./chat-completions.html">مرجع API</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>قانونی</h4>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li><a href="../terms.html">شرایط استفاده</a></li>
+          <li><a href="../privacy.html">حریم خصوصی</a></li>
+          <li><a href="../refund.html">سیاست بازپرداخت</a></li>
+        </ul>
+      </div>
+      <div>
+        <a href="../index.html" style="display:flex;align-items:center;gap:.5rem;text-decoration:none;margin-bottom:.75rem">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="28" height="28" rx="6" fill="#D97757"/><text x="14" y="16" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="13" font-weight="500">{}</text></svg>
+          <span style="font-family:var(--font-serif);font-weight:700;font-size:1.25rem;color:#1A1915">Codism</span>
+        </a>
+        <p style="font-size:.875rem;color:#6B6659;line-height:1.7;margin:0">مدل‌های هوش مصنوعی از یک API ساده — سازگار با OpenAI، آماده برای ابزارهای کدنویسی.</p>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 Codism — تمامی حقوق محفوظ است.</div>
+  </div>
+</footer>
+
+<script src="../assets/app.js?v=45125269"></script>
+
+</body>
+</html>
