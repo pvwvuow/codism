@@ -16,11 +16,11 @@
   const STATE = { me: null, usage: null, keys: [], models: [], adminStats: null };
 
   const PLAN_FA = {
+    none: "بدون پلن",
     starter: "استارتر",
     basic: "بیسیک",
     pro: "حرفه‌ای",
     scale: "مقیاس",
-    unlimited: "نامحدود",
   };
 
   const HINTS = {
@@ -379,7 +379,8 @@
       STATE.keys = keys;
       const today = me.today || { requests: 0, prompt_tokens: 0, completion_tokens: 0 };
       const month = me.month || { requests: 0, prompt_tokens: 0, completion_tokens: 0 };
-      const planKey = (me.user && me.user.plan) || "starter";
+      const planKey = (me.user && me.user.plan) || "none";
+      const noPlan = planKey === "none";
       const planFa = PLAN_FA[planKey] || PLAN_FA.starter;
       setText("[data-plan-name]", planFa);
       setText("[data-plan-name2]", planFa);
@@ -413,24 +414,26 @@
       const quota = me.user ? me.user.monthly_quota_tokens : null;
       const quotaEl = q("[data-plan-quota]");
       if (quotaEl) {
-        quotaEl.textContent = quota == null || quota === 0 ? "نامحدود" : fmtTok(quota) + " توکن";
+        quotaEl.textContent = noPlan ? "—" : quota == null || quota === 0 ? "نامحدود" : fmtTok(quota) + " توکن";
       }
       const progressTextEl = q("[data-plan-progress]");
       const progressFill = q("[data-plan-fill]") || q(".progress > i") || q("[data-plan-progress-bar]");
       const hintEl = q("[data-plan-hint]") || q("[data-plan-progress-hint]");
+      const monthQuotaTok = month.quota_tokens == null ? monthTok : Number(month.quota_tokens) || 0;
       let pct = 0;
-      if (quota != null && quota > 0) pct = Math.min(100, Math.round((monthTok / quota) * 100));
+      if (!noPlan && quota != null && quota > 0) pct = Math.min(100, Math.round((monthQuotaTok / quota) * 100));
       if (progressFill) progressFill.style.width = pct + "%";
       // also if progressTextEl is the bar itself, set width
       if (progressTextEl && progressTextEl.classList.contains("progress")) {
         const inner = progressTextEl.querySelector("i");
         if (inner) inner.style.width = pct + "%";
       } else if (progressTextEl) {
-        if (quota == null || quota === 0) progressTextEl.textContent = "بدون سقف";
+        if (noPlan) progressTextEl.textContent = "پلن فعالی ندارید";
+        else if (quota == null || quota === 0) progressTextEl.textContent = "بدون سقف";
         else progressTextEl.textContent = "از " + fmtTok(quota) + " سهمیه";
       }
       // hint percent
-      const hintText = quota == null || quota === 0 ? "بدون سقف" : faNum(pct) + "% از سهمیه مصرف شده";
+      const hintText = noPlan ? "برای استفاده از API، از صفحه تعرفه‌ها پلن تهیه کنید" : quota == null || quota === 0 ? "بدون سقف" : faNum(pct) + "% از سهمیه مصرف شده" + (monthQuotaTok !== monthTok ? " (توکن معادل)" : "");
       if (hintEl) hintEl.textContent = hintText;
       // also try generic hint
       const genericHint = q("[data-quota-hint]");
@@ -764,10 +767,10 @@
       const emailInput=q("[data-set-email]");
       if(emailInput) emailInput.value=u.email||"";
       setText("[data-set-name]", u.name || "—");
-      const planFa = PLAN_FA[u.plan] || PLAN_FA.starter;
+      const planFa = PLAN_FA[u.plan] || PLAN_FA.none;
       setText("[data-set-plan]", planFa);
       const quota = u.monthly_quota_tokens;
-      setText("[data-set-quota]", quota == null || quota === 0 ? TR("نامحدود", "Unlimited") : fmtTok(quota) + " " + TR("توکن", "tokens"));
+      setText("[data-set-quota]", u.plan === "none" ? "—" : quota == null || quota === 0 ? TR("نامحدود", "Unlimited") : fmtTok(quota) + " " + TR("توکن", "tokens"));
       let since = "—";
       try {
         if (u.created_at) since = esc(new Date(u.created_at).toLocaleDateString(LOC()));
@@ -886,7 +889,7 @@
     const up = q("[data-edit-upstream]");
     if (up) up.value = u.upstream_key_id ? String(u.upstream_key_id) : "";
     const planSel = q("[data-edit-plan]");
-    if (planSel) planSel.value = PLAN_FA[u.plan] ? u.plan : "starter";
+    if (planSel) planSel.value = PLAN_FA[u.plan] ? u.plan : "none";
     const en = q("[data-edit-enabled]");
     if (en) en.checked = !!u.enabled;
     const m = q("[data-edit-quota-month]");
@@ -910,7 +913,7 @@
         const d = q("[data-edit-quota-day]");
         const pw = q("[data-edit-pass]");
         const payload = {};
-        if (planSel) payload.plan = planSel.value || "starter";
+        if (planSel) payload.plan = planSel.value || "none";
         if (en) payload.enabled = !!en.checked;
         if (m) payload.monthly_quota_tokens = m.value.trim() === "" ? 0 : Number(m.value);
         if (d) payload.daily_quota_tokens = d.value.trim() === "" ? 0 : Number(d.value);
@@ -975,7 +978,7 @@
       }
       users.forEach((u) => {
         const tr = document.createElement("tr");
-        const planFa = PLAN_FA[u.plan] || esc(u.plan || "starter");
+        const planFa = PLAN_FA[u.plan] || esc(u.plan || "بدون پلن");
         const enabledBadge = u.enabled ? '<span class="badge badge-ok">فعال</span>' : '<span class="badge badge-bad">غیرفعال</span>';
         const quotaTxt = u.monthly_quota_tokens == null || u.monthly_quota_tokens === 0 ? TR("نامحدود", "Unlimited") : fmtTok(u.monthly_quota_tokens) + " " + TR("توکن", "tokens");
         let dateStr = "—";
