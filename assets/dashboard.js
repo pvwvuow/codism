@@ -364,11 +364,13 @@
   async function loadOverview() {
     try {
       const mePromise = STATE.me ? Promise.resolve(STATE.me) : api("/api/me");
-      const [meRes, keysRes, usageRes] = await Promise.all([
+      const [meRes, keysRes, usageRes, evRes] = await Promise.all([
         mePromise,
         api("/api/keys").catch(() => []),
         api("/api/usage?days=14").catch(() => null),
+        api("/api/event").catch(() => null),
       ]);
+
       if (meRes && meRes.user) {
         STATE.me = meRes;
         setupHeader();
@@ -377,6 +379,8 @@
       const me = meRes;
       const keys = Array.isArray(keysRes) ? keysRes : [];
       STATE.keys = keys;
+      STATE.event = evRes && evRes.status ? evRes : null;
+
       const today = me.today || { requests: 0, prompt_tokens: 0, completion_tokens: 0 };
       const month = me.month || { requests: 0, prompt_tokens: 0, completion_tokens: 0 };
       const planKey = (me.user && me.user.plan) || "none";
@@ -428,12 +432,29 @@
         const inner = progressTextEl.querySelector("i");
         if (inner) inner.style.width = pct + "%";
       } else if (progressTextEl) {
-        if (noPlan) progressTextEl.textContent = "پلن فعالی ندارید";
+        if (noPlan) progressTextEl.textContent = STATE.event && STATE.event.status === "live" ? TR("بدون پلن — مدل رایگان ایونت فعال است", "No plan — free event model is live") : "پلن فعالی ندارید";
         else if (quota == null || quota === 0) progressTextEl.textContent = "بدون سقف";
+
         else progressTextEl.textContent = "از " + fmtTok(quota) + " سهمیه";
       }
       // hint percent
-      const hintText = noPlan ? "برای استفاده از API، از صفحه تعرفه‌ها پلن تهیه کنید" : quota == null || quota === 0 ? "بدون سقف" : faNum(pct) + "% از سهمیه مصرف شده" + (monthQuotaTok !== monthTok ? " (توکن معادل)" : "");
+      let hintText;
+      if (noPlan) {
+        const ev = STATE.event;
+        const evModel = ev && ev.model ? ev.model : "gpt-6-luna-free";
+        if (ev && ev.status === "live") {
+          hintText = TR("ایونت فعال است — مدل " + evModel + " بدون نیاز به پلن کار می‌کند", "Event is live — the " + evModel + " model works without any plan");
+        } else if (ev && ev.status === "scheduled") {
+          let t = "";
+          try { const d = ev.opens_at ? new Date(ev.opens_at) : null; if (d && !isNaN(d.getTime())) t = d.toLocaleString(LOC()); } catch (e) {}
+          hintText = TR("ایونت به‌زودی — از " + (t || "زمان اعلام‌شده") + " مدل " + evModel + " بدون پلن رایگان می‌شود", "Event coming soon — from " + (t || "the announced time") + " the " + evModel + " model is free without a plan");
+        } else {
+          hintText = TR("برای استفاده از API، از صفحه تعرفه‌ها پلن تهیه کنید", "To use the API, purchase a plan on the pricing page");
+        }
+      } else {
+        hintText = quota == null || quota === 0 ? "بدون سقف" : faNum(pct) + "% از سهمیه مصرف شده" + (monthQuotaTok !== monthTok ? " (توکن معادل)" : "");
+      }
+
       if (hintEl) hintEl.textContent = hintText;
       // also try generic hint
       const genericHint = q("[data-quota-hint]");
