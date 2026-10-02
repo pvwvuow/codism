@@ -1,5 +1,4 @@
- /*
- Codism AI Panel — Supabase Edge Function (Deno)
+/* Codism AI Panel — Supabase Edge Function (Deno)
  Env vars:
   SUPABASE_URL, SUPABASE_SERVICE_ROLE, UPSTREAM_API_KEY, UPSTREAM_BASE_URL (default https://codecraftapi.com/v1),
   MODEL_ALIASES (JSON), JWT_SECRET (>=32 chars), ADMIN_EMAIL, ADMIN_PASSWORD, MAX_BODY_MB (default 8),
@@ -16,14 +15,14 @@ async function verifyPassword(pw:string,stored:string){const p=stored.split("$")
 async function jwtSign(payload:any,secret:string){const h=b64urlEncode(enc.encode(JSON.stringify({alg:"HS256",typ:"JWT"}))),pp=b64urlEncode(enc.encode(JSON.stringify(payload))),data=`${h}.${pp}`,key=await crypto.subtle.importKey("raw",enc.encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]),sig=await crypto.subtle.sign("HMAC",key,enc.encode(data));return `${data}.${b64urlEncode(new Uint8Array(sig))}`}
 async function jwtVerify(token:string,secret:string){const parts=token.split(".");if(parts.length!==3)return null;const data=`${parts[0]}.${parts[1]}`;try{const key=await crypto.subtle.importKey("raw",enc.encode(secret),{name:"HMAC",hash:"SHA-256"},false,["verify"]),sig=b64urlDecode(parts[2]);if(!await crypto.subtle.verify("HMAC",key,sig,enc.encode(data)))return null;const payload=JSON.parse(dec.decode(b64urlDecode(parts[1])));if(payload.exp&&Date.now()/1000>payload.exp)return null;return payload}catch{return null}}
  function getEnv(k:string,d?:string){const v=Deno.env.get(k);return v===undefined?d??"":v}
-const PLANS=["starter","basic","pro","scale","unlimited"] as const;
+const PLANS=["starter","basic","pro","scale"] as const;
 type PlanName=typeof PLANS[number];
-const PLAN_MONTHLY_TOKENS:Record<PlanName,number|null>={starter:30_000_000,basic:100_000_000,pro:200_000_000,scale:500_000_000,unlimited:null};
+const PLAN_MONTHLY_TOKENS:Record<PlanName,number|null>={starter:30_000_000,basic:100_000_000,pro:200_000_000,scale:500_000_000};
 function planOf(v:any):PlanName|null{const s=String(v||"").toLowerCase();return (PLANS as readonly string[]).includes(s)?(s as PlanName):null}
 function planQuota(p:PlanName):number|null{return PLAN_MONTHLY_TOKENS[p]}
-const PLAN_RPM:Record<PlanName,number>={starter:120,basic:300,pro:600,scale:1200,unlimited:3000};
-const PLAN_LABEL_FA:Record<PlanName,string>={starter:"استارتر",basic:"بیسیک",pro:"پرو",scale:"اسکیل",unlimited:"بدون سقف"};
-const PLAN_PRICE_MONTHLY_USD:Record<PlanName,number>={starter:1.2,basic:3.5,pro:5.75,scale:11.5,unlimited:50};
+const PLAN_RPM:Record<PlanName,number>={starter:120,basic:300,pro:600,scale:1200};
+const PLAN_LABEL_FA:Record<PlanName,string>={starter:"استارتر",basic:"بیسیک",pro:"پرو",scale:"اسکیل"};
+const PLAN_PRICE_MONTHLY_USD:Record<PlanName,number>={starter:1.2,basic:3.5,pro:5.75,scale:11.5};
 function isSupaMisconfigured(){return !(getEnv("SUPABASE_URL")||getEnv("PANEL_SUPABASE_URL"))||!(getEnv("SUPABASE_SERVICE_ROLE")||getEnv("PANEL_SERVICE_ROLE"))}
 function supaHeaders(){const k=getEnv("SUPABASE_SERVICE_ROLE")||getEnv("PANEL_SERVICE_ROLE");return{"apikey":k,"Authorization":`Bearer ${k}`,"Content-Type":"application/json"}}
 function supaUrl(path:string){if(isSupaMisconfigured()) throw new Error("server misconfiguration");return `${(getEnv("SUPABASE_URL")||getEnv("PANEL_SUPABASE_URL")).replace(/\/+$/,"")}/rest/v1${path}`}
@@ -55,10 +54,11 @@ function isKeyRpmLimited(keyId:string,limit:number){const now=Date.now(),arr=(ke
 function parseAliases():Record<string,string>{try{const v=getEnv("MODEL_ALIASES");if(!v)return {};return JSON.parse(v)}catch{return {}}}
 function upstreamBase(){return getEnv("UPSTREAM_BASE_URL","https://codecraftapi.com/v1").replace(/\/+$/,"")}
 function maxBodyBytes(){return (parseInt(getEnv("MAX_BODY_MB","8"),10)||8)*1024*1024}
-const _apmixCache:any={ts:0,v:null,flight:null as any};let _apmixErr:string="";async function getApmixStats(){let v:any=null;try{const ac=new AbortController();const to=setTimeout(()=>ac.abort(),12000);const r=await fetch("https://apmix.ai/api/event",{headers:{accept:"application/json","user-agent":BROWSER_UA},signal:ac.signal});clearTimeout(to);if(!r.ok) throw new Error("apmix_status_"+r.status);const j:any=await r.json();v={status:String(j.status||""),model_id:String(j.modelId||""),pool:Number(j.pool)||0,used:Number(j.used)||0,remaining:Number(j.remaining)||0,starts_at:j.startsAt?String(j.startsAt):null,participants:Number(j.participants)||0,requests:Number(j.requests)||0,fetched_at:new Date().toISOString(),via:"json"}}catch{v=null}
+const _apmixCache:any={ts:0,v:null,flight:null as any};let _apmixErr:string="";async function getApmixStats(){let v:any=null;try{const ac=new AbortController();const to=setTimeout(()=>ac.abort(),12000);const r=await fetch("https://apmix.ai/api/event",{headers:{accept:"application/json","user-agent":BROWSER_UA},signal:ac.signal});clearTimeout(to);if(!r.ok) throw new Error("mirror_status_"+r.status)
+;const j:any=await r.json();v={status:String(j.status||""),model_id:String(j.modelId||""),pool:Number(j.pool)||0,used:Number(j.used)||0,remaining:Number(j.remaining)||0,starts_at:j.startsAt?String(j.startsAt):null,participants:Number(j.participants)||0,requests:Number(j.requests)||0,fetched_at:new Date().toISOString(),via:"json"}}catch{v=null}
 if(!v){try{const ac2=new AbortController();const to2=setTimeout(()=>ac2.abort(),15000);const r2=await fetch("https://apmix.ai/event",{headers:{accept:"text/html","user-agent":BROWSER_UA},signal:ac2.signal});clearTimeout(to2);if(r2.ok){const s2=(await r2.text()).replace(/\\"/g,'"');const m2=s2.match(/"status":"(upcoming|live|ended|completed)"[^{}]*?"modelId":"([^"]+)"[^{}]*?"pool":(\d+)[^{}]*?"used":(\d+)[^{}]*?"remaining":(\d+)[^{}]*?"startsAt":"([^"]+)"[^{}]*?"endsAt":(null|"([^"]*)")[^{}]*?"now":"([^"]+)"/);if(m2) v={status:m2[1],model_id:m2[2],pool:Number(m2[3]),used:Number(m2[4]),remaining:Number(m2[5]),starts_at:m2[6],participants:0,requests:0,fetched_at:new Date().toISOString(),via:"html"}}}catch{v=null}}
-if(v){_apmixCache.ts=Date.now();_apmixCache.v=v;return v}_apmixCache.ts=Date.now();_apmixCache.v=null;_apmixErr="json+html fetch failed";return null}
-function apmixNow():Promise<any>{const now=Date.now();if(now-_apmixCache.ts<15000) return Promise.resolve(_apmixCache.v);if(!_apmixCache.flight){_apmixCache.flight=getApmixStats().catch(()=>null).finally(()=>{_apmixCache.flight=null})}return Promise.race([_apmixCache.flight,new Promise((res)=>setTimeout(()=>res(_apmixCache.v),8000))])}
+if(v){_apmixCache.ts=Date.now();_apmixCache.v=v;_apmixErr="";return v}_apmixCache.ts=Date.now();_apmixCache.v=null;_apmixErr="json+html fetch failed";return null}
+function apmixNow():Promise<any>{const now=Date.now();if(now-_apmixCache.ts<15000) return Promise.resolve(_apmixCache.v);if(!_apmixCache.flight){_apmixCache.flight=getApmixStats().catch(()=>null).finally(()=>{_apmixCache.flight=null})}let _rt:any=null;const _fb=new Promise((res)=>{_rt=setTimeout(()=>res(_apmixCache.v),8000)});return Promise.race([_apmixCache.flight,_fb]).finally(()=>{if(_rt)clearTimeout(_rt)})}
 let _ourUpRow:{id:string|null,ts:number}|null=null;async function ourUpstreamRowId():Promise<string|null>{const now=Date.now();if(_ourUpRow&&_ourUpRow.id&&(now-_ourUpRow.ts<600000)) return _ourUpRow.id;if(_ourUpRow&&!_ourUpRow.id&&(now-_ourUpRow.ts<60000)) return _ourUpRow.id;try{const k=getEnv("UPSTREAM_API_KEY")||"";if(!k){_ourUpRow={id:null,ts:now};return null}const rows=await sbGet(`/upstream_keys?select=id,key`);let id:string|null=null;for(const r of (rows as any[]||[])){if(r&&r.key===k){id=String(r.id);break}}_ourUpRow={id,ts:now};return id}catch{_ourUpRow={id:null,ts:now};return null}}
 const _evCache:any={ts:0,v:null};async function getEventState(){
 const now=Date.now();if(now-_evCache.ts<15000){const v=_evCache.v;if(v&&v.apmix_sync!==false) return {...v,apmix:_apmixCache.v};return v}try{const ours=await ourUpstreamRowId();const r:any=await sbRpc("event_pool",{p_ours:ours});const row=Array.isArray(r)&&r[0]?r[0]:null;if(!row) throw new Error("empty");const ev={pool_total:Number(row.pool_total),spent:Number(row.spent),spent_ours:Number(row.spent_ours||0),spent_other:Number(row.spent_other||0),model:String(row.model||""),upstream_model:String(row.upstream_model||""),opens_at:row.opens_at,enabled:!!row.enabled,apmix_sync:row.apmix_sync!==false,apmix:(row.apmix_sync===false)?null:(await apmixNow())};_evCache.ts=now;_evCache.v=ev;return ev}catch{ _evCache.ts=Date.now()-12000;_evCache.v=null;return null}}
@@ -68,6 +68,9 @@ const COMBO_PREFIX="combo/";
 const TOKEN_SAVER_SYSTEM="You are a token-efficient assistant. Answer concisely and directly: no preamble, no filler, no restating the question. Prefer the shortest complete correct answer. Keep code minimal but functional.";
 const PRICE_PER_MTOK:Record<string,[number,number]>={"claude-opus":[5,25],"claude-sonnet":[3,15],"claude-haiku":[1,5],"claude":[3,15],"gpt-5":[2.5,10],"gpt":[2.5,10],"gemini":[1.25,5],"glm":[0.6,2],"deepseek":[0.3,1.2],"qwen":[0.8,3],"grok":[3,15],"kimi":[0.6,2.5],"seed":[0.3,1.2],"muse":[0.3,1.2],"gemma":[0.1,0.3]};
 function estCost(model:string,pt:number,ct:number):number{const m=String(model||"").toLowerCase();let p:[number,number]=[1,3];for(const k of Object.keys(PRICE_PER_MTOK)){if(m.includes(k)){p=PRICE_PER_MTOK[k];break}}return ((pt*p[0])+(ct*p[1]))/1e6}
+  const GROK_MODEL_COST:Record<string,[number,number]>={"grok-4.7":[2,6],"grok-4.6":[2,6],"grok-4.5":[3,15],"grok-4.20":[1.25,2.5],"grok-4.3":[1.25,2.5],"grok-build-0.1":[1,2],"grok-4-fast":[0.2,0.5],"grok-4":[3,15],"grok-3-mini":[0.6,4],"grok-3":[3,15]};
+  const QUOTA_REF_USD_PER_MTOK=0.04; // internal quota unit value: starter plan $1.2 / 30M tokens
+  function quotaTokens(model:string,pt:number,ct:number):number{const m=String(model||"").toLowerCase();const P=Math.max(0,Math.ceil(Number(pt)||0)),C=Math.max(0,Math.ceil(Number(ct)||0));if(!m.includes("grok"))return P+C;let best:[number,number]|null=null;let blen=0;for(const k of Object.keys(GROK_MODEL_COST)){if(m===k||m.startsWith(k+"/"))return Math.ceil((P*GROK_MODEL_COST[k][0]+C*GROK_MODEL_COST[k][1])/QUOTA_REF_USD_PER_MTOK);if(m.startsWith(k)&&k.length>blen){best=GROK_MODEL_COST[k];blen=k.length}}if(!best){for(const k of Object.keys(PRICE_PER_MTOK)){if(m.includes(k)){best=PRICE_PER_MTOK[k];break}}}if(!best)return P+C;return Math.ceil((P*best[0]+C*best[1])/QUOTA_REF_USD_PER_MTOK)}
 type ChainStep={upstream_key_id:string|null,model:string};
 function trimBigText(s:string):string{let t=s.replace(/[ \t]+$/gm,"").replace(/\n{3,}/g,"\n\n");if(t.length>24000)t=t.slice(0,24000)+`\n…[truncated ${t.length-24000} chars]`;return t}
 function applyTokenSaver(body:any,level:string):{body:any,savedChars:number}{
@@ -121,6 +124,7 @@ let __defUpCache:{ts:number,row:{key:string,base:string,label:string}|null}|null
 async function getDefaultUpstream(){const n=Date.now();if(__defUpCache&&n-__defUpCache.ts<60000) return __defUpCache.row;let row:{key:string,base:string,label:string}|null=null;try{const rows=await sbGet(`/upstream_keys?is_default=eq.true&enabled=eq.true&select=key,base_url,label&limit=1`);if(rows[0]&&rows[0].key) row={key:rows[0].key,base:String(rows[0].base_url||"").replace(/\/+$/,"") as string,label:rows[0].label||"default"}}catch{}__defUpCache={ts:n,row};return row}
 let __evUpRowCache:{ts:number,row:{id:string,label:string}|null}|null=null;
 async function getEventUpstreamRow(){const n=Date.now();if(__evUpRowCache&&n-__evUpRowCache.ts<60000) return __evUpRowCache.row;let row:{id:string,label:string}|null=null;try{const eid=getEnv("EVENT_UPSTREAM_ID","").trim();let rows:any[]=[];if(eid) rows=await sbGet(`/upstream_keys?id=eq.${encodeURIComponent(eid)}&enabled=eq.true&select=id,label`);if(!rows.length) rows=await sbGet(`/upstream_keys?enabled=eq.true&base_url=ilike.*apmix.ai*&select=id,label&limit=1`);if(rows[0]) row={id:String(rows[0].id),label:String(rows[0].label||"event")};}catch{}__evUpRowCache={ts:n,row};return row}
+let __poolModelsCache:{ts:number,data:ModelInfo[]}|null=null;async function poolModels():Promise<ModelInfo[]>{const n=Date.now();if(__poolModelsCache&&n-__poolModelsCache.ts<300000) return __poolModelsCache.data;let out:ModelInfo[]=[];try{const pools=await sbGet(`/upstream_keys?enabled=eq.true&select=key,base_url&limit=8`);const list=(Array.isArray(pools)?pools:[]).filter((p:any)=>p&&p.key&&p.base_url).slice(0,5);if(list.length){const rs=await Promise.all(list.map(async(p:any)=>{const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),4000);try{const r=await fetch(String(p.base_url).replace(/\/+$/,"")+"/models",{headers:{"Authorization":`Bearer ${String(p.key)}`,"User-Agent":BROWSER_UA},signal:ctrl.signal});if(!r.ok)return[];const j=await r.json().catch(()=>null) as any;const arr=j&&typeof j==="object"?(j.data||j.models||j):null;if(!Array.isArray(arr))return[];return arr.map((m:any)=>{const id=String(m&&m.id||m&&m.name||"");if(!id)return null;const meta=modelMeta(id);if(typeof m.context_length==="number")meta.context=m.context_length;else if(typeof m.context==="number")meta.context=m.context;else if(typeof m.max_tokens==="number")meta.context=m.max_tokens;return meta}).filter(Boolean) as ModelInfo[]}catch{return[]}finally{clearTimeout(to)}}));const seen=new Set<string>();for(const arr of rs)for(const m of arr){if(m&&m.id&&!seen.has(m.id)){seen.add(m.id);out.push(m)}}}}catch{}__poolModelsCache={ts:n,data:out};return out}
 const TZ_OFF_MIN=210;
 function todayBounds(){const n=new Date(Date.now()+TZ_OFF_MIN*60000);const s=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate(),0,0,0)-TZ_OFF_MIN*60000);const e=new Date(s.getTime()+86400000);return[s.toISOString(),e.toISOString()]}
 function monthBounds(){const n=new Date(Date.now()+TZ_OFF_MIN*60000);const s=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),1,0,0,0)-TZ_OFF_MIN*60000);const e=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth()+1,1,0,0,0)-TZ_OFF_MIN*60000);return[s.toISOString(),e.toISOString()]}
@@ -178,6 +182,11 @@ const STATIC_FALLBACK_MODELS:ModelInfo[]=[
  {id:"gpt-5.6-terra",provider:"openai",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:400000},
  {id:"grok-4.5",provider:"xai",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:256000},
  {id:"grok-4.6",provider:"xai",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:256000},
+ {id:"grok-4.7",provider:"xai",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:500000},
+ {id:"grok-4.20",provider:"xai",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:256000},
+ {id:"grok-4.3",provider:"xai",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:256000},
+ {id:"grok-build-0.1",provider:"xai",capabilities:{reasoning:true,tools:true,vision:true,json:true,web:false},context:256000},
+
  {id:"kimi-k2.6",provider:"moonshot",capabilities:{reasoning:true,tools:true,vision:false,json:true,web:false},context:262144},
  {id:"kimi-k3",provider:"moonshot",capabilities:{reasoning:true,tools:true,vision:false,json:true,web:false},context:262144},
  {id:"muse-spark-1.1",provider:"bytedance",capabilities:{reasoning:false,tools:true,vision:false,json:true,web:false},context:128000},
@@ -244,6 +253,7 @@ if(norm==="/api/models"&&req.method==="GET"){
     }
     let data:ModelInfo[]=upstreamModels&&upstreamModels.length?upstreamModels:STATIC_FALLBACK_MODELS.slice();
     if(allowedSet) data=data.filter(m=>allowedSet.has(m.id));
+    try{const pm=await poolModels();if(pm.length){const _s=new Set(data.map(m=>m.id));for(const m of pm){if(!_s.has(m.id)&&(!allowedSet||allowedSet.has(m.id))){data.push(m);_s.add(m.id)}}}}catch{}
     const aliases=parseAliases();
     const aliasKeys=Object.keys(aliases);
     if(aliasKeys.length){
@@ -283,8 +293,10 @@ if(norm==="/api/status"&&req.method==="GET"){
   g2.__codismStatusCache={ts:now,payload};
   return jsonRes(200,payload);
 }
- if(norm==="/api/event"&&method==="GET"){const ev=await getEventState();const nowMs=Date.now();const nowIso=new Date(nowMs).toISOString();if(!ev||eventStatusOf(ev,nowMs)==="disabled") return jsonRes(200,{ok:true,status:"disabled",event:null,model:null,pool_total:null,pool_spent:null,pool_remaining:null,opens_at:null,apmix:null,apmix_err:_apmixErr||null,now:nowIso});
-const st=eventStatusOf(ev,nowMs);const rem=Math.max(0,(Number(ev.pool_total)||0)-(Number(ev.spent)||0));return jsonRes(200,{ok:true,status:st,event:{model:ev.model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_remaining:rem,opens_at:ev.opens_at,apmix:ev.apmix||null},model:ev.model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_remaining:rem,opens_at:ev.opens_at,apmix:ev.apmix||null,apmix_err:(ev.apmix?null:(_apmixErr||"unset")),now:nowIso});
+ if(norm==="/api/event"&&method==="GET"){const ev=await getEventState();const nowMs=Date.now();const nowIso=new Date(nowMs).toISOString();if(!ev||eventStatusOf(ev,nowMs)==="disabled") return jsonRes(200,{ok:true,status:"disabled",event:null,model:null,pool_total:null,pool_spent:null,pool_remaining:null,opens_at:null,mirror:null,mirror_err:_apmixErr||null,now:nowIso});
+
+const st=eventStatusOf(ev,nowMs);const rem=Math.max(0,(Number(ev.pool_total)||0)-(Number(ev.spent)||0));return jsonRes(200,{ok:true,status:st,event:{model:ev.model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_remaining:rem,opens_at:ev.opens_at,mirror:ev.apmix||null},model:ev.model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_remaining:rem,opens_at:ev.opens_at,mirror:ev.apmix||null,mirror_err:(ev.apmix?null:(_apmixErr||"unset")),now:nowIso});
+
 }
  // health
  if(norm==="/health"&&method==="GET") return jsonRes(200,{ok:true,service:"codism-panel"});
@@ -304,9 +316,9 @@ const st=eventStatusOf(ev,nowMs);const rem=Math.max(0,(Number(ev.pool_total)||0)
   const ex=await sbGet(`/users?email=eq.${encodeURIComponent(email)}&select=id`);
   if(ex.length){addRegFail(ip);return jsonRes(409,{error:"email_exists",code:"email_exists"})}
   const h=await hashPassword(password);
-  const plan="starter";
-  const mq=planQuota(plan);
-  let ins:any;try{ins=await sbPost("/users",{email,name,password_hash:h,role:"user",enabled:true,plan,daily_quota_tokens:0,monthly_quota_tokens:mq||0,phone:body.phone||null})}catch(e:any){console.error("register insert failed:",String(e.message||e));const msg=String(e.message||"");if(msg.includes("duplicate")||msg.includes("23505")||msg.includes("already exists")){addRegFail(ip);return jsonRes(409,{error:"email_exists",code:"email_exists"})}return jsonRes(400,{error:"create_failed",code:"create_failed"})}
+  const plan="none";
+  const mq=0;
+  let ins:any;try{ins=await sbPost("/users",{email,name,password_hash:h,role:"user",enabled:true,plan,daily_quota_tokens:0,monthly_quota_tokens:mq,phone:body.phone||null})}catch(e:any){console.error("register insert failed:",String(e.message||e));const msg=String(e.message||"");if(msg.includes("duplicate")||msg.includes("23505")||msg.includes("already exists")){addRegFail(ip);return jsonRes(409,{error:"email_exists",code:"email_exists"})}return jsonRes(400,{error:"create_failed",code:"create_failed"})}
   const user=ins[0];
   resetRegFail(ip);
   const exp=Math.floor(Date.now()/1000)+12*3600;
@@ -467,17 +479,21 @@ const st=eventStatusOf(ev,nowMs);const rem=Math.max(0,(Number(ev.pool_total)||0)
  if(pathname.startsWith("/api/admin/")){
   const a=await authOr401();if(!a) return panelErr(401,"Unauthorized");
   if(a.role!=="admin") return panelErr(403,"Admin only");
-  if(norm==="/api/admin/event"&&method==="GET"){const ev=await getEventState();if(!ev) return jsonRes(200,{ok:true,event:null,status:"disabled",pool_spent_ours:0,pool_spent_other:0,apmix:null});
-const st=eventStatusOf(ev,Date.now());const rem=Math.max(0,(Number(ev.pool_total)||0)-(Number(ev.spent)||0));return jsonRes(200,{ok:true,event:{model:ev.model,upstream_model:ev.upstream_model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_spent_ours:ev.spent_ours||0,pool_spent_other:ev.spent_other||0,pool_remaining:rem,opens_at:ev.opens_at,enabled:ev.enabled,status:st,apmix_sync:ev.apmix_sync!==false,apmix:ev.apmix||null},status:st,model:ev.model,upstream_model:ev.upstream_model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_spent_ours:ev.spent_ours||0,pool_spent_other:ev.spent_other||0,pool_remaining:rem,opens_at:ev.opens_at,enabled:ev.enabled,apmix_sync:ev.apmix_sync!==false,apmix:ev.apmix||null});
+  if(norm==="/api/admin/event"&&method==="GET"){const ev=await getEventState();if(!ev) return jsonRes(200,{ok:true,event:null,status:"disabled",pool_spent_ours:0,pool_spent_other:0,mirror:null});
+const st=eventStatusOf(ev,Date.now());const rem=Math.max(0,(Number(ev.pool_total)||0)-(Number(ev.spent)||0));return jsonRes(200,{ok:true,event:{model:ev.model,upstream_model:ev.upstream_model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_spent_ours:ev.spent_ours||0,pool_spent_other:ev.spent_other||0,pool_remaining:rem,opens_at:ev.opens_at,enabled:ev.enabled,status:st,mirror_sync:ev.apmix_sync!==false,mirror:ev.apmix||null},status:st,model:ev.model,upstream_model:ev.upstream_model,pool_total:ev.pool_total,pool_spent:ev.spent,pool_spent_ours:ev.spent_ours||0,pool_spent_other:ev.spent_other||0,pool_remaining:rem,opens_at:ev.opens_at,enabled:ev.enabled,mirror_sync:ev.apmix_sync!==false,mirror:ev.apmix||null});
+
 }
-  if(norm==="/api/admin/event"&&method==="PATCH"){let b:any=null;try{b=await req.json()}catch{return panelErr(400,"invalid json")}const patch:any={};if(b.model!==undefined){const v=String(b.model).trim().toLowerCase();if(!/^[a-z0-9][a-z0-9._-]{0,63}$/.test(v)) return panelErr(400,"invalid model");patch.model=v}if(b.upstream_model!==undefined){const v=String(b.upstream_model).trim().toLowerCase();if(!/^[a-z0-9][a-z0-9._-]{0,63}$/.test(v)) return panelErr(400,"invalid upstream_model");patch.upstream_model=v}if(b.pool_total!==undefined){const n=Number(b.pool_total);if(!Number.isFinite(n)||n<1||n>1e15) return panelErr(400,"invalid pool_total");patch.pool_total=Math.round(n)}if(b.opens_at!==undefined){const t=Date.parse(String(b.opens_at));if(isNaN(t)) return panelErr(400,"invalid opens_at");patch.opens_at=new Date(t).toISOString()}if(b.enabled!==undefined){if(typeof b.enabled!=="boolean") return panelErr(400,"invalid enabled");patch.enabled=b.enabled}if(b.apmix_sync!==undefined){if(typeof b.apmix_sync!=="boolean") return panelErr(400,"invalid apmix_sync");patch.apmix_sync=b.apmix_sync}if(Object.keys(patch).length===0) return panelErr(400,"no fields");patch.updated_at=new Date().toISOString();try{await sbPatch("/event_state?id=eq.1",patch)}catch(e:any){return panelErr(500,"event update failed")}invalidateEventCache();return jsonRes(200,{ok:true});}
+  if(norm==="/api/admin/event"&&method==="PATCH"){let b:any=null;try{b=await req.json()}catch{return panelErr(400,"invalid json")}const patch:any={};if(b.model!==undefined){const v=String(b.model).trim().toLowerCase();if(!/^[a-z0-9][a-z0-9._-]{0,63}$/.test(v)) return panelErr(400,"invalid model");patch.model=v}if(b.upstream_model!==undefined){const v=String(b.upstream_model).trim().toLowerCase();if(!/^[a-z0-9][a-z0-9._-]{0,63}$/.test(v)) return panelErr(400,"invalid upstream_model");patch.upstream_model=v}if(b.pool_total!==undefined){const n=Number(b.pool_total);if(!Number.isFinite(n)||n<1||n>1e15) return panelErr(400,"invalid pool_total");patch.pool_total=Math.round(n)}if(b.opens_at!==undefined){const t=Date.parse(String(b.opens_at));if(isNaN(t)) return panelErr(400,"invalid opens_at");patch.opens_at=new Date(t).toISOString()}if(b.enabled!==undefined){if(typeof b.enabled!=="boolean") return panelErr(400,"invalid enabled");patch.enabled=b.enabled}if(b.mirror_sync!==undefined||b.apmix_sync!==undefined){const _ms=(b.mirror_sync!==undefined?b.mirror_sync:b.apmix_sync);if(typeof _ms!=="boolean") return panelErr(400,"invalid mirror_sync");patch.apmix_sync=_ms}
+if(Object.keys(patch).length===0) return panelErr(400,"no fields");patch.updated_at=new Date().toISOString();try{await sbPatch("/event_state?id=eq.1",patch)}catch(e:any){return panelErr(500,"event update failed")}invalidateEventCache();return jsonRes(200,{ok:true});}
   if(norm==="/api/admin/users"&&method==="GET"){
    const users=await sbGet(`/users?select=id,email,name,role,enabled,plan,daily_quota_tokens,monthly_quota_tokens,created_at,username,subscription_expires_at,upstream_key_id&order=created_at.desc`);
    const keys=await sbGet(`/api_keys?select=user_id`);
    const cnt=new Map<string,number>();for(const k of keys) cnt.set(k.user_id,(cnt.get(k.user_id)||0)+1);
    const uk=await sbGet(`/upstream_keys?select=id,label`);const ukMap=new Map<string,string>();for(const x of uk) ukMap.set(x.id,x.label);
    const usageRows=await sbRpc("admin_user_usage",{});const uMap=new Map<string,any>();for(const r of usageRows) uMap.set(r.user_id,r);
-   const out=users.map((u:any)=>{const us=uMap.get(u.id)||{};return {id:u.id,email:u.email,name:u.name,role:u.role,enabled:u.enabled,plan:planOf(u.plan)||"starter",daily_quota_tokens:u.daily_quota_tokens,monthly_quota_tokens:u.monthly_quota_tokens,created_at:u.created_at,key_count:cnt.get(u.id)||0,username:u.username||null,subscription_expires_at:u.subscription_expires_at||null,upstream_key_id:u.upstream_key_id||null,upstream_key_label:u.upstream_key_id?ukMap.get(u.upstream_key_id)||null:null,usage_month_tokens:Number(us.month_tokens||0),usage_month_requests:Number(us.month_requests||0),usage_total_tokens:Number(us.total_tokens||0)}});
+   const out=users.map((u:any)=>{const us=uMap.get(u.id)||{};return {id:u.id,email:u.email,name:u.name,role:u.role,enabled:u.enabled,plan:planOf(u.plan)||(String(u.plan||"")==="none"?"none":null),
+
+daily_quota_tokens:u.daily_quota_tokens,monthly_quota_tokens:u.monthly_quota_tokens,created_at:u.created_at,key_count:cnt.get(u.id)||0,username:u.username||null,subscription_expires_at:u.subscription_expires_at||null,upstream_key_id:u.upstream_key_id||null,upstream_key_label:u.upstream_key_id?ukMap.get(u.upstream_key_id)||null:null,usage_month_tokens:Number(us.month_tokens||0),usage_month_requests:Number(us.month_requests||0),usage_total_tokens:Number(us.total_tokens||0)}});
    return jsonRes(200,out);
   }
 
@@ -490,9 +506,10 @@ const st=eventStatusOf(ev,Date.now());const rem=Math.max(0,(Number(ev.pool_total
    let subscription_expires_at:any=null;if(b.subscription_expires_at!==undefined&&b.subscription_expires_at!==null){const v=String(b.subscription_expires_at).trim();if(!v) subscription_expires_at=null;else if(isNaN(Date.parse(v))) return panelErr(400,"invalid subscription date");else subscription_expires_at=new Date(v).toISOString()}
    let upstream_key_id:any=null;if(b.upstream_key_id!==undefined&&b.upstream_key_id!==null&&String(b.upstream_key_id).trim()!==""){const ukId=String(b.upstream_key_id).trim();const uk=await sbGet(`/upstream_keys?id=eq.${encodeURIComponent(ukId)}&select=id`);if(!uk.length) return panelErr(400,"invalid upstream key");upstream_key_id=ukId}
    const h=await hashPassword(password);
-   const plan=planOf(b.plan||"starter");
-   if(!plan) return panelErr(400,"invalid plan");
-   const mq=planQuota(plan);
+   const _wantsNone=String(b.plan||"").trim().toLowerCase()==="none";
+   const plan:any=_wantsNone?"none":planOf(b.plan||"starter");
+   if(!_wantsNone&&!plan) return panelErr(400,"invalid plan");
+   const mq=_wantsNone?0:(planQuota(plan)||0);
    const dq:any=0;
    try{const ins=await sbPost("/users",{email,name,password_hash:h,role,enabled:true,plan,daily_quota_tokens:dq,monthly_quota_tokens:mq||0,username,subscription_expires_at,upstream_key_id});return jsonRes(200,ins[0]||{ok:true})}catch(e:any){console.error("admin create user failed:",String(e.message||e));const m2=String(e.message||"");if(m2.includes("duplicate")||m2.includes("23505")){if(m2.includes("users_username_unique")) return panelErr(409,"username exists");return panelErr(409,"email exists")}return panelErr(400,"create failed")}
   }
@@ -510,7 +527,7 @@ const st=eventStatusOf(ev,Date.now());const rem=Math.max(0,(Number(ev.pool_total
    if(b.monthly_quota_tokens!==undefined) patch.monthly_quota_tokens=parseInt(b.monthly_quota_tokens,10)||0;
    if(b.role) patch.role=b.role;
    if(b.password) patch.password_hash=await hashPassword(b.password);
-   if(b.plan!==undefined){const pl=planOf(b.plan);if(!pl) return panelErr(400,"invalid plan");patch.plan=pl;if(b.monthly_quota_tokens===undefined)patch.monthly_quota_tokens=planQuota(pl)||0;if(b.daily_quota_tokens===undefined)patch.daily_quota_tokens=0}
+   if(b.plan!==undefined){if(String(b.plan).trim().toLowerCase()==="none"){patch.plan="none";if(b.monthly_quota_tokens===undefined)patch.monthly_quota_tokens=0;if(b.daily_quota_tokens===undefined)patch.daily_quota_tokens=0}else{const pl=planOf(b.plan);if(!pl) return panelErr(400,"invalid plan");patch.plan=pl;if(b.monthly_quota_tokens===undefined)patch.monthly_quota_tokens=planQuota(pl)||0;if(b.daily_quota_tokens===undefined)patch.daily_quota_tokens=0}}
    if(b.username!==undefined){if(b.username===null||String(b.username).trim()==="") patch.username=null;else{const u=String(b.username).trim().toLowerCase();if(!/^[a-z0-9_-]{3,32}$/.test(u)) return panelErr(400,"invalid username");const ex=await sbGet(`/users?username=eq.${encodeURIComponent(u)}&id=neq.${encodeURIComponent(id)}&select=id`);if(ex.length) return panelErr(409,"username exists");patch.username=u}}
    if(b.email!==undefined){if(b.email===null||String(b.email).trim()==="") patch.email=null;else{const e=String(b.email).trim();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return panelErr(400,"invalid email");const ex=await sbGet(`/users?email=eq.${encodeURIComponent(e)}&id=neq.${encodeURIComponent(id)}&select=id`);if(ex.length) return panelErr(409,"email exists");patch.email=e}}
    if(b.subscription_expires_at!==undefined){if(b.subscription_expires_at===null||String(b.subscription_expires_at).trim()==="") patch.subscription_expires_at=null;else{const v=String(b.subscription_expires_at).trim();if(isNaN(Date.parse(v))) return panelErr(400,"invalid subscription date");patch.subscription_expires_at=new Date(v).toISOString()}}
@@ -629,10 +646,10 @@ const st=eventStatusOf(ev,Date.now());const rem=Math.max(0,(Number(ev.pool_total
    clearTimeout(t);
    const ct=up.headers.get("content-type")||"";
    if(up.ok&&ct.includes("application/json")){
-    const data=await up.json();const list=Array.isArray(data.data)?data.data:[];for(const s of synthetic)list.push(s);let filtered=filterList(list);try{const ev=await getEventState();if(ev&&eventStatusOf(ev,Date.now())==="live"&&!filtered.some((m:any)=>m.id===ev.model)) filtered.push({id:ev.model,object:"model",created:1700000000,owned_by:"codism-event"})}catch{}const out={object:"list",data:filtered};const h=withCors(new Headers({"content-type":"application/json"}));for(const [k,v] of up.headers.entries()) if(k.toLowerCase().startsWith("x-ratelimit-")) h.set(k,v);return new Response(JSON.stringify(out),{status:200,headers:h});
+    const data=await up.json();const list=Array.isArray(data.data)?data.data:[];for(const s of synthetic)list.push(s);try{const pm=await poolModels();const _s=new Set(list.map((x:any)=>x.id));for(const m of pm){if(!_s.has(m.id)){list.push(m);_s.add(m.id)}}}catch{}let filtered=filterList(list);try{const ev=await getEventState();if(ev&&eventStatusOf(ev,Date.now())==="live"&&!filtered.some((m:any)=>m.id===ev.model)) filtered.push({id:ev.model,object:"model",created:1700000000,owned_by:"codism-event"})}catch{}const out={object:"list",data:filtered};const h=withCors(new Headers({"content-type":"application/json"}));for(const [k,v] of up.headers.entries()) if(k.toLowerCase().startsWith("x-ratelimit-")) h.set(k,v);return new Response(JSON.stringify(out),{status:200,headers:h});
    }
   }catch{}
-  let fb=filterList(synthetic.slice());try{const ev=await getEventState();if(ev&&eventStatusOf(ev,Date.now())==="live"&&!fb.some((m:any)=>m.id===ev.model)) fb.push({id:ev.model,object:"model",created:1700000000,owned_by:"codism-event"})}catch{}return jsonRes(200,{object:"list",data:fb});
+  let fb=filterList(synthetic.slice());try{const pm=await poolModels();for(const m of pm){if(!fb.some((x:any)=>x.id===m.id))fb.push(m)}}catch{}try{const ev=await getEventState();if(ev&&eventStatusOf(ev,Date.now())==="live"&&!fb.some((m:any)=>m.id===ev.model)) fb.push({id:ev.model,object:"model",created:1700000000,owned_by:"codism-event"})}catch{}return jsonRes(200,{object:"list",data:fb});
 
  }
  const isChat = (norm==="/v1/chat/completions"||norm==="/chat/completions");
@@ -647,9 +664,10 @@ const st=eventStatusOf(ev,Date.now());const rem=Math.max(0,(Number(ev.pool_total
   const kRows=await sbGet(`/api_keys?key=eq.${encodeURIComponent(keyText)}&select=id,user_id,enabled,models,token_saver,debug`);
   const kRow=kRows[0];if(!kRow){logRequest(null,null,"/v1/chat/completions",method,null,401,"invalid_api_key",0,0,Date.now()-t0);return openaiErr(401,"Invalid API key.","invalid_request_error","invalid_api_key")}
   if(!kRow.enabled){logRequest(kRow.user_id,kRow.id,"/v1/chat/completions",method,null,403,"key_disabled",0,0,Date.now()-t0);return openaiErr(403,"This API key has been disabled.","insufficient_quota","key_disabled")}
-  const uRows=await sbGet(`/users?id=eq.${encodeURIComponent(kRow.user_id)}&select=id,enabled,plan,daily_quota_tokens,monthly_quota_tokens,subscription_expires_at,upstream_key_id`);
+  const uRows=await sbGet(`/users?id=eq.${encodeURIComponent(kRow.user_id)}&select=id,enabled,plan,role,daily_quota_tokens,monthly_quota_tokens,subscription_expires_at,upstream_key_id`);
   const uRow=uRows[0];if(!uRow||!uRow.enabled){logRequest(uRow?uRow.id:null,kRow.id,"/v1/chat/completions",method,null,403,"user_disabled",0,0,Date.now()-t0);return openaiErr(403,"User disabled.","insufficient_quota","user_disabled")}
  {const _lim=(PLAN_RPM as any)[uRow.plan]||120;if(isKeyRpmLimited(kRow.id,_lim)){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,null,429,"rpm_exceeded",0,0,Date.now()-t0);return openaiErr(429,"Rate limit exceeded. Too many requests for this key.","rate_limit_error","rpm_exceeded")}}if(uRow.subscription_expires_at&&Date.now()>Date.parse(uRow.subscription_expires_at)){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,null,403,"subscription_expired",0,0,Date.now()-t0);return openaiErr(403,"Your subscription has expired. Please renew it.","insufficient_quota","subscription_expired")}
+
   let bodyJson:any=null;if(raw)try{bodyJson=JSON.parse(dec.decode(raw))}catch{}
   const aliases=parseAliases();
   let expandedModel=bodyJson?.model||"";
@@ -658,6 +676,7 @@ const st=eventStatusOf(ev,Date.now());const rem=Math.max(0,(Number(ev.pool_total
   // event model detection (shared pool; bypasses per-key model gate + token quotas)
   const evState=await getEventState();
   const evReq=!!(evState&&evState.enabled&&expandedModel&&expandedModel.toLowerCase()===String(evState.model));
+  if(!evReq&&uRow.role!=="admin"&&!planOf(uRow.plan)){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,403,"no_active_plan",0,0,Date.now()-t0);return openaiErr(403,"No active plan on this account. Please purchase a plan to use the API.","insufficient_quota","no_active_plan")}
   // model gate
   const modelsStr=(kRow.models||"*").trim();
   if(!evReq&&modelsStr!=="*"&&modelsStr!==""){
@@ -670,12 +689,12 @@ const st=eventStatusOf(ev,Date.now());const rem=Math.max(0,(Number(ev.pool_total
   if(!evReq&&(uRow.daily_quota_tokens||0)>0){
    const [f,t]=todayBounds();const r=await sbRpc("usage_sum",{p_user:uRow.id,p_from:f,p_to:t});
    if(!r||!r.length){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,503,"quota_unavailable",0,0,Date.now()-t0);return openaiErr(503,"quota check unavailable, try again","api_error","quota_unavailable")}
-   const s=r[0]||{prompt_tokens:0,completion_tokens:0};const tot=(Number(s.prompt_tokens)||0)+(Number(s.completion_tokens)||0);if(tot>=uRow.daily_quota_tokens){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,429,"daily_quota_exceeded",0,0,Date.now()-t0);return openaiErr(429,"daily token quota exceeded","insufficient_quota","daily_quota_exceeded")}
+   const s=r[0]||{prompt_tokens:0,completion_tokens:0,quota_tokens:0};const _qt=s.quota_tokens==null?null:Number(s.quota_tokens)||0;const tot=_qt!=null?_qt:((Number(s.prompt_tokens)||0)+(Number(s.completion_tokens)||0));if(tot>=uRow.daily_quota_tokens){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,429,"daily_quota_exceeded",0,0,Date.now()-t0);return openaiErr(429,"daily token quota exceeded","insufficient_quota","daily_quota_exceeded")}
   }
   if(!evReq&&(uRow.monthly_quota_tokens||0)>0){
    const [f,t]=monthBounds();const r=await sbRpc("usage_sum",{p_user:uRow.id,p_from:f,p_to:t});
    if(!r||!r.length){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,503,"quota_unavailable",0,0,Date.now()-t0);return openaiErr(503,"quota check unavailable, try again","api_error","quota_unavailable")}
-   const s=r[0]||{prompt_tokens:0,completion_tokens:0};const tot=(Number(s.prompt_tokens)||0)+(Number(s.completion_tokens)||0);if(tot>=uRow.monthly_quota_tokens){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,429,"monthly_quota_exceeded",0,0,Date.now()-t0);return openaiErr(429,"monthly token quota exceeded","insufficient_quota","monthly_quota_exceeded")}
+   const s=r[0]||{prompt_tokens:0,completion_tokens:0,quota_tokens:0};const _qt=s.quota_tokens==null?null:Number(s.quota_tokens)||0;const tot=_qt!=null?_qt:((Number(s.prompt_tokens)||0)+(Number(s.completion_tokens)||0));if(tot>=uRow.monthly_quota_tokens){logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,429,"monthly_quota_exceeded",0,0,Date.now()-t0);return openaiErr(429,"monthly token quota exceeded","insufficient_quota","monthly_quota_exceeded")}
   }
   // stream handling: merge stream_options
   let isStream=false;if(bodyJson&&bodyJson.stream===true) isStream=true;
@@ -780,7 +799,7 @@ const st=eventStatusOf(ev,Date.now());const rem=Math.max(0,(Number(ev.pool_total
       ctrl.close();
       const latency=Date.now()-start;
       if(!foundUsage){promptTokens=Math.ceil(promptChars/4);completionTokens=Math.ceil(completionChars/4)}
-      sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:(evReq&&expandedModel)?expandedModel:servedModel,prompt_tokens:promptTokens,completion_tokens:completionTokens,latency_ms:latency,status:upResp.status,saved_tokens:Math.round(savedChars/4),is_event:evReq,upstream_key_id:servedUpKeyId})
+      sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:(evReq&&expandedModel)?expandedModel:servedModel,prompt_tokens:promptTokens,completion_tokens:completionTokens,latency_ms:latency,status:upResp.status,saved_tokens:Math.round(savedChars/4),is_event:evReq,quota_tokens:quotaTokens((evReq&&expandedModel)?expandedModel:servedModel,promptTokens,completionTokens),upstream_key_id:servedUpKeyId})
 .catch((e:any)=>console.error("usage_log write failed:",e));
       logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,upResp.status,null,promptTokens,completionTokens,latency,debugDetail());
      }
@@ -792,7 +811,8 @@ const st=eventStatusOf(ev,Date.now());const rem=Math.max(0,(Number(ev.pool_total
    const buf=new Uint8Array(await upResp.arrayBuffer());
    let pt=0,ctok=0;try{const j=JSON.parse(dec.decode(buf));if(j.usage){pt=Number(j.usage.prompt_tokens)||0;ctok=Number(j.usage.completion_tokens)||0}}catch{}
    const latency=Date.now()-start;
-   sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:(evReq&&expandedModel)?expandedModel:servedModel,prompt_tokens:pt,completion_tokens:ctok,latency_ms:latency,status:upResp.status,saved_tokens:Math.round(savedChars/4),is_event:evReq,upstream_key_id:servedUpKeyId})
+   sbPost("/usage_log",{user_id:uRow.id,key_id:kRow.id,model:(evReq&&expandedModel)?expandedModel:servedModel,prompt_tokens:pt,completion_tokens:ctok,latency_ms:latency,status:upResp.status,saved_tokens:Math.round(savedChars/4),is_event:evReq,quota_tokens:quotaTokens((evReq&&expandedModel)?expandedModel:servedModel,pt,ctok),upstream_key_id:servedUpKeyId})
+
 .catch((e:any)=>console.error("usage_log write failed:",e));
    logRequest(uRow.id,kRow.id,"/v1/chat/completions",method,expandedModel||null,upResp.status,null,pt,ctok,latency,debugDetail());
    return new Response(buf,{status:upResp.status,headers:respHeaders});

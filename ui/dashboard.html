@@ -608,12 +608,16 @@
 </div>
 <div class="kpi-row" style="grid-template-columns:repeat(auto-fit,minmax(9rem,1fr))">
 <div class="kpi card">
-<div class="kpi-label">مصرف کل ایونت (لایو apmix)</div>
-<div class="kpi-value" data-ev-apmix-used>—</div>
+<div class="kpi-label">مصرف کل ایونت (لایو)</div>
+
+<div class="kpi-value" data-ev-mirror-used>—</div>
+
 </div>
 <div class="kpi card">
-<div class="kpi-label">باقی‌مانده استخر (لایو apmix)</div>
-<div class="kpi-value" data-ev-apmix-remaining>—</div>
+<div class="kpi-label">باقی‌مانده استخر (لایو)</div>
+
+<div class="kpi-value" data-ev-mirror-remaining>—</div>
+
 </div>
 <div class="kpi card">
 <div class="kpi-label">از upstream خود ما</div>
@@ -624,12 +628,16 @@
 <div class="kpi-value" data-ev-spent-other>۰</div>
 </div>
 <div class="kpi card">
-<div class="kpi-label">شرکت‌کننده (apmix)</div>
-<div class="kpi-value" data-ev-apmix-part>—</div>
+<div class="kpi-label">شرکت‌کننده‌ها</div>
+
+<div class="kpi-value" data-ev-mirror-part>—</div>
+
 </div>
 <div class="kpi card">
-<div class="kpi-label">درخواست‌ها (apmix)</div>
-<div class="kpi-value" data-ev-apmix-req>—</div>
+<div class="kpi-label">درخواست‌ها</div>
+
+<div class="kpi-value" data-ev-mirror-req>—</div>
+
 </div>
 </div>
 
@@ -656,14 +664,17 @@
 <label class="label" for="ev-enabled" style="margin:0">ایونت فعال باشد</label>
 </div>
 <div class="field" style="display:flex;align-items:center;gap:.5rem">
-<input type="checkbox" id="ev-apmixsync" data-ev-apmixsync style="width:1rem;height:1rem" checked>
-<label class="label" for="ev-apmixsync" style="margin:0">همگام‌سازی کامل با apmix.ai (شروع/پایان و آمار زنده)</label>
+<input type="checkbox" id="ev-mirrorsync" data-ev-mirrorsync style="width:1rem;height:1rem" checked>
+
+<label class="label" for="ev-mirrorsync" style="margin:0">همگام‌سازی کامل (شروع/پایان و آمار زنده)</label>
+
 </div>
 <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-top:.5rem">
 <button type="button" class="btn btn-primary" data-ev-save>ذخیره‌ی تغییرات</button>
 <span data-ev-msg style="font-size:.85rem;color:#6B6659"></span>
 </div>
-<p class="muted" style="font-size:.78rem;color:#8A8475;margin:.9rem 0 0">مصرف ایونت از سهمیه‌ی کاربران کم نمی‌شود و فقط از استخر مشترک پرداخت می‌شود. تغییر تنظیمات تا ۱۵ ثانیه بعد در همه‌ی سرورها اعمال می‌شود. «از upstream خود ما» یعنی درخواست‌هایی که با کلید پیش‌فرض دروازه (کلید اصلی) سرو شده‌اند؛ باقی از upstream اختصاصی کاربران. آمار apmix هر ۱۵ ثانیه مستقیم از apmix.ai گرفته می‌شود و پایان ایونت نیز از استخر apmix پیگیری می‌شود.</p>
+<p class="muted" style="font-size:.78rem;color:#8A8475;margin:.9rem 0 0">مصرف ایونت از سهمیه‌ی کاربران کم نمی‌شود و فقط از استخر مشترک پرداخت می‌شود. تغییر تنظیمات تا ۱۵ ثانیه بعد در همه‌ی سرورها اعمال می‌شود. «از upstream خود ما» یعنی درخواست‌هایی که با کلید پیش‌فرض دروازه (کلید اصلی) سرو شده‌اند؛ باقی از upstream اختصاصی کاربران. آمار استخر هر ۱۵ ثانیه به‌روزرسانی می‌شود و پایان ایونت نیز از همین منبع پیگیری می‌شود.</p>
+
 
 </div>
 </section>
@@ -775,7 +786,7 @@
 <option value="basic">بیسیک (basic)</option>
 <option value="pro">حرفه‌ای (pro)</option>
 <option value="scale">مقیاس (scale)</option>
-<option value="unlimited">نامحدود (unlimited)</option>
+<option value="none">بدون پلن (none)</option>
 </select>
 </div>
 <div class="field">
@@ -828,7 +839,7 @@
 <option value="basic">بیسیک (basic)</option>
 <option value="pro">حرفه‌ای (pro)</option>
 <option value="scale">مقیاس (scale)</option>
-<option value="unlimited">نامحدود (unlimited)</option>
+<option value="none">بدون پلن (none)</option>
 </select>
 <p class="hint" style="margin-top:.375rem">انتخاب پلن، سهمیه ماهانه را به استاندارد همان پلن بازنشانی می‌کند.</p>
 </div>
