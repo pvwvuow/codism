@@ -5,4 +5,5 @@ try{window.I18N.addDict({"، الزامی":", required",". کلید فقط یک�
 try{window.I18N.addDict({"پیش‌فرض همه کاربران": "Default for all users", "تنظیم پیش‌فرض": "Make default", "این کلید پیش‌فرض همه کاربران شد": "This key is now the default for all users"})}catch(e){}
 try{window.I18N.addDict({"مصرف‌شده تا این لحظه:": "Spent so far:", "توکن": "tokens", "مصرف‌شده": "Spent", "باقی‌مانده": "Remaining", "تا شروع ایونت": "Until the event opens", "زنده شد": "Live", "استخر تمام شد": "Pool spent"})}catch(e){}
 try{window.I18N.addDict({"بدون پلن": "No plan", "پلن فعالی ندارید": "No active plan", "برای استفاده از API، از صفحه تعرفه‌ها پلن تهیه کنید": "To use the API, purchase a plan on the pricing page", "توکن معادل": "equivalent tokens"})}catch(e){}
+try{window.I18N.addDict({"پلی‌گراند":"Playground","پلی‌گراند Grok":"Grok Playground"})}catch(e){}
 try{window.I18N.init()}catch(e){}
